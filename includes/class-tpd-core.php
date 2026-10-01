@@ -78,31 +78,46 @@ class TPD_Tool_Core {
 		// Advisor Dashboard
 		if ( $uri === 'advisor-dashboard' || is_page( 'advisor-dashboard' ) || $uri === 'advisor-portal' ) {
 			$file = TPD_TOOL_DIR . 'templates/advisor/dashboard.php';
-			if ( file_exists( $file ) ) return $file;
+			if ( file_exists( $file ) ) {
+				status_header( 200 );
+				return $file;
+			}
 		}
 
 		// Supplier Dashboard
 		if ( $uri === 'supplier-dashboard' || is_page( 'supplier-dashboard' ) || $uri === 'supplier-portal' ) {
 			$file = TPD_TOOL_DIR . 'templates/supplier/dashboard.php';
-			if ( file_exists( $file ) ) return $file;
+			if ( file_exists( $file ) ) {
+				status_header( 200 );
+				return $file;
+			}
 		}
 
 		// Super Admin Dashboard
 		if ( $uri === 'tpd-admin' || is_page( 'tpd-admin' ) ) {
 			$file = TPD_TOOL_DIR . 'templates/admin/super-admin-dashboard.php';
-			if ( file_exists( $file ) ) return $file;
+			if ( file_exists( $file ) ) {
+				status_header( 200 );
+				return $file;
+			}
 		}
 
 		// Advisor Registration Page
 		if ( $uri === 'advisor-registration' || is_page( 'advisor-registration' ) ) {
 			$file = TPD_TOOL_DIR . 'templates/registration/advisor-registration.php';
-			if ( file_exists( $file ) ) return $file;
+			if ( file_exists( $file ) ) {
+				status_header( 200 );
+				return $file;
+			}
 		}
 
 		// Supplier Registration Page
 		if ( $uri === 'supplier-registration' || is_page( 'supplier-registration' ) ) {
 			$file = TPD_TOOL_DIR . 'templates/registration/supplier-registration.php';
-			if ( file_exists( $file ) ) return $file;
+			if ( file_exists( $file ) ) {
+				status_header( 200 );
+				return $file;
+			}
 		}
 
 		return $template;

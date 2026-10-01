@@ -33,13 +33,119 @@
 	--tpd-font-script: 'Caveat', cursive;
 }
 
-body.tpd-theme-dark-sidebar {
+body.tpd-theme-dark-sidebar,
+body.tpd-app-body {
 	margin: 0;
 	padding: 0;
 	background-color: var(--tpd-slate-bg);
 	font-family: var(--tpd-font-sans);
 	color: var(--tpd-navy-text);
 	-webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   Global Button System
+   ========================================================================== */
+.tpd-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 10px 20px;
+	font-size: 13.5px;
+	font-weight: 700;
+	border-radius: 8px;
+	border: 1px solid transparent;
+	cursor: pointer;
+	text-decoration: none;
+	transition: all 0.15s ease;
+	font-family: var(--tpd-font-sans);
+	box-sizing: border-box;
+	line-height: 1.4;
+}
+
+.tpd-btn:disabled {
+	opacity: 0.65;
+	cursor: not-allowed;
+}
+
+.tpd-btn-lg {
+	padding: 14px 32px;
+	font-size: 15px;
+	border-radius: 10px;
+}
+
+.tpd-btn-sm {
+	padding: 7px 14px;
+	font-size: 12.5px;
+	border-radius: 6px;
+}
+
+.tpd-btn-xs {
+	padding: 5px 10px;
+	font-size: 11.5px;
+	border-radius: 5px;
+}
+
+.tpd-btn-primary {
+	background: var(--tpd-blue-accent);
+	color: #ffffff !important;
+	border-color: var(--tpd-blue-accent);
+}
+
+.tpd-btn-primary:hover {
+	background: #1d4ed8;
+	border-color: #1d4ed8;
+	color: #ffffff !important;
+}
+
+.tpd-btn-darkblue {
+	background: var(--tpd-navy-dark);
+	color: #ffffff !important;
+	border-color: var(--tpd-navy-dark);
+}
+
+.tpd-btn-darkblue:hover {
+	background: #1d3557;
+	border-color: #1d3557;
+	color: #ffffff !important;
+}
+
+.tpd-btn-outline {
+	background: transparent;
+	color: var(--tpd-navy-text) !important;
+	border-color: var(--tpd-slate-border);
+}
+
+.tpd-btn-outline:hover {
+	background: #f8fafc;
+	border-color: #cbd5e1;
+}
+
+.tpd-btn-outline-white {
+	background: transparent;
+	color: #ffffff !important;
+	border-color: rgba(255, 255, 255, 0.35);
+}
+
+.tpd-btn-outline-white:hover {
+	background: rgba(255, 255, 255, 0.12);
+	border-color: #ffffff;
+	color: #ffffff !important;
+}
+
+.tpd-btn-secondary {
+	background: #f1f5f9;
+	color: #334155 !important;
+	border-color: #cbd5e1;
+}
+
+.tpd-btn-secondary:hover {
+	background: #e2e8f0;
+}
+
+.tpd-btn-block {
+	width: 100%;
 }
 
 .tpd-portal-shell {

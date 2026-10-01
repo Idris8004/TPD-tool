@@ -8,6 +8,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+$is_standalone = ! did_action( 'wp_head' );
+if ( $is_standalone ) {
+	?>
+	<!DOCTYPE html>
+	<html <?php language_attributes(); ?>>
+	<head>
+		<meta charset="<?php bloginfo( 'charset' ); ?>">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title><?php esc_html_e( 'Supplier Partner Registration | Travel Partner Directory', 'tpd-tool' ); ?></title>
+		<?php wp_head(); ?>
+	</head>
+	<body class="tpd-app-body" style="background:#f1f5f9; padding:40px 16px; margin:0; font-family:'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;">
+	<?php
+}
+
 if ( is_user_logged_in() ) {
 	$current_user = wp_get_current_user();
 	?>
@@ -20,6 +35,13 @@ if ( is_user_logged_in() ) {
 		</a>
 	</div>
 	<?php
+	if ( $is_standalone ) {
+		wp_footer();
+		?>
+		</body>
+		</html>
+		<?php
+	}
 	return;
 }
 ?>
@@ -122,3 +144,13 @@ if ( is_user_logged_in() ) {
 		</form>
 	</div>
 </div>
+
+<?php
+if ( $is_standalone ) {
+	wp_footer();
+	?>
+	</body>
+	</html>
+	<?php
+}
+?>
