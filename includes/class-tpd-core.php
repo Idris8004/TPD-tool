@@ -93,6 +93,18 @@ class TPD_Tool_Core {
 			if ( file_exists( $file ) ) return $file;
 		}
 
+		// Advisor Registration Page
+		if ( $uri === 'advisor-registration' || is_page( 'advisor-registration' ) ) {
+			$file = TPD_TOOL_DIR . 'templates/registration/advisor-registration.php';
+			if ( file_exists( $file ) ) return $file;
+		}
+
+		// Supplier Registration Page
+		if ( $uri === 'supplier-registration' || is_page( 'supplier-registration' ) ) {
+			$file = TPD_TOOL_DIR . 'templates/registration/supplier-registration.php';
+			if ( file_exists( $file ) ) return $file;
+		}
+
 		return $template;
 	}
 

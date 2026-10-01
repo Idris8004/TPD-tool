@@ -27,6 +27,8 @@ require_once TPD_TOOL_DIR . 'includes/class-tpd-analytics.php';
 require_once TPD_TOOL_DIR . 'includes/class-tpd-chat.php';
 require_once TPD_TOOL_DIR . 'includes/class-tpd-favorites.php';
 require_once TPD_TOOL_DIR . 'includes/class-tpd-events.php';
+require_once TPD_TOOL_DIR . 'includes/class-tpd-registration.php';
+require_once TPD_TOOL_DIR . 'includes/class-tpd-profile-editor.php';
 require_once TPD_TOOL_DIR . 'includes/class-tpd-shortcodes.php';
 require_once TPD_TOOL_DIR . 'includes/class-tpd-elementor.php';
 require_once TPD_TOOL_DIR . 'includes/class-tpd-seeder.php';

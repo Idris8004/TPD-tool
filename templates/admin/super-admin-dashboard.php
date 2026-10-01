@@ -58,6 +58,7 @@ if ( ! $is_in_admin ) {
 $summary = TPD_Tool_Analytics::get_platform_summary();
 $all_features = TPD_Tool_Tiers::get_all_features();
 $current_permissions = get_option( TPD_Tool_Tiers::OPTION_PERMISSIONS, array() );
+$claims = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Profile_Editor::get_claims() : array();
 
 // Fetch all registered advisors and suppliers
 $users = get_users( array(
@@ -69,9 +70,12 @@ $users = get_users( array(
 	<div class="tpd-admin-hub-header">
 		<div>
 			<h1><i class="fa-solid fa-shield-halved text-gold"></i> <?php esc_html_e( 'TPD Super Admin Control Hub', 'tpd-tool' ); ?></h1>
-			<p><?php esc_html_e( 'Manage registered users, toggle Free vs. Paid tiers, configure feature permissions, and monitor platform metrics.', 'tpd-tool' ); ?></p>
+			<p><?php esc_html_e( 'Manage registered users, assign 3-Tier plans (Basic, Standard, Premium), review listing claims, export demographics, and configure feature permissions.', 'tpd-tool' ); ?></p>
 		</div>
-		<div class="tpd-admin-header-links">
+		<div class="tpd-admin-header-links" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+			<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'tpd_action', 'export_advisors_csv' ), 'tpd_export_advisors', 'nonce' ) ); ?>" class="tpd-btn tpd-btn-sm tpd-btn-primary" style="background:#047857; border-color:#047857; color:#fff;">
+				<i class="fa-solid fa-file-csv"></i> <?php esc_html_e( 'Export Advisors Demographics CSV', 'tpd-tool' ); ?>
+			</a>
 			<a href="<?php echo esc_url( home_url( '/advisor-dashboard/' ) ); ?>" target="_blank" class="tpd-btn tpd-btn-sm tpd-btn-outline">
 				<i class="fa-solid fa-arrow-up-right-from-square"></i> <?php esc_html_e( 'Open Advisor Portal', 'tpd-tool' ); ?>
 			</a>
@@ -96,23 +100,23 @@ $users = get_users( array(
 		</div>
 
 		<div class="tpd-kpi-card">
-			<span class="tpd-kpi-label"><?php esc_html_e( 'Paid / Pro Users', 'tpd-tool' ); ?></span>
-			<h2 class="tpd-kpi-value text-gold"><?php echo esc_html( $summary['paid_users'] ); ?></h2>
-			<span class="tpd-kpi-sub"><?php echo esc_html( $summary['free_users'] ); ?> <?php esc_html_e( 'Free Tier Users', 'tpd-tool' ); ?></span>
+			<span class="tpd-kpi-label"><?php esc_html_e( 'Pending Claims', 'tpd-tool' ); ?></span>
+			<h2 class="tpd-kpi-value text-gold"><?php echo esc_html( count( $claims ) ); ?></h2>
+			<span class="tpd-kpi-sub"><?php esc_html_e( 'Awaiting Admin Verification', 'tpd-tool' ); ?></span>
 		</div>
 
 		<div class="tpd-kpi-card">
-			<span class="tpd-kpi-label"><?php esc_html_e( 'Total Inquiries & Messages', 'tpd-tool' ); ?></span>
+			<span class="tpd-kpi-label"><?php esc_html_e( 'Total Platform Interactions', 'tpd-tool' ); ?></span>
 			<h2 class="tpd-kpi-value text-green"><?php echo esc_html( $summary['inquiries'] + $summary['messages'] ); ?></h2>
-			<span class="tpd-kpi-sub"><?php esc_html_e( 'Platform Interactions', 'tpd-tool' ); ?></span>
+			<span class="tpd-kpi-sub"><?php esc_html_e( 'Inquiries & Messages', 'tpd-tool' ); ?></span>
 		</div>
 	</div>
 
 	<!-- Section 1: Users & Tier Management Table -->
 	<div class="tpd-admin-panel-card">
 		<div class="tpd-panel-header">
-			<h3><i class="fa-solid fa-users-gear"></i> <?php esc_html_e( 'User Directory & Membership Tier Management', 'tpd-tool' ); ?></h3>
-			<p><?php esc_html_e( 'Instantly switch any user between Free and Paid tiers to grant or restrict platform features.', 'tpd-tool' ); ?></p>
+			<h3><i class="fa-solid fa-users-gear"></i> <?php esc_html_e( 'User Directory & 3-Tier Membership Plan Manager', 'tpd-tool' ); ?></h3>
+			<p><?php esc_html_e( 'Instantly change any user between Basic (Free), Standard ($9.99/mo), and Premium ($19.99/mo) tiers with live permission gating.', 'tpd-tool' ); ?></p>
 		</div>
 
 		<div class="tpd-panel-body">
@@ -122,8 +126,8 @@ $users = get_users( array(
 						<th><?php esc_html_e( 'User / Member', 'tpd-tool' ); ?></th>
 						<th><?php esc_html_e( 'Role', 'tpd-tool' ); ?></th>
 						<th><?php esc_html_e( 'Email Address', 'tpd-tool' ); ?></th>
-						<th><?php esc_html_e( 'Current Tier', 'tpd-tool' ); ?></th>
-						<th><?php esc_html_e( 'One-Click Tier Switcher', 'tpd-tool' ); ?></th>
+						<th><?php esc_html_e( 'Current Tier Status', 'tpd-tool' ); ?></th>
+						<th><?php esc_html_e( 'Instant Tier Assignment', 'tpd-tool' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -135,7 +139,7 @@ $users = get_users( array(
 							<td>
 								<div class="tpd-user-cell">
 									<strong><?php echo esc_html( $u->display_name ); ?></strong>
-									<small>(<?php echo esc_html( $u->user_login ); ?>)</small>
+									<small>(@<?php echo esc_html( $u->user_login ); ?>)</small>
 								</div>
 							</td>
 							<td>
@@ -146,16 +150,26 @@ $users = get_users( array(
 							<td><?php echo esc_html( $u->user_email ); ?></td>
 							<td>
 								<span class="tpd-tier-badge tpd-tier-<?php echo esc_attr( $tier ); ?>" id="tier-badge-<?php echo esc_attr( $u->ID ); ?>">
-									<?php echo ( 'paid' === $tier ) ? '<i class="fa-solid fa-crown text-gold"></i> Paid Pro' : 'Free Tier'; ?>
+									<?php 
+									if ( 'premium' === $tier ) {
+										echo '<i class="fa-solid fa-crown text-gold"></i> Premium Plan';
+									} elseif ( 'standard' === $tier ) {
+										echo '<i class="fa-solid fa-gem text-blue"></i> Standard Plan';
+									} else {
+										echo 'Basic (Free)';
+									}
+									?>
 								</span>
 							</td>
 							<td>
-								<button type="button" 
-									class="tpd-btn tpd-btn-xs <?php echo ( 'paid' === $tier ) ? 'tpd-btn-outline' : 'tpd-btn-secondary'; ?> tpd-toggle-tier-btn" 
-									data-user-id="<?php echo esc_attr( $u->ID ); ?>" 
-									data-current-tier="<?php echo esc_attr( $tier ); ?>">
-									<?php echo ( 'paid' === $tier ) ? __( 'Demote to Free', 'tpd-tool' ) : __( 'Upgrade to Paid Pro', 'tpd-tool' ); ?>
-								</button>
+								<div style="display:flex; align-items:center; gap:8px;">
+									<select class="tpd-select tpd-select-sm tpd-tier-select" data-user-id="<?php echo esc_attr( $u->ID ); ?>" style="font-weight:600; padding:6px 10px; border-radius:6px;">
+										<option value="basic" <?php selected( $tier, 'basic' ); ?>>Basic (Free)</option>
+										<option value="standard" <?php selected( $tier, 'standard' ); ?>>Standard ($9.99/mo)</option>
+										<option value="premium" <?php selected( $tier, 'premium' ); ?>>Premium ($19.99/mo)</option>
+									</select>
+									<span class="tpd-tier-update-indicator" id="tier-ind-<?php echo esc_attr( $u->ID ); ?>" style="display:none; color:#16a34a; font-size:14px;"><i class="fa-solid fa-check"></i></span>
+								</div>
 							</td>
 						</tr>
 					<?php endforeach; ?>
@@ -164,10 +178,87 @@ $users = get_users( array(
 		</div>
 	</div>
 
-	<!-- Section 2: Tier Permissions Matrix (Configuring What Free vs Paid Can Access) -->
+	<!-- Section 2: Pending Brand Listing Claims Queue -->
 	<div class="tpd-admin-panel-card mt-4">
 		<div class="tpd-panel-header">
-			<h3><i class="fa-solid fa-sliders"></i> <?php esc_html_e( 'Feature Permission Matrix (Free vs. Paid Tiers)', 'tpd-tool' ); ?></h3>
+			<div style="display:flex; justify-content:space-between; align-items:center;">
+				<div>
+					<h3><i class="fa-solid fa-clipboard-check text-gold"></i> <?php esc_html_e( 'Pending Brand Listing Claims Queue', 'tpd-tool' ); ?></h3>
+					<p><?php esc_html_e( 'Suppliers requesting verified ownership of existing directory listings. Review credentials and approve to assign listing management.', 'tpd-tool' ); ?></p>
+				</div>
+				<span class="tpd-badge-count" style="background:#fef3c7; color:#b45309; padding:4px 12px; border-radius:999px; font-weight:800; font-size:12px;">
+					<?php echo count( $claims ); ?> Active Requests
+				</span>
+			</div>
+		</div>
+
+		<div class="tpd-panel-body">
+			<?php if ( ! empty( $claims ) ) : ?>
+				<table class="tpd-admin-table" id="tpd-claims-table">
+					<thead>
+						<tr>
+							<th><?php esc_html_e( 'Listing / Brand', 'tpd-tool' ); ?></th>
+							<th><?php esc_html_e( 'Claiming Supplier User', 'tpd-tool' ); ?></th>
+							<th><?php esc_html_e( 'Date Submitted', 'tpd-tool' ); ?></th>
+							<th><?php esc_html_e( 'Verification Notes', 'tpd-tool' ); ?></th>
+							<th><?php esc_html_e( 'Status', 'tpd-tool' ); ?></th>
+							<th><?php esc_html_e( 'Review Action', 'tpd-tool' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $claims as $lid => $c ) : 
+							$claimer = get_userdata( $c['user_id'] );
+							$listing_title = get_the_title( $lid ) ?: ( 'Listing #' . $lid );
+							$status = isset( $c['status'] ) ? $c['status'] : 'pending';
+						?>
+							<tr id="claim-row-<?php echo esc_attr( $lid ); ?>">
+								<td>
+									<strong><?php echo esc_html( $listing_title ); ?></strong>
+									<br><small class="text-muted">Post ID: <?php echo esc_html( $lid ); ?></small>
+								</td>
+								<td>
+									<?php if ( $claimer ) : ?>
+										<strong><?php echo esc_html( $claimer->display_name ); ?></strong>
+										<br><small><?php echo esc_html( $claimer->user_email ); ?></small>
+									<?php else : ?>
+										<span class="text-muted">User #<?php echo esc_html( $c['user_id'] ); ?></span>
+									<?php endif; ?>
+								</td>
+								<td><small><?php echo esc_html( $c['date'] ); ?></small></td>
+								<td style="max-width:280px; font-size:12.5px; color:#475569;"><?php echo esc_html( $c['notes'] ); ?></td>
+								<td>
+									<span class="tpd-claim-status-badge tpd-status-<?php echo esc_attr( $status ); ?>" id="claim-status-<?php echo esc_attr( $lid ); ?>" style="padding:4px 10px; border-radius:6px; font-size:11.5px; font-weight:700; text-transform:uppercase; <?php echo ( 'approved' === $status ) ? 'background:#dcfce7; color:#166534;' : ( ( 'rejected' === $status ) ? 'background:#fee2e2; color:#991b1b;' : 'background:#fef3c7; color:#92400e;' ); ?>">
+										<?php echo esc_html( $status ); ?>
+									</span>
+								</td>
+								<td>
+									<?php if ( 'pending' === $status ) : ?>
+										<div style="display:flex; gap:6px;">
+											<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-primary tpd-claim-action-btn" data-id="<?php echo esc_attr( $lid ); ?>" data-decision="approve" style="background:#16a34a; border-color:#16a34a;">
+												<i class="fa-solid fa-check"></i> Approve
+											</button>
+											<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-claim-action-btn" data-id="<?php echo esc_attr( $lid ); ?>" data-decision="reject" style="color:#dc2626; border-color:#fca5a5;">
+												<i class="fa-solid fa-xmark"></i> Reject
+											</button>
+										</div>
+									<?php else : ?>
+										<span class="text-muted" style="font-size:12px;">Reviewed</span>
+									<?php endif; ?>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php else : ?>
+				<p class="text-muted"><?php esc_html_e( 'No claims pending review at this time.', 'tpd-tool' ); ?></p>
+			<?php endif; ?>
+		</div>
+	</div>
+
+	<!-- Section 3: Tier Permissions Matrix (Configuring What Basic vs Standard vs Premium Can Access) -->
+	<div class="tpd-admin-panel-card mt-4">
+		<div class="tpd-panel-header">
+			<h3><i class="fa-solid fa-sliders"></i> <?php esc_html_e( 'Feature Permission Matrix (Plan Gating Rules)', 'tpd-tool' ); ?></h3>
 			<p><?php esc_html_e( 'Configure which capabilities are accessible to Free Tier accounts vs. Paid Pro accounts.', 'tpd-tool' ); ?></p>
 		</div>
 

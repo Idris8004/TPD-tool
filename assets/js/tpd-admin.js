@@ -7,16 +7,14 @@
 	'use strict';
 
 	$(document).ready(function() {
-		// 1. One-Click User Membership Tier Toggle
-		$(document).on('click', '.tpd-toggle-tier-btn', function(e) {
-			e.preventDefault();
+		// 1. Instant 3-Tier Plan Switcher (Basic, Standard, Premium)
+		$(document).on('change', '.tpd-tier-select', function(e) {
+			var $select = $(this);
+			var userId = $select.data('user-id');
+			var targetTier = $select.val();
+			var $ind = $('#tier-ind-' + userId);
 
-			var $btn = $(this);
-			var userId = $btn.data('user-id');
-			var currentTier = $btn.attr('data-current-tier') || 'free';
-			var targetTier = (currentTier === 'paid') ? 'free' : 'paid';
-
-			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Updating...');
+			$select.prop('disabled', true);
 
 			$.ajax({
 				url: (typeof tpd_data !== 'undefined') ? tpd_data.ajax_url : '/wp-admin/admin-ajax.php',
@@ -28,36 +26,78 @@
 					nonce: (typeof tpd_data !== 'undefined' && tpd_data.admin_nonce) ? tpd_data.admin_nonce : ''
 				},
 				success: function(res) {
-					$btn.prop('disabled', false);
+					$select.prop('disabled', false);
 
 					if (res.success) {
 						var newTier = res.data.tier;
-						$btn.attr('data-current-tier', newTier);
-
 						var $badge = $('#tier-badge-' + userId);
 
-						if (newTier === 'paid') {
-							$badge.removeClass('tpd-tier-free').addClass('tpd-tier-paid')
-								  .html('<i class="fa-solid fa-crown text-gold"></i> Paid Pro');
-							$btn.removeClass('tpd-btn-secondary').addClass('tpd-btn-outline')
-								.text('Demote to Free');
+						$badge.removeClass('tpd-tier-basic tpd-tier-standard tpd-tier-premium tpd-tier-free tpd-tier-paid')
+							  .addClass('tpd-tier-' + newTier);
+
+						if (newTier === 'premium') {
+							$badge.html('<i class="fa-solid fa-crown text-gold"></i> Premium Plan');
+						} else if (newTier === 'standard') {
+							$badge.html('<i class="fa-solid fa-gem text-blue"></i> Standard Plan');
 						} else {
-							$badge.removeClass('tpd-tier-paid').addClass('tpd-tier-free')
-								  .text('Free Tier');
-							$btn.removeClass('tpd-btn-outline').addClass('tpd-btn-secondary')
-								.text('Upgrade to Paid Pro');
+							$badge.text('Basic (Free)');
 						}
 
-						showAdminToast('User tier updated to ' + res.data.label);
+						$ind.fadeIn(200).delay(2000).fadeOut(300);
+						showAdminToast('User plan updated to ' + res.data.label);
 					} else {
 						alert(res.data.message || 'Failed to update tier.');
-						$btn.text((currentTier === 'paid') ? 'Demote to Free' : 'Upgrade to Paid Pro');
+					}
+				},
+				error: function() {
+					$select.prop('disabled', false);
+					alert('Connection error. Please try again.');
+				}
+			});
+		});
+
+		// 2. Pending Brand Listing Claim Action (Approve / Reject)
+		$(document).on('click', '.tpd-claim-action-btn', function(e) {
+			e.preventDefault();
+
+			var $btn = $(this);
+			var listingId = $btn.data('id');
+			var decision = $btn.data('decision');
+			var $row = $('#claim-row-' + listingId);
+			var $statusBadge = $('#claim-status-' + listingId);
+
+			if (!confirm('Are you sure you want to ' + decision + ' this listing claim?')) {
+				return;
+			}
+
+			$btn.prop('disabled', true);
+
+			$.ajax({
+				url: (typeof tpd_data !== 'undefined') ? tpd_data.ajax_url : '/wp-admin/admin-ajax.php',
+				type: 'POST',
+				data: {
+					action: 'tpd_admin_review_claim',
+					listing_id: listingId,
+					decision: decision,
+					nonce: (typeof tpd_data !== 'undefined' && tpd_data.admin_nonce) ? tpd_data.admin_nonce : ''
+				},
+				success: function(res) {
+					if (res.success) {
+						if (decision === 'approve') {
+							$statusBadge.css({ 'background': '#dcfce7', 'color': '#166534' }).text('approved');
+						} else {
+							$statusBadge.css({ 'background': '#fee2e2', 'color': '#991b1b' }).text('rejected');
+						}
+						$row.find('.tpd-claim-action-btn').parent().html('<span class="text-muted" style="font-size:12px;">Reviewed</span>');
+						showAdminToast(res.data.message);
+					} else {
+						alert(res.data.message || 'Failed to process claim.');
+						$btn.prop('disabled', false);
 					}
 				},
 				error: function() {
 					$btn.prop('disabled', false);
 					alert('Connection error. Please try again.');
-					$btn.text((currentTier === 'paid') ? 'Demote to Free' : 'Upgrade to Paid Pro');
 				}
 			});
 		});

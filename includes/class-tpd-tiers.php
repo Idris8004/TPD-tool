@@ -14,6 +14,7 @@ class TPD_Tool_Tiers {
 
 	public static function init() {
 		add_action( 'admin_init', array( __CLASS__, 'ensure_default_permissions' ) );
+		add_action( 'init', array( __CLASS__, 'export_advisors_csv' ) );
 		add_action( 'wp_ajax_tpd_update_user_tier', array( __CLASS__, 'ajax_update_user_tier' ) );
 		add_action( 'wp_ajax_tpd_save_tier_permissions', array( __CLASS__, 'ajax_save_tier_permissions' ) );
 	}
@@ -99,67 +100,130 @@ class TPD_Tool_Tiers {
 	}
 
 	/**
-	 * Default Permissions Setup
+	 * Default Permissions Setup (Basic, Standard, Premium)
 	 */
 	public static function ensure_default_permissions() {
-		if ( false === get_option( self::OPTION_PERMISSIONS ) ) {
+		$existing = get_option( self::OPTION_PERMISSIONS );
+		if ( empty( $existing ) || ! isset( $existing['standard'] ) ) {
 			$defaults = array(
-				'free' => array(
-					// Free advisors can save suppliers and view basic events
-					'advisor_saved_suppliers' => 1,
-					'advisor_events'          => 1,
-					// Free suppliers can manage basic content
-					'supplier_resources'      => 1,
-				),
-				'paid' => array(
-					// Paid tier gets everything unlocked!
+				'basic' => array(
+					// Basic Advisor (Free): Directory access, chat, meetings, saved suppliers, basic profile
 					'advisor_chat'            => 1,
-					'advisor_analytics_deep'  => 1,
-					'advisor_inquiries'       => 1,
 					'advisor_saved_suppliers' => 1,
 					'advisor_meetings'        => 1,
 					'advisor_events'          => 1,
+					'advisor_basic_profile'   => 1,
+					// Basic Supplier (Free): Basic listing & logo
+					'supplier_basic_info'     => 1,
+				),
+				'standard' => array(
+					// Standard Advisor ($9.99/mo): All basic + Cruise comparison, Discovery call, Enhanced profile
+					'advisor_chat'            => 1,
+					'advisor_saved_suppliers' => 1,
+					'advisor_meetings'        => 1,
+					'advisor_events'          => 1,
+					'advisor_basic_profile'   => 1,
+					'advisor_analytics_deep'  => 1,
+					'advisor_inquiries'       => 1,
+					'advisor_cruise_comp'     => 1,
+					'advisor_discovery_call'  => 1,
+					'advisor_enhanced_profile'=> 1,
+					'advisor_travel_blog'     => 1,
 
-					'supplier_virtual_office' => 1,
+					// Standard Supplier: Custom banner, 1 gallery, 1 video, 5 PDFs, team members, 1 news
+					'supplier_basic_info'     => 1,
+					'supplier_custom_banner'  => 1,
+					'supplier_gallery'        => 1,
+					'supplier_resources_5'    => 1,
+					'supplier_team_mgmt'      => 1,
+					'supplier_news_events'    => 1,
+					'supplier_promos'         => 1,
 					'supplier_chat'           => 1,
-					'supplier_quote_requests' => 1,
 					'supplier_meetings'       => 1,
-					'supplier_resources'      => 1,
+				),
+				'premium' => array(
+					// Premium Advisor ($19.99/mo): Everything unlocked + 10 specialties, albums, custom inquiry
+					'advisor_chat'            => 1,
+					'advisor_saved_suppliers' => 1,
+					'advisor_meetings'        => 1,
+					'advisor_events'          => 1,
+					'advisor_basic_profile'   => 1,
+					'advisor_analytics_deep'  => 1,
+					'advisor_inquiries'       => 1,
+					'advisor_cruise_comp'     => 1,
+					'advisor_discovery_call'  => 1,
+					'advisor_enhanced_profile'=> 1,
+					'advisor_travel_blog'     => 1,
+					'advisor_premium_albums'  => 1,
+					'advisor_custom_inquiry'  => 1,
+					'advisor_dispute_reviews' => 1,
+
+					// Premium Supplier: 3 galleries, 10 videos, 20 PDFs, social packs, 5 events, 8 associations, priority
+					'supplier_basic_info'     => 1,
+					'supplier_custom_banner'  => 1,
+					'supplier_gallery'        => 1,
+					'supplier_resources_5'    => 1,
+					'supplier_resources_20'   => 1,
+					'supplier_team_mgmt'      => 1,
+					'supplier_news_events'    => 1,
+					'supplier_promos'         => 1,
+					'supplier_chat'           => 1,
+					'supplier_meetings'       => 1,
+					'supplier_social_packs'   => 1,
+					'supplier_videos_tab'     => 1,
 					'supplier_analytics_deep' => 1,
 					'supplier_featured'       => 1,
 				),
 			);
+			// Also maintain backward-compatible aliases for free and paid
+			$defaults['free'] = $defaults['basic'];
+			$defaults['paid'] = $defaults['premium'];
+
 			update_option( self::OPTION_PERMISSIONS, $defaults );
 		}
 	}
 
 	/**
-	 * Get User Tier ('free' or 'paid')
+	 * Get User Tier ('basic', 'standard', 'premium')
 	 */
 	public static function get_user_tier( $user_id = null ) {
 		if ( ! $user_id ) {
 			$user_id = get_current_user_id();
 		}
 		if ( ! $user_id ) {
-			return 'free';
+			return 'basic';
 		}
 
-		// Administrators always have full paid/super access
+		// Administrators always have full premium access
 		if ( user_can( $user_id, 'manage_options' ) ) {
-			return 'paid';
+			return 'premium';
 		}
 
 		$tier = get_user_meta( $user_id, 'tpd_user_tier', true );
-		return ! empty( $tier ) ? sanitize_text_field( $tier ) : 'free';
+		if ( empty( $tier ) || 'free' === $tier ) {
+			return 'basic';
+		}
+		if ( 'paid' === $tier ) {
+			return 'standard';
+		}
+		return sanitize_text_field( $tier );
 	}
 
 	/**
 	 * Set User Tier
 	 */
 	public static function set_user_tier( $user_id, $tier ) {
-		$valid_tier = ( 'paid' === $tier ) ? 'paid' : 'free';
-		update_user_meta( $user_id, 'tpd_user_tier', $valid_tier );
-		return $valid_tier;
+		$valid_tiers = array( 'basic', 'standard', 'premium' );
+		if ( 'free' === $tier ) {
+			$tier = 'basic';
+		} elseif ( 'paid' === $tier ) {
+			$tier = 'standard';
+		}
+		if ( ! in_array( $tier, $valid_tiers, true ) ) {
+			$tier = 'basic';
+		}
+		update_user_meta( $user_id, 'tpd_user_tier', $tier );
+		return $tier;
 	}
 
 	/**
@@ -206,12 +270,96 @@ class TPD_Tool_Tiers {
 		}
 
 		$updated_tier = self::set_user_tier( $target_user_id, $new_tier );
+		$labels = array(
+			'basic'    => __( 'Basic (Free)', 'tpd-tool' ),
+			'standard' => __( 'Standard ($9.99/mo)', 'tpd-tool' ),
+			'premium'  => __( 'Premium ($19.99/mo)', 'tpd-tool' ),
+		);
 
 		wp_send_json_success( array(
 			'user_id' => $target_user_id,
 			'tier'    => $updated_tier,
-			'label'   => ( 'paid' === $updated_tier ) ? 'Paid (Pro Tier)' : 'Free Tier',
+			'label'   => isset( $labels[ $updated_tier ] ) ? $labels[ $updated_tier ] : ucfirst( $updated_tier ),
 		) );
+	}
+
+	/**
+	 * Export Advisors Demographics to CSV
+	 */
+	public static function export_advisors_csv() {
+		if ( ! isset( $_GET['tpd_action'] ) || 'export_advisors_csv' !== $_GET['tpd_action'] ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Unauthorized access.', 'tpd-tool' ) );
+		}
+
+		check_admin_referer( 'tpd_export_advisors', 'nonce' );
+
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename=tpd-advisors-demographics-' . gmdate( 'Y-m-d' ) . '.csv' );
+		header( 'Pragma: no-cache' );
+		header( 'Expires: 0' );
+
+		$output = fopen( 'php://output', 'w' );
+		fputcsv( $output, array(
+			'User ID',
+			'Full Name',
+			'Username',
+			'Email',
+			'Phone',
+			'Location',
+			'Agency Name',
+			'Agency Address',
+			'Role',
+			'Agency Structure',
+			'Consortia',
+			'Host Agency',
+			'Personal Sales Volume',
+			'Agency Sales Volume',
+			'CLIA Number',
+			'IATA Number',
+			'ARC Number',
+			'TRUE Number',
+			'Membership Tier',
+			'Registered Date',
+		) );
+
+		$advisors = get_users( array(
+			'role'    => 'travel_advisor',
+			'orderby' => 'registered',
+			'order'   => 'DESC',
+		) );
+
+		foreach ( $advisors as $adv ) {
+			$uid = $adv->ID;
+			fputcsv( $output, array(
+				$uid,
+				$adv->display_name,
+				$adv->user_login,
+				$adv->user_email,
+				get_user_meta( $uid, 'tpd_phone', true ) ?: 'N/A',
+				get_user_meta( $uid, 'tpd_location', true ) ?: 'N/A',
+				get_user_meta( $uid, 'tpd_agency_name', true ) ?: 'N/A',
+				get_user_meta( $uid, 'tpd_agency_address', true ) ?: 'N/A',
+				get_user_meta( $uid, 'tpd_business_structure', true ) ?: 'N/A',
+				get_user_meta( $uid, 'tpd_agency_structure', true ) ?: 'N/A',
+				get_user_meta( $uid, 'tpd_consortia', true ) ?: 'N/A',
+				get_user_meta( $uid, 'tpd_host_agency', true ) ?: 'N/A',
+				get_user_meta( $uid, 'tpd_personal_sales_volume', true ) ?: 'N/A',
+				get_user_meta( $uid, 'tpd_agency_sales_volume', true ) ?: 'N/A',
+				get_user_meta( $uid, 'tpd_clia_num', true ) ?: 'N/A',
+				get_user_meta( $uid, 'tpd_iata_num', true ) ?: 'N/A',
+				get_user_meta( $uid, 'tpd_arc_num', true ) ?: 'N/A',
+				get_user_meta( $uid, 'tpd_true_num', true ) ?: 'N/A',
+				strtoupper( self::get_user_tier( $uid ) ),
+				$adv->user_registered,
+			) );
+		}
+
+		fclose( $output );
+		exit;
 	}
 
 	/**
