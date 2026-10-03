@@ -210,19 +210,35 @@ class TPD_Tool_Tiers {
 	}
 
 	/**
-	 * Set User Tier
+	 * Set User Tier (supports Basic, Standard, Premium, and any Custom Plans created by Admin)
 	 */
 	public static function set_user_tier( $user_id, $tier ) {
-		$valid_tiers = array( 'basic', 'standard', 'premium' );
 		if ( 'free' === $tier ) {
 			$tier = 'basic';
 		} elseif ( 'paid' === $tier ) {
 			$tier = 'standard';
 		}
+		$plans = class_exists( 'TPD_Tool_Settings' ) ? TPD_Tool_Settings::get_plans() : array();
+		$valid_tiers = ! empty( $plans ) ? array_keys( $plans ) : array( 'basic', 'standard', 'premium' );
+
+		$tier = sanitize_key( $tier );
 		if ( ! in_array( $tier, $valid_tiers, true ) ) {
 			$tier = 'basic';
 		}
 		update_user_meta( $user_id, 'tpd_user_tier', $tier );
+
+		// Also sync tier to linked CPT post
+		$linked = get_posts( array(
+			'post_type'      => array( 'travel_advisor', 'supplier_listing' ),
+			'posts_per_page' => 1,
+			'meta_key'       => 'tpd_assigned_user',
+			'meta_value'     => $user_id,
+			'fields'         => 'ids',
+		) );
+		if ( ! empty( $linked ) ) {
+			update_post_meta( $linked[0], 'tpd_user_tier', $tier );
+		}
+
 		return $tier;
 	}
 
@@ -253,7 +269,7 @@ class TPD_Tool_Tiers {
 	}
 
 	/**
-	 * AJAX: Toggle User Tier by Admin
+	 * AJAX: Toggle User Tier by Admin (Promote / Demote Plan)
 	 */
 	public static function ajax_update_user_tier() {
 		check_ajax_referer( 'tpd_admin_nonce', 'nonce' );
@@ -263,23 +279,23 @@ class TPD_Tool_Tiers {
 		}
 
 		$target_user_id = isset( $_POST['user_id'] ) ? absint( $_POST['user_id'] ) : 0;
-		$new_tier       = isset( $_POST['tier'] ) ? sanitize_text_field( $_POST['tier'] ) : 'free';
+		$new_tier       = isset( $_POST['tier'] ) ? sanitize_text_field( $_POST['tier'] ) : 'basic';
 
 		if ( ! $target_user_id ) {
 			wp_send_json_error( array( 'message' => 'Invalid user ID' ) );
 		}
 
 		$updated_tier = self::set_user_tier( $target_user_id, $new_tier );
-		$labels = array(
-			'basic'    => __( 'Basic (Free)', 'tpd-tool' ),
-			'standard' => __( 'Standard ($9.99/mo)', 'tpd-tool' ),
-			'premium'  => __( 'Premium ($19.99/mo)', 'tpd-tool' ),
-		);
+		$plan_info    = class_exists( 'TPD_Tool_Settings' ) ? TPD_Tool_Settings::get_plan( $updated_tier ) : array( 'name' => ucfirst( $updated_tier ) );
+
+		if ( class_exists( 'TPD_Tool_Settings' ) ) {
+			TPD_Tool_Settings::record_subscription( $target_user_id, $updated_tier, 'Month', 'Admin Assigned' );
+		}
 
 		wp_send_json_success( array(
 			'user_id' => $target_user_id,
 			'tier'    => $updated_tier,
-			'label'   => isset( $labels[ $updated_tier ] ) ? $labels[ $updated_tier ] : ucfirst( $updated_tier ),
+			'label'   => isset( $plan_info['name'] ) ? $plan_info['name'] : ucfirst( $updated_tier ),
 		) );
 	}
 

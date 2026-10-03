@@ -14,13 +14,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TPD_TOOL_VERSION', '2.0.0' );
+define( 'TPD_TOOL_VERSION', '2.1.0' );
 define( 'TPD_TOOL_FILE', __FILE__ );
 define( 'TPD_TOOL_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TPD_TOOL_URL', plugin_dir_url( __FILE__ ) );
 
 // Load Core Architecture Classes
 require_once TPD_TOOL_DIR . 'includes/class-tpd-roles.php';
+require_once TPD_TOOL_DIR . 'includes/class-tpd-settings.php';
 require_once TPD_TOOL_DIR . 'includes/class-tpd-tiers.php';
 require_once TPD_TOOL_DIR . 'includes/class-tpd-cpt.php';
 require_once TPD_TOOL_DIR . 'includes/class-tpd-analytics.php';

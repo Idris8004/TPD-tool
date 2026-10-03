@@ -1,8 +1,9 @@
 <?php
 /**
  * Registration Engine for TPD Tool
- * Handles Travel Advisor (Pro User) and Supplier registration workflows,
- * automated user provisioning, CPT profile linking, and tier initialization.
+ * Handles multi-step Travel Advisor (Pro User) and Supplier registration workflows,
+ * automated user provisioning, paired CPT creation (travel_advisor & supplier_listing),
+ * dynamic custom/ACF field saving, and subscription plan initialization.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -23,24 +24,32 @@ class TPD_Tool_Registration {
 	}
 
 	/**
-	 * AJAX Handler: Register Travel Advisor
+	 * AJAX Handler: Register Travel Advisor (Pro User)
 	 */
 	public static function ajax_register_advisor() {
 		check_ajax_referer( 'tpd_nonce', 'nonce' );
 
-		// 1. Sanitize Basic Account Details
-		$first_name = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
-		$last_name  = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
-		$email      = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
-		$username   = isset( $_POST['username'] ) ? sanitize_user( wp_unslash( $_POST['username'] ) ) : '';
-		$password   = isset( $_POST['password'] ) ? $_POST['password'] : '';
-		$tier       = isset( $_POST['tier'] ) ? sanitize_text_field( $_POST['tier'] ) : 'basic';
-		if ( ! in_array( $tier, array( 'basic', 'standard', 'premium' ), true ) ) {
-			$tier = 'basic';
+		// 1. Sanitize Account & Personal Details
+		$first_name       = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
+		$last_name        = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
+		$email            = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+		$username         = isset( $_POST['username'] ) ? sanitize_user( wp_unslash( $_POST['username'] ) ) : '';
+		$password         = isset( $_POST['password'] ) ? $_POST['password'] : '';
+		$confirm_password = isset( $_POST['confirm_password'] ) ? $_POST['confirm_password'] : $password;
+		$tier             = isset( $_POST['tier'] ) ? sanitize_key( wp_unslash( $_POST['tier'] ) ) : 'basic';
+		$billing_cycle    = isset( $_POST['billing_cycle'] ) ? sanitize_text_field( wp_unslash( $_POST['billing_cycle'] ) ) : 'Month';
+		$payment_gateway  = isset( $_POST['payment_gateway'] ) ? sanitize_text_field( wp_unslash( $_POST['payment_gateway'] ) ) : 'Stripe';
+
+		if ( empty( $first_name ) || empty( $last_name ) || empty( $email ) || empty( $password ) ) {
+			wp_send_json_error( array( 'message' => __( 'First name, last name, email address, and password are required.', 'tpd-tool' ) ) );
 		}
 
-		if ( empty( $first_name ) || empty( $email ) || empty( $password ) ) {
-			wp_send_json_error( array( 'message' => __( 'First name, email, and password are required.', 'tpd-tool' ) ) );
+		if ( $password !== $confirm_password ) {
+			wp_send_json_error( array( 'message' => __( 'Passwords do not match. Please verify your password confirmation.', 'tpd-tool' ) ) );
+		}
+
+		if ( strlen( $password ) < 8 ) {
+			wp_send_json_error( array( 'message' => __( 'Password must be at least 8 characters long.', 'tpd-tool' ) ) );
 		}
 
 		if ( ! is_email( $email ) ) {
@@ -61,26 +70,26 @@ class TPD_Tool_Registration {
 		}
 
 		// 2. Sanitize Agency & Credential Details
-		$phone_code          = isset( $_POST['phone_country_code'] ) ? sanitize_text_field( $_POST['phone_country_code'] ) : '+1';
+		$phone_code          = isset( $_POST['phone_country_code'] ) ? sanitize_text_field( wp_unslash( $_POST['phone_country_code'] ) ) : '';
 		$raw_phone           = isset( $_POST['phone'] ) ? sanitize_text_field( wp_unslash( $_POST['phone'] ) ) : '';
-		$phone               = trim( $phone_code . ' ' . $raw_phone );
+		$phone               = trim( ( $phone_code ? $phone_code . ' ' : '' ) . $raw_phone );
 		$location            = isset( $_POST['location'] ) ? sanitize_text_field( wp_unslash( $_POST['location'] ) ) : '';
 		$agency_name         = isset( $_POST['agency_name'] ) ? sanitize_text_field( wp_unslash( $_POST['agency_name'] ) ) : '';
 		$agency_address      = isset( $_POST['agency_address'] ) ? sanitize_text_field( wp_unslash( $_POST['agency_address'] ) ) : '';
-		$business_structure  = isset( $_POST['business_structure'] ) ? sanitize_text_field( wp_unslash( $_POST['business_structure'] ) ) : 'Travel Advisor - Independent Contractor';
-		$agency_structure    = isset( $_POST['agency_structure'] ) ? sanitize_text_field( wp_unslash( $_POST['agency_structure'] ) ) : 'Hosted Agency';
-		$years_experience    = isset( $_POST['years_experience'] ) ? sanitize_text_field( wp_unslash( $_POST['years_experience'] ) ) : '3–5 years';
-		$agency_advisors_cnt = isset( $_POST['agency_advisors_count'] ) ? sanitize_text_field( wp_unslash( $_POST['agency_advisors_count'] ) ) : '2-5';
-		$sales_volume        = isset( $_POST['sales_volume'] ) ? sanitize_text_field( wp_unslash( $_POST['sales_volume'] ) ) : '$500,000-$750,000';
-		$agency_sales_volume = isset( $_POST['agency_sales_volume'] ) ? sanitize_text_field( wp_unslash( $_POST['agency_sales_volume'] ) ) : '$500,000-$1M';
+		$business_structure  = isset( $_POST['business_structure'] ) ? sanitize_text_field( wp_unslash( $_POST['business_structure'] ) ) : '';
+		$agency_structure    = isset( $_POST['agency_structure'] ) ? sanitize_text_field( wp_unslash( $_POST['agency_structure'] ) ) : '';
+		$years_experience    = isset( $_POST['years_experience'] ) ? sanitize_text_field( wp_unslash( $_POST['years_experience'] ) ) : '';
+		$agency_advisors_cnt = isset( $_POST['agency_advisors_count'] ) ? sanitize_text_field( wp_unslash( $_POST['agency_advisors_count'] ) ) : '';
+		$sales_volume        = isset( $_POST['sales_volume'] ) ? sanitize_text_field( wp_unslash( $_POST['sales_volume'] ) ) : '';
+		$agency_sales_volume = isset( $_POST['agency_sales_volume'] ) ? sanitize_text_field( wp_unslash( $_POST['agency_sales_volume'] ) ) : '';
 		$consortia           = isset( $_POST['consortia'] ) ? sanitize_text_field( wp_unslash( $_POST['consortia'] ) ) : '';
 		$host_agency         = isset( $_POST['host_agency'] ) ? sanitize_text_field( wp_unslash( $_POST['host_agency'] ) ) : '';
 
 		// Accreditations
-		$clia_num = ! empty( $_POST['has_clia'] ) && isset( $_POST['clia_num'] ) ? sanitize_text_field( wp_unslash( $_POST['clia_num'] ) ) : '';
-		$iata_num = ! empty( $_POST['has_iata'] ) && isset( $_POST['iata_num'] ) ? sanitize_text_field( wp_unslash( $_POST['iata_num'] ) ) : '';
-		$arc_num  = ! empty( $_POST['has_arc'] )  && isset( $_POST['arc_num'] )  ? sanitize_text_field( wp_unslash( $_POST['arc_num'] ) ) : '';
-		$true_num = ! empty( $_POST['has_true'] ) && isset( $_POST['true_num'] ) ? sanitize_text_field( wp_unslash( $_POST['true_num'] ) ) : '';
+		$clia_num = ! empty( $_POST['has_clia'] ) && isset( $_POST['clia_num'] ) ? sanitize_text_field( wp_unslash( $_POST['clia_num'] ) ) : ( isset( $_POST['clia_num'] ) ? sanitize_text_field( wp_unslash( $_POST['clia_num'] ) ) : '' );
+		$iata_num = ! empty( $_POST['has_iata'] ) && isset( $_POST['iata_num'] ) ? sanitize_text_field( wp_unslash( $_POST['iata_num'] ) ) : ( isset( $_POST['iata_num'] ) ? sanitize_text_field( wp_unslash( $_POST['iata_num'] ) ) : '' );
+		$arc_num  = ! empty( $_POST['has_arc'] )  && isset( $_POST['arc_num'] )  ? sanitize_text_field( wp_unslash( $_POST['arc_num'] ) )  : ( isset( $_POST['arc_num'] ) ? sanitize_text_field( wp_unslash( $_POST['arc_num'] ) ) : '' );
+		$true_num = ! empty( $_POST['has_true'] ) && isset( $_POST['true_num'] ) ? sanitize_text_field( wp_unslash( $_POST['true_num'] ) ) : ( isset( $_POST['true_num'] ) ? sanitize_text_field( wp_unslash( $_POST['true_num'] ) ) : '' );
 
 		// 3. Create WordPress User
 		$user_id = wp_create_user( $username, $password, $email );
@@ -97,8 +106,30 @@ class TPD_Tool_Registration {
 			'role'         => 'travel_advisor',
 		) );
 
-		// Set User Tier
-		TPD_Tool_Tiers::set_user_tier( $user_id, $tier );
+		// Save User Meta (100% synced for CSV export, Admin Hub, and Dashboard)
+		update_user_meta( $user_id, 'tpd_account_status', 'active' );
+		update_user_meta( $user_id, 'tpd_phone', $phone );
+		update_user_meta( $user_id, 'tpd_location', $location );
+		update_user_meta( $user_id, 'tpd_agency_name', $agency_name );
+		update_user_meta( $user_id, 'tpd_agency_address', $agency_address );
+		update_user_meta( $user_id, 'tpd_business_structure', $business_structure );
+		update_user_meta( $user_id, 'tpd_agency_structure', $agency_structure );
+		update_user_meta( $user_id, 'tpd_years_experience', $years_experience );
+		update_user_meta( $user_id, 'tpd_agency_advisors_count', $agency_advisors_cnt );
+		update_user_meta( $user_id, 'tpd_personal_sales_volume', $sales_volume );
+		update_user_meta( $user_id, 'tpd_agency_sales_volume', $agency_sales_volume );
+		update_user_meta( $user_id, 'tpd_consortia', $consortia );
+		update_user_meta( $user_id, 'tpd_host_agency', $host_agency );
+		update_user_meta( $user_id, 'tpd_clia_num', $clia_num );
+		update_user_meta( $user_id, 'tpd_iata_num', $iata_num );
+		update_user_meta( $user_id, 'tpd_arc_num', $arc_num );
+		update_user_meta( $user_id, 'tpd_true_num', $true_num );
+
+		// Set User Tier & Record Plan Subscription
+		$final_tier = TPD_Tool_Tiers::set_user_tier( $user_id, $tier );
+		if ( class_exists( 'TPD_Tool_Settings' ) ) {
+			TPD_Tool_Settings::record_subscription( $user_id, $final_tier, $billing_cycle, $payment_gateway );
+		}
 
 		// 4. Create Paired CPT Record (travel_advisor)
 		$post_id = wp_insert_post( array(
@@ -123,52 +154,71 @@ class TPD_Tool_Registration {
 			update_post_meta( $post_id, 'tpd_host_agency', $host_agency );
 			update_post_meta( $post_id, 'tpd_phone', $phone );
 			update_post_meta( $post_id, 'tpd_location', $location );
-			update_post_meta( $post_id, 'tpd_user_tier', $tier );
-
-			// Accreditations
+			update_post_meta( $post_id, 'tpd_user_tier', $final_tier );
 			update_post_meta( $post_id, 'tpd_clia_number', $clia_num );
 			update_post_meta( $post_id, 'tpd_iata_number', $iata_num );
 			update_post_meta( $post_id, 'tpd_arc_number', $arc_num );
 			update_post_meta( $post_id, 'tpd_true_number', $true_num );
+
+			if ( class_exists( 'TPD_Tool_CPT' ) ) {
+				TPD_Tool_CPT::save_dynamic_fields_submission( 'travel_advisor', $post_id, $user_id );
+			}
 		}
 
-		// 6. Automatically Authenticate the User
+		// 5. Automatically Authenticate the User
 		wp_set_current_user( $user_id );
 		wp_set_auth_cookie( $user_id, true );
 
-		// 7. Send Welcome Email
+		// 6. Send Welcome Email
 		$subject = __( 'Welcome to Travel Partner Directory by TARC!', 'tpd-tool' );
 		$message = sprintf(
-			"Dear %s,\n\nWelcome to Travel Partner Directory! Your Travel Advisor profile has been created and verified on the platform.\n\nYou can access your Advisor Dashboard here:\n%s\n\nThank you for partnering with TARC!\nTravel Partner Directory Team",
+			"Dear %s,\n\nWelcome to Travel Partner Directory! Your Travel Advisor account (%s) has been created.\n\nAccess your Advisor Dashboard here:\n%s\n\nThank you for partnering with TARC!\nTravel Partner Directory Team",
 			$first_name,
+			strtoupper( $final_tier ),
 			home_url( '/advisor-dashboard/' )
 		);
 		wp_mail( $email, $subject, $message );
 
 		wp_send_json_success( array(
-			'message'      => __( 'Registration successful! Redirecting to your dashboard...', 'tpd-tool' ),
+			'message'      => __( 'Registration complete! Opening your Advisor Dashboard...', 'tpd-tool' ),
 			'redirect_url' => home_url( '/advisor-dashboard/' ),
 		) );
 	}
 
 	/**
 	 * AJAX Handler: Register Supplier Partner
+	 * Supports exact client fields:
+	 * First Name *, Last Name *, Phone Number *, Email Address *, Username *,
+	 * Position/Title, Supplier/Company Name *, Country *, Password *, Confirm Password *
 	 */
 	public static function ajax_register_supplier() {
 		check_ajax_referer( 'tpd_nonce', 'nonce' );
 
-		$first_name = isset( $_POST['rep_first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['rep_first_name'] ) ) : '';
-		$last_name  = isset( $_POST['rep_last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['rep_last_name'] ) ) : '';
-		$email      = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
-		$password   = isset( $_POST['password'] ) ? $_POST['password'] : '';
-		$phone_code = isset( $_POST['phone_country_code'] ) ? sanitize_text_field( $_POST['phone_country_code'] ) : '+1';
-		$raw_phone  = isset( $_POST['phone'] ) ? sanitize_text_field( wp_unslash( $_POST['phone'] ) ) : '';
-		$phone      = trim( $phone_code . ' ' . $raw_phone );
-		$country    = isset( $_POST['country_of_residence'] ) ? sanitize_text_field( wp_unslash( $_POST['country_of_residence'] ) ) : 'United States';
-		$username   = isset( $_POST['username'] ) ? sanitize_user( wp_unslash( $_POST['username'] ) ) : '';
+		$first_name       = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : ( isset( $_POST['rep_first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['rep_first_name'] ) ) : '' );
+		$last_name        = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : ( isset( $_POST['rep_last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['rep_last_name'] ) ) : '' );
+		$email            = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+		$username         = isset( $_POST['username'] ) ? sanitize_user( wp_unslash( $_POST['username'] ) ) : '';
+		$phone_code       = isset( $_POST['phone_country_code'] ) ? sanitize_text_field( wp_unslash( $_POST['phone_country_code'] ) ) : '';
+		$raw_phone        = isset( $_POST['phone'] ) ? sanitize_text_field( wp_unslash( $_POST['phone'] ) ) : '';
+		$phone            = trim( ( $phone_code ? $phone_code . ' ' : '' ) . $raw_phone );
+		$position_title   = isset( $_POST['position_title'] ) ? sanitize_text_field( wp_unslash( $_POST['position_title'] ) ) : '';
+		$company_name     = isset( $_POST['company_name'] ) ? sanitize_text_field( wp_unslash( $_POST['company_name'] ) ) : '';
+		$country          = isset( $_POST['country'] ) ? sanitize_text_field( wp_unslash( $_POST['country'] ) ) : ( isset( $_POST['country_of_residence'] ) ? sanitize_text_field( wp_unslash( $_POST['country_of_residence'] ) ) : '' );
+		$password         = isset( $_POST['password'] ) ? $_POST['password'] : '';
+		$confirm_password = isset( $_POST['confirm_password'] ) ? $_POST['confirm_password'] : $password;
+		$tier             = isset( $_POST['tier'] ) ? sanitize_key( wp_unslash( $_POST['tier'] ) ) : 'basic';
+		$billing_cycle    = isset( $_POST['billing_cycle'] ) ? sanitize_text_field( wp_unslash( $_POST['billing_cycle'] ) ) : 'Month';
 
-		if ( empty( $first_name ) || empty( $email ) || empty( $password ) ) {
-			wp_send_json_error( array( 'message' => __( 'First name, email, and password are required.', 'tpd-tool' ) ) );
+		if ( empty( $first_name ) || empty( $last_name ) || empty( $email ) || empty( $phone ) || empty( $company_name ) || empty( $country ) || empty( $password ) ) {
+			wp_send_json_error( array( 'message' => __( 'Please fill in all required (*) fields, including First Name, Last Name, Phone, Email, Supplier/Company Name, Country, and Password.', 'tpd-tool' ) ) );
+		}
+
+		if ( $password !== $confirm_password ) {
+			wp_send_json_error( array( 'message' => __( 'Passwords do not match. Please check your password confirmation.', 'tpd-tool' ) ) );
+		}
+
+		if ( strlen( $password ) < 8 ) {
+			wp_send_json_error( array( 'message' => __( 'Password must be at least 8 characters long.', 'tpd-tool' ) ) );
 		}
 
 		if ( ! is_email( $email ) ) {
@@ -176,7 +226,7 @@ class TPD_Tool_Registration {
 		}
 
 		if ( email_exists( $email ) ) {
-			wp_send_json_error( array( 'message' => __( 'An account with this email already exists.', 'tpd-tool' ) ) );
+			wp_send_json_error( array( 'message' => __( 'An account with this email address already exists.', 'tpd-tool' ) ) );
 		}
 
 		if ( empty( $username ) ) {
@@ -203,16 +253,57 @@ class TPD_Tool_Registration {
 			'role'         => 'supplier',
 		) );
 
+		update_user_meta( $user_id, 'tpd_account_status', 'active' );
 		update_user_meta( $user_id, 'tpd_phone', $phone );
+		update_user_meta( $user_id, 'tpd_position_title', $position_title );
+		update_user_meta( $user_id, 'tpd_company_name', $company_name );
 		update_user_meta( $user_id, 'tpd_country_of_residence', $country );
-		TPD_Tool_Tiers::set_user_tier( $user_id, 'basic' );
 
-		// Authenticate
+		$final_tier = TPD_Tool_Tiers::set_user_tier( $user_id, $tier );
+		if ( class_exists( 'TPD_Tool_Settings' ) ) {
+			TPD_Tool_Settings::record_subscription( $user_id, $final_tier, $billing_cycle, 'Stripe' );
+		}
+
+		// Create Paired supplier_listing CPT Post so Supplier Dashboard & WP Admin are 100% connected
+		$listing_id = wp_insert_post( array(
+			'post_type'    => 'supplier_listing',
+			'post_title'   => $company_name ?: $display_name,
+			'post_content' => '',
+			'post_status'  => 'publish',
+			'post_author'  => $user_id,
+		) );
+
+		if ( ! is_wp_error( $listing_id ) ) {
+			update_post_meta( $listing_id, 'tpd_assigned_user', $user_id );
+			update_post_meta( $listing_id, 'tpd_company_name', $company_name );
+			update_post_meta( $listing_id, 'tpd_position_title', $position_title );
+			update_post_meta( $listing_id, 'tpd_primary_rep_phone', $phone );
+			update_post_meta( $listing_id, 'tpd_country_of_residence', $country );
+			update_post_meta( $listing_id, 'tpd_headquarters', $country );
+			update_post_meta( $listing_id, 'tpd_user_tier', $final_tier );
+
+			// Initialize Virtual Office team with the registering representative
+			update_post_meta( $listing_id, '_tpd_team_members', array(
+				array(
+					'name'      => $display_name,
+					'title'     => $position_title ?: 'Trade Representative',
+					'email'     => $email,
+					'phone'     => $phone,
+					'photo_url' => '',
+				),
+			) );
+
+			if ( class_exists( 'TPD_Tool_CPT' ) ) {
+				TPD_Tool_CPT::save_dynamic_fields_submission( 'supplier_listing', $listing_id, $user_id );
+			}
+		}
+
+		// Authenticate User
 		wp_set_current_user( $user_id );
 		wp_set_auth_cookie( $user_id, true );
 
 		wp_send_json_success( array(
-			'message'      => __( 'Supplier account registered successfully! Redirecting...', 'tpd-tool' ),
+			'message'      => __( 'Supplier account & company listing created! Opening your Supplier Dashboard...', 'tpd-tool' ),
 			'redirect_url' => home_url( '/supplier-dashboard/' ),
 		) );
 	}

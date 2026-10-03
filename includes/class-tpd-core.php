@@ -21,13 +21,18 @@ class TPD_Tool_Core {
 	private function __construct() {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
-		add_action( 'template_include', array( $this, 'template_loader' ), 99 );
+		add_action( 'template_include', array( $this, 'template_loader' ), 999 );
 		add_action( 'admin_init', array( $this, 'restrict_admin_access' ) );
 		add_action( 'after_setup_theme', array( $this, 'hide_admin_bar' ) );
 		add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
 	}
 
 	public function enqueue_assets() {
+		$css_ver  = file_exists( TPD_TOOL_DIR . 'assets/css/tpd-tool.css' ) ? filemtime( TPD_TOOL_DIR . 'assets/css/tpd-tool.css' ) : TPD_TOOL_VERSION;
+		$chat_ver = file_exists( TPD_TOOL_DIR . 'assets/css/tpd-chat.css' ) ? filemtime( TPD_TOOL_DIR . 'assets/css/tpd-chat.css' ) : TPD_TOOL_VERSION;
+		$dash_ver = file_exists( TPD_TOOL_DIR . 'assets/js/tpd-dashboard.js' ) ? filemtime( TPD_TOOL_DIR . 'assets/js/tpd-dashboard.js' ) : TPD_TOOL_VERSION;
+		$adm_ver  = file_exists( TPD_TOOL_DIR . 'assets/js/tpd-admin.js' ) ? filemtime( TPD_TOOL_DIR . 'assets/js/tpd-admin.js' ) : TPD_TOOL_VERSION;
+
 		// Font Awesome 6
 		wp_enqueue_style( 'font-awesome-6', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css', array(), '6.5.1' );
 
@@ -35,13 +40,13 @@ class TPD_Tool_Core {
 		wp_enqueue_style( 'tpd-fonts', 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Caveat:wght@600&display=swap', array(), null );
 
 		// TPD Tool Stylesheet
-		wp_enqueue_style( 'tpd-tool-style', TPD_TOOL_URL . 'assets/css/tpd-tool.css', array( 'font-awesome-6', 'tpd-fonts' ), TPD_TOOL_VERSION );
-		wp_enqueue_style( 'tpd-chat-style', TPD_TOOL_URL . 'assets/css/tpd-chat.css', array( 'tpd-tool-style' ), TPD_TOOL_VERSION );
+		wp_enqueue_style( 'tpd-tool-style', TPD_TOOL_URL . 'assets/css/tpd-tool.css', array( 'font-awesome-6', 'tpd-fonts' ), $css_ver );
+		wp_enqueue_style( 'tpd-chat-style', TPD_TOOL_URL . 'assets/css/tpd-chat.css', array( 'tpd-tool-style' ), $chat_ver );
 
 		// Scripts
-		wp_enqueue_script( 'tpd-dashboard-js', TPD_TOOL_URL . 'assets/js/tpd-dashboard.js', array( 'jquery' ), TPD_TOOL_VERSION, true );
-		wp_enqueue_script( 'tpd-chat-js', TPD_TOOL_URL . 'assets/js/tpd-chat.js', array( 'jquery' ), TPD_TOOL_VERSION, true );
-		wp_enqueue_script( 'tpd-admin-js', TPD_TOOL_URL . 'assets/js/tpd-admin.js', array( 'jquery' ), TPD_TOOL_VERSION, true );
+		wp_enqueue_script( 'tpd-dashboard-js', TPD_TOOL_URL . 'assets/js/tpd-dashboard.js', array( 'jquery' ), $dash_ver, true );
+		wp_enqueue_script( 'tpd-chat-js', TPD_TOOL_URL . 'assets/js/tpd-chat.js', array( 'jquery' ), $chat_ver, true );
+		wp_enqueue_script( 'tpd-admin-js', TPD_TOOL_URL . 'assets/js/tpd-admin.js', array( 'jquery' ), $adm_ver, true );
 
 		$current_uid = get_current_user_id();
 
@@ -60,10 +65,13 @@ class TPD_Tool_Core {
 	}
 
 	public function enqueue_admin_assets() {
+		$css_ver = file_exists( TPD_TOOL_DIR . 'assets/css/tpd-tool.css' ) ? filemtime( TPD_TOOL_DIR . 'assets/css/tpd-tool.css' ) : TPD_TOOL_VERSION;
+		$adm_ver = file_exists( TPD_TOOL_DIR . 'assets/js/tpd-admin.js' ) ? filemtime( TPD_TOOL_DIR . 'assets/js/tpd-admin.js' ) : TPD_TOOL_VERSION;
+
 		wp_enqueue_style( 'font-awesome-6', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css', array(), '6.5.1' );
 		wp_enqueue_style( 'tpd-fonts', 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap', array(), null );
-		wp_enqueue_style( 'tpd-tool-style', TPD_TOOL_URL . 'assets/css/tpd-tool.css', array( 'font-awesome-6' ), TPD_TOOL_VERSION );
-		wp_enqueue_script( 'tpd-admin-js', TPD_TOOL_URL . 'assets/js/tpd-admin.js', array( 'jquery' ), TPD_TOOL_VERSION, true );
+		wp_enqueue_style( 'tpd-tool-style', TPD_TOOL_URL . 'assets/css/tpd-tool.css', array( 'font-awesome-6' ), $css_ver );
+		wp_enqueue_script( 'tpd-admin-js', TPD_TOOL_URL . 'assets/js/tpd-admin.js', array( 'jquery' ), $adm_ver, true );
 
 		wp_localize_script( 'tpd-admin-js', 'tpd_data', array(
 			'ajax_url'    => admin_url( 'admin-ajax.php' ),

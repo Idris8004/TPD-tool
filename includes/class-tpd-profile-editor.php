@@ -2,7 +2,8 @@
 /**
  * Frontend Profile & Listing Editor for TPD Tool
  * Enables Travel Advisors and Suppliers to manage their profile pictures,
- * agency logos, banners, brochures, team members, and listing content directly from the frontend.
+ * agency logos, banners, brochures, team members, listing content, and dynamic ACF/custom fields
+ * directly from the frontend with 100% bi-directional sync to WP Admin CPTs.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -14,6 +15,7 @@ class TPD_Tool_Profile_Editor {
 	public static function init() {
 		add_action( 'wp_ajax_tpd_save_advisor_profile', array( __CLASS__, 'ajax_save_advisor_profile' ) );
 		add_action( 'wp_ajax_tpd_save_supplier_listing', array( __CLASS__, 'ajax_save_supplier_listing' ) );
+		add_action( 'wp_ajax_tpd_save_supplier_rep_profile', array( __CLASS__, 'ajax_save_supplier_rep_profile' ) );
 		add_action( 'wp_ajax_tpd_upload_media_file', array( __CLASS__, 'ajax_upload_media' ) );
 		add_action( 'wp_ajax_tpd_submit_claim_listing', array( __CLASS__, 'ajax_submit_claim_listing' ) );
 		add_action( 'wp_ajax_tpd_admin_review_claim', array( __CLASS__, 'ajax_review_claim' ) );
@@ -55,7 +57,7 @@ class TPD_Tool_Profile_Editor {
 	}
 
 	/**
-	 * AJAX: Save Advisor Profile Updates
+	 * AJAX: Save Advisor Profile Updates (Bi-Directionally Synced with travel_advisor CPT & ACF)
 	 */
 	public static function ajax_save_advisor_profile() {
 		check_ajax_referer( 'tpd_nonce', 'nonce' );
@@ -65,18 +67,25 @@ class TPD_Tool_Profile_Editor {
 			wp_send_json_error( array( 'message' => __( 'Authentication required.', 'tpd-tool' ) ) );
 		}
 
-		$first_name   = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
-		$last_name    = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
-		$display_name = trim( $first_name . ' ' . $last_name );
-		$phone        = isset( $_POST['phone'] ) ? sanitize_text_field( wp_unslash( $_POST['phone'] ) ) : '';
-		$email        = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
-		$agency_name  = isset( $_POST['agency_name'] ) ? sanitize_text_field( wp_unslash( $_POST['agency_name'] ) ) : '';
-		$location     = isset( $_POST['location'] ) ? sanitize_text_field( wp_unslash( $_POST['location'] ) ) : '';
-		$website      = isset( $_POST['website'] ) ? esc_url_raw( wp_unslash( $_POST['website'] ) ) : '';
-		$bio          = isset( $_POST['bio'] ) ? wp_kses_post( wp_unslash( $_POST['bio'] ) ) : '';
-		$headshot_url = isset( $_POST['headshot_url'] ) ? esc_url_raw( wp_unslash( $_POST['headshot_url'] ) ) : '';
-		$logo_url     = isset( $_POST['logo_url'] ) ? esc_url_raw( wp_unslash( $_POST['logo_url'] ) ) : '';
-		$banner_url   = isset( $_POST['banner_url'] ) ? esc_url_raw( wp_unslash( $_POST['banner_url'] ) ) : '';
+		$first_name         = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
+		$last_name          = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
+		$display_name       = trim( $first_name . ' ' . $last_name );
+		$phone              = isset( $_POST['phone'] ) ? sanitize_text_field( wp_unslash( $_POST['phone'] ) ) : '';
+		$email              = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+		$agency_name        = isset( $_POST['agency_name'] ) ? sanitize_text_field( wp_unslash( $_POST['agency_name'] ) ) : '';
+		$agency_address     = isset( $_POST['agency_address'] ) ? sanitize_text_field( wp_unslash( $_POST['agency_address'] ) ) : '';
+		$location           = isset( $_POST['location'] ) ? sanitize_text_field( wp_unslash( $_POST['location'] ) ) : '';
+		$website            = isset( $_POST['website'] ) ? esc_url_raw( wp_unslash( $_POST['website'] ) ) : '';
+		$consortia          = isset( $_POST['consortia'] ) ? sanitize_text_field( wp_unslash( $_POST['consortia'] ) ) : '';
+		$host_agency        = isset( $_POST['host_agency'] ) ? sanitize_text_field( wp_unslash( $_POST['host_agency'] ) ) : '';
+		$clia_num           = isset( $_POST['clia_number'] ) ? sanitize_text_field( wp_unslash( $_POST['clia_number'] ) ) : '';
+		$iata_num           = isset( $_POST['iata_number'] ) ? sanitize_text_field( wp_unslash( $_POST['iata_number'] ) ) : '';
+		$arc_num            = isset( $_POST['arc_number'] ) ? sanitize_text_field( wp_unslash( $_POST['arc_number'] ) ) : '';
+		$true_num           = isset( $_POST['true_number'] ) ? sanitize_text_field( wp_unslash( $_POST['true_number'] ) ) : '';
+		$bio                = isset( $_POST['bio'] ) ? wp_kses_post( wp_unslash( $_POST['bio'] ) ) : '';
+		$headshot_url       = isset( $_POST['headshot_url'] ) ? esc_url_raw( wp_unslash( $_POST['headshot_url'] ) ) : '';
+		$logo_url           = isset( $_POST['logo_url'] ) ? esc_url_raw( wp_unslash( $_POST['logo_url'] ) ) : '';
+		$banner_url         = isset( $_POST['banner_url'] ) ? esc_url_raw( wp_unslash( $_POST['banner_url'] ) ) : '';
 
 		// Update WP User
 		$user_data = array( 'ID' => $user_id );
@@ -90,9 +99,19 @@ class TPD_Tool_Profile_Editor {
 		if ( $headshot_url ) update_user_meta( $user_id, 'tpd_headshot_url', $headshot_url );
 		if ( $logo_url ) update_user_meta( $user_id, 'tpd_logo_url', $logo_url );
 		if ( $banner_url ) update_user_meta( $user_id, 'tpd_banner_url', $banner_url );
-		if ( $phone ) update_user_meta( $user_id, 'tpd_phone', $phone );
+		update_user_meta( $user_id, 'tpd_phone', $phone );
+		update_user_meta( $user_id, 'tpd_agency_name', $agency_name );
+		update_user_meta( $user_id, 'tpd_agency_address', $agency_address );
+		update_user_meta( $user_id, 'tpd_location', $location );
+		update_user_meta( $user_id, 'tpd_website', $website );
+		update_user_meta( $user_id, 'tpd_consortia', $consortia );
+		update_user_meta( $user_id, 'tpd_host_agency', $host_agency );
+		update_user_meta( $user_id, 'tpd_clia_num', $clia_num );
+		update_user_meta( $user_id, 'tpd_iata_num', $iata_num );
+		update_user_meta( $user_id, 'tpd_arc_num', $arc_num );
+		update_user_meta( $user_id, 'tpd_true_num', $true_num );
 
-		// Find or update paired travel_advisor CPT
+		// Find or create paired travel_advisor CPT
 		$query = get_posts( array(
 			'post_type'      => 'travel_advisor',
 			'posts_per_page' => 1,
@@ -101,41 +120,64 @@ class TPD_Tool_Profile_Editor {
 			'fields'         => 'ids',
 		) );
 
-		if ( ! empty( $query ) ) {
+		if ( empty( $query ) ) {
+			$post_id = wp_insert_post( array(
+				'post_type'    => 'travel_advisor',
+				'post_title'   => $display_name ?: 'Travel Advisor',
+				'post_content' => $bio,
+				'post_status'  => 'publish',
+				'post_author'  => $user_id,
+			) );
+			update_post_meta( $post_id, 'tpd_assigned_user', $user_id );
+		} else {
 			$post_id = $query[0];
 			wp_update_post( array(
 				'ID'           => $post_id,
 				'post_title'   => $display_name ?: get_the_title( $post_id ),
 				'post_content' => $bio,
 			) );
+		}
 
+		if ( $post_id && ! is_wp_error( $post_id ) ) {
 			update_post_meta( $post_id, 'tpd_agency_name', $agency_name );
+			update_post_meta( $post_id, 'tpd_agency_address', $agency_address );
 			update_post_meta( $post_id, 'tpd_phone', $phone );
 			update_post_meta( $post_id, 'tpd_location', $location );
 			update_post_meta( $post_id, 'tpd_website', $website );
-			update_post_meta( $post_id, 'tpd_headshot_url', $headshot_url );
-			update_post_meta( $post_id, 'tpd_logo_url', $logo_url );
-			update_post_meta( $post_id, 'tpd_banner_url', $banner_url );
+			update_post_meta( $post_id, 'tpd_consortia', $consortia );
+			update_post_meta( $post_id, 'tpd_host_agency', $host_agency );
+			update_post_meta( $post_id, 'tpd_clia_number', $clia_num );
+			update_post_meta( $post_id, 'tpd_iata_number', $iata_num );
+			update_post_meta( $post_id, 'tpd_arc_number', $arc_num );
+			update_post_meta( $post_id, 'tpd_true_number', $true_num );
+			if ( $headshot_url ) update_post_meta( $post_id, 'tpd_headshot_url', $headshot_url );
+			if ( $logo_url ) update_post_meta( $post_id, 'tpd_logo_url', $logo_url );
+			if ( $banner_url ) update_post_meta( $post_id, 'tpd_banner_url', $banner_url );
 
-			if ( ! empty( $_POST['destinations'] ) ) {
+			if ( isset( $_POST['destinations'] ) ) {
 				$dests = array_map( 'sanitize_text_field', (array) $_POST['destinations'] );
 				wp_set_object_terms( $post_id, $dests, 'travel_destination' );
 			}
-			if ( ! empty( $_POST['travel_styles'] ) ) {
+			if ( isset( $_POST['travel_styles'] ) ) {
 				$styles = array_map( 'sanitize_text_field', (array) $_POST['travel_styles'] );
 				wp_set_object_terms( $post_id, $styles, 'travel_style' );
+			}
+
+			// Save Dynamic ACF & Admin Custom Fields
+			if ( class_exists( 'TPD_Tool_CPT' ) ) {
+				TPD_Tool_CPT::save_dynamic_fields_submission( 'travel_advisor', $post_id, $user_id );
 			}
 		}
 
 		wp_send_json_success( array(
-			'message'      => __( 'Advisor profile updated successfully!', 'tpd-tool' ),
+			'message'      => __( 'Advisor profile & custom fields updated and synced with directory!', 'tpd-tool' ),
 			'display_name' => $display_name,
 			'headshot_url' => $headshot_url,
 		) );
 	}
 
 	/**
-	 * AJAX: Save Supplier Listing Showcase Content
+	 * AJAX: Save Supplier Listing Showcase Content (Bi-Directionally Synced with supplier_listing CPT & ACF)
 	 */
 	public static function ajax_save_supplier_listing() {
 		check_ajax_referer( 'tpd_nonce', 'nonce' );
@@ -145,22 +187,12 @@ class TPD_Tool_Profile_Editor {
 			wp_send_json_error( array( 'message' => __( 'Authentication required.', 'tpd-tool' ) ) );
 		}
 
-		$listing_id = isset( $_POST['listing_id'] ) ? absint( $_POST['listing_id'] ) : 0;
-		if ( ! $listing_id ) {
-			// Create new listing if none exists
-			$listing_id = wp_insert_post( array(
-				'post_type'    => 'supplier_listing',
-				'post_title'   => isset( $_POST['company_name'] ) ? sanitize_text_field( wp_unslash( $_POST['company_name'] ) ) : 'New Supplier Listing',
-				'post_status'  => 'publish',
-				'post_author'  => $user_id,
-			) );
-			update_post_meta( $listing_id, 'tpd_assigned_user', $user_id );
-		}
-
+		$listing_id   = isset( $_POST['listing_id'] ) ? absint( $_POST['listing_id'] ) : 0;
 		$company_name = isset( $_POST['company_name'] ) ? sanitize_text_field( wp_unslash( $_POST['company_name'] ) ) : '';
 		$tagline      = isset( $_POST['tagline'] ) ? sanitize_text_field( wp_unslash( $_POST['tagline'] ) ) : '';
 		$phone        = isset( $_POST['phone'] ) ? sanitize_text_field( wp_unslash( $_POST['phone'] ) ) : '';
 		$booking_url  = isset( $_POST['booking_url'] ) ? esc_url_raw( wp_unslash( $_POST['booking_url'] ) ) : '';
+		$headquarters = isset( $_POST['headquarters'] ) ? sanitize_text_field( wp_unslash( $_POST['headquarters'] ) ) : '';
 		$rewards      = isset( $_POST['rewards'] ) ? sanitize_text_field( wp_unslash( $_POST['rewards'] ) ) : 'No';
 		$ustoa        = isset( $_POST['ustoa'] ) ? sanitize_text_field( wp_unslash( $_POST['ustoa'] ) ) : 'No';
 		$asta         = isset( $_POST['asta'] ) ? sanitize_text_field( wp_unslash( $_POST['asta'] ) ) : 'No';
@@ -168,26 +200,117 @@ class TPD_Tool_Profile_Editor {
 		$logo_url     = isset( $_POST['logo_url'] ) ? esc_url_raw( wp_unslash( $_POST['logo_url'] ) ) : '';
 		$banner_url   = isset( $_POST['banner_url'] ) ? esc_url_raw( wp_unslash( $_POST['banner_url'] ) ) : '';
 		$video_url    = isset( $_POST['video_url'] ) ? esc_url_raw( wp_unslash( $_POST['video_url'] ) ) : '';
+		$promo_title  = isset( $_POST['promo_title'] ) ? sanitize_text_field( wp_unslash( $_POST['promo_title'] ) ) : '';
+		$promo_desc   = isset( $_POST['promo_desc'] ) ? sanitize_textarea_field( wp_unslash( $_POST['promo_desc'] ) ) : '';
 
-		wp_update_post( array(
-			'ID'           => $listing_id,
-			'post_title'   => $company_name ?: get_the_title( $listing_id ),
-			'post_content' => $description,
-		) );
+		if ( ! $listing_id ) {
+			$listing_id = wp_insert_post( array(
+				'post_type'    => 'supplier_listing',
+				'post_title'   => $company_name ?: 'New Supplier Listing',
+				'post_content' => $description,
+				'post_status'  => 'publish',
+				'post_author'  => $user_id,
+			) );
+			update_post_meta( $listing_id, 'tpd_assigned_user', $user_id );
+		} else {
+			wp_update_post( array(
+				'ID'           => $listing_id,
+				'post_title'   => $company_name ?: get_the_title( $listing_id ),
+				'post_content' => $description,
+			) );
+		}
 
+		update_post_meta( $listing_id, 'tpd_company_name', $company_name );
 		update_post_meta( $listing_id, 'tpd_tagline', $tagline );
 		update_post_meta( $listing_id, 'tpd_primary_rep_phone', $phone );
 		update_post_meta( $listing_id, 'tpd_booking_portal_url', $booking_url );
+		update_post_meta( $listing_id, 'tpd_headquarters', $headquarters );
 		update_post_meta( $listing_id, 'tpd_agent_rewards', $rewards );
 		update_post_meta( $listing_id, 'tpd_member_ustoa', $ustoa );
 		update_post_meta( $listing_id, 'tpd_member_asta', $asta );
-		update_post_meta( $listing_id, 'tpd_logo_url', $logo_url );
-		update_post_meta( $listing_id, 'tpd_banner_url', $banner_url );
+		if ( $logo_url ) update_post_meta( $listing_id, 'tpd_logo_url', $logo_url );
+		if ( $banner_url ) update_post_meta( $listing_id, 'tpd_banner_url', $banner_url );
 		update_post_meta( $listing_id, 'tpd_main_video_url', $video_url );
+		update_post_meta( $listing_id, 'tpd_promo_title', $promo_title );
+		update_post_meta( $listing_id, 'tpd_promo_desc', $promo_desc );
+
+		// Sync company name back to user meta
+		if ( $company_name ) {
+			update_user_meta( $user_id, 'tpd_company_name', $company_name );
+		}
+
+		// Save Dynamic ACF & Admin Custom Fields
+		if ( class_exists( 'TPD_Tool_CPT' ) ) {
+			TPD_Tool_CPT::save_dynamic_fields_submission( 'supplier_listing', $listing_id, $user_id );
+		}
 
 		wp_send_json_success( array(
-			'message'    => __( 'Supplier Listing & Showcase updated successfully!', 'tpd-tool' ),
-			'listing_id' => $listing_id,
+			'message'      => __( 'Supplier Listing, Showcase & Custom Fields updated!', 'tpd-tool' ),
+			'listing_id'   => $listing_id,
+			'company_name' => $company_name,
+		) );
+	}
+
+	/**
+	 * AJAX: Save Supplier Personal Representative Profile Settings
+	 */
+	public static function ajax_save_supplier_rep_profile() {
+		check_ajax_referer( 'tpd_nonce', 'nonce' );
+
+		$user_id = get_current_user_id();
+		if ( ! $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Authentication required.', 'tpd-tool' ) ) );
+		}
+
+		$first_name     = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
+		$last_name      = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
+		$display_name   = trim( $first_name . ' ' . $last_name );
+		$email          = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+		$phone          = isset( $_POST['phone'] ) ? sanitize_text_field( wp_unslash( $_POST['phone'] ) ) : '';
+		$position_title = isset( $_POST['position_title'] ) ? sanitize_text_field( wp_unslash( $_POST['position_title'] ) ) : '';
+		$company_name   = isset( $_POST['company_name'] ) ? sanitize_text_field( wp_unslash( $_POST['company_name'] ) ) : '';
+		$country        = isset( $_POST['country'] ) ? sanitize_text_field( wp_unslash( $_POST['country'] ) ) : '';
+		$avatar_url     = isset( $_POST['headshot_url'] ) ? esc_url_raw( wp_unslash( $_POST['headshot_url'] ) ) : '';
+
+		$user_args = array( 'ID' => $user_id );
+		if ( $first_name ) $user_args['first_name'] = $first_name;
+		if ( $last_name ) $user_args['last_name'] = $last_name;
+		if ( $display_name ) $user_args['display_name'] = $display_name;
+		if ( $email && is_email( $email ) ) $user_args['user_email'] = $email;
+		wp_update_user( $user_args );
+
+		update_user_meta( $user_id, 'tpd_phone', $phone );
+		update_user_meta( $user_id, 'tpd_position_title', $position_title );
+		update_user_meta( $user_id, 'tpd_company_name', $company_name );
+		update_user_meta( $user_id, 'tpd_country_of_residence', $country );
+		if ( $avatar_url ) {
+			update_user_meta( $user_id, 'tpd_headshot_url', $avatar_url );
+		}
+
+		// Sync with linked supplier_listing CPT
+		$listings = get_posts( array(
+			'post_type'      => 'supplier_listing',
+			'posts_per_page' => 1,
+			'meta_key'       => 'tpd_assigned_user',
+			'meta_value'     => $user_id,
+			'fields'         => 'ids',
+		) );
+		if ( ! empty( $listings ) ) {
+			$lid = $listings[0];
+			update_post_meta( $lid, 'tpd_position_title', $position_title );
+			update_post_meta( $lid, 'tpd_country_of_residence', $country );
+			if ( $company_name ) {
+				update_post_meta( $lid, 'tpd_company_name', $company_name );
+				wp_update_post( array( 'ID' => $lid, 'post_title' => $company_name ) );
+			}
+		}
+
+		wp_send_json_success( array(
+			'message'        => __( 'Representative profile settings saved!', 'tpd-tool' ),
+			'display_name'   => $display_name,
+			'position_title' => $position_title,
+			'company_name'   => $company_name,
+			'headshot_url'   => $avatar_url,
 		) );
 	}
 
@@ -242,7 +365,7 @@ class TPD_Tool_Profile_Editor {
 	public static function ajax_manage_team_member() {
 		check_ajax_referer( 'tpd_nonce', 'nonce' );
 
-		$listing_id = isset( $_POST['listing_id'] ) ? absint( $_POST['listing_id'] ) : 0;
+		$listing_id  = isset( $_POST['listing_id'] ) ? absint( $_POST['listing_id'] ) : 0;
 		$member_name = isset( $_POST['member_name'] ) ? sanitize_text_field( wp_unslash( $_POST['member_name'] ) ) : '';
 		$title       = isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '';
 		$email       = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
@@ -253,7 +376,10 @@ class TPD_Tool_Profile_Editor {
 			wp_send_json_error( array( 'message' => __( 'Listing ID and Member Name are required.', 'tpd-tool' ) ) );
 		}
 
-		$team = (array) get_post_meta( $listing_id, '_tpd_team_members', true );
+		$team = get_post_meta( $listing_id, '_tpd_team_members', true );
+		if ( ! is_array( $team ) ) {
+			$team = array();
+		}
 		$team[] = array(
 			'name'      => $member_name,
 			'title'     => $title,
@@ -293,7 +419,6 @@ class TPD_Tool_Profile_Editor {
 
 		if ( 'approve' === $decision ) {
 			$claiming_user_id = $claims[ $listing_id ]['user_id'];
-			// Assign ownership of the supplier listing CPT to the claiming supplier user
 			wp_update_post( array(
 				'ID'          => $listing_id,
 				'post_author' => $claiming_user_id,
@@ -320,12 +445,11 @@ class TPD_Tool_Profile_Editor {
 	}
 
 	/**
-	 * Get All Claims with Fallback Demonstration Claims
+	 * Get All Claims
 	 */
 	public static function get_claims() {
 		$claims = get_option( 'tpd_pending_listing_claims', false );
 		if ( false === $claims || empty( $claims ) ) {
-			// Seed a sample demonstration claim so Super Admin review queue is immediately visible
 			$claims = array(
 				28 => array(
 					'user_id'    => 2,

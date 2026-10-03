@@ -1,6 +1,7 @@
 /**
- * TPD Tool - Frontend Dashboard Orchestrator
- * Handles tab navigation, search filtering, event registration, and bookmarking.
+ * TPD Tool - Frontend Dashboard & Multi-Step Wizard Orchestrator
+ * Handles tab navigation, multi-step registration wizards, profile editors,
+ * plan upgrades, password updates, account deletion, and directory interactions.
  */
 
 (function($) {
@@ -11,7 +12,6 @@
 		function switchTab(viewId) {
 			if (!viewId) return;
 
-			// Handle # prefix if present
 			var cleanId = viewId.replace(/^#/, '');
 
 			// Remove active state from nav items
@@ -35,7 +35,6 @@
 
 			if ($targetPanel.length) {
 				$targetPanel.addClass('active');
-				// Smooth scroll to top of workspace
 				window.scrollTo({ top: 0, behavior: 'smooth' });
 			}
 		}
@@ -65,7 +64,99 @@
 			switchTab(window.location.hash.replace(/^#/, ''));
 		}
 
-		// 2. Real-Time Supplier Directory Search
+		// 2. Multi-Step Registration Wizard Navigation & Validation
+		function goToWizardStep($form, nextStep) {
+			$form.find('.tpd-wizard-pane').removeClass('active');
+			$form.find('.tpd-wizard-pane[data-step="' + nextStep + '"]').addClass('active');
+
+			var $stepper = $form.closest('.tpd-reg-form-panel').find('.tpd-wizard-stepper');
+			$stepper.find('.tpd-w-step').each(function() {
+				var stepNum = parseInt($(this).data('step'), 10);
+				$(this).removeClass('active done');
+				if (stepNum < nextStep) {
+					$(this).addClass('done');
+				} else if (stepNum === nextStep) {
+					$(this).addClass('active');
+				}
+			});
+
+			window.scrollTo({ top: $form.closest('.tpd-reg-card').offset().top - 30, behavior: 'smooth' });
+		}
+
+		$(document).on('click', '.tpd-wizard-next-btn', function(e) {
+			e.preventDefault();
+			var $btn = $(this);
+			var $form = $btn.closest('form');
+			var $currentPane = $btn.closest('.tpd-wizard-pane');
+			var nextStep = parseInt($btn.data('next'), 10);
+
+			// Validate required fields inside current pane
+			var isValid = true;
+			var firstInvalid = null;
+
+			$currentPane.find('input[required], select[required], textarea[required]').each(function() {
+				var val = $(this).val();
+				if (!val || $.trim(val) === '') {
+					isValid = false;
+					$(this).css('border-color', '#ef4444');
+					if (!firstInvalid) firstInvalid = $(this);
+				} else {
+					$(this).css('border-color', '#cbd5e1');
+				}
+			});
+
+			if (!isValid) {
+				showToast('<i class="fa-solid fa-circle-exclamation"></i> Please complete all required fields (*) in this step.');
+				if (firstInvalid) firstInvalid.focus();
+				return;
+			}
+
+			// Step 1 password match check
+			var $pwd = $currentPane.find('input[name="password"]');
+			var $confirmPwd = $currentPane.find('input[name="confirm_password"]');
+			if ($pwd.length && $confirmPwd.length) {
+				if ($pwd.val().length < 6) {
+					$pwd.css('border-color', '#ef4444').focus();
+					showToast('<i class="fa-solid fa-lock"></i> Password must be at least 6 characters.');
+					return;
+				}
+				if ($pwd.val() !== $confirmPwd.val()) {
+					$confirmPwd.css('border-color', '#ef4444').focus();
+					showToast('<i class="fa-solid fa-triangle-exclamation"></i> Passwords do not match. Please verify Confirm Password.');
+					return;
+				}
+			}
+
+			goToWizardStep($form, nextStep);
+		});
+
+		$(document).on('click', '.tpd-wizard-prev-btn', function(e) {
+			e.preventDefault();
+			var $btn = $(this);
+			var $form = $btn.closest('form');
+			var prevStep = parseInt($btn.data('prev'), 10);
+			goToWizardStep($form, prevStep);
+		});
+
+		// Plan Card Radio Selection & Dynamic Payment Checkout Box
+		$(document).on('change', '.tpd-plan-radio', function() {
+			var $radio = $(this);
+			var $form = $radio.closest('form');
+			$form.find('.tpd-plan-card-option').removeClass('selected');
+			$radio.closest('.tpd-plan-card-option').addClass('selected');
+
+			var monthlyPrice = parseFloat($radio.data('monthly') || 0);
+			var $checkoutBox = $form.find('#tpd-reg-payment-checkout');
+			if ($checkoutBox.length) {
+				if (monthlyPrice > 0) {
+					$checkoutBox.slideDown(200);
+				} else {
+					$checkoutBox.slideUp(200);
+				}
+			}
+		});
+
+		// 3. Real-Time Supplier Directory Search
 		$('#tpd-live-supplier-search').on('keyup', function() {
 			var query = $(this).val().toLowerCase().trim();
 			$('.tpd-supplier-profile-card, .tpd-supplier-list-card').each(function() {
@@ -82,13 +173,12 @@
 			e.preventDefault();
 			var query = $('#tpd-live-supplier-search').val().toLowerCase().trim();
 			if (query) {
-				// Switch to suppliers tab if not already on it
 				switchTab('suppliers');
 				$('#tpd-live-supplier-search').trigger('keyup');
 			}
 		});
 
-		// 3. Event & Webinar One-Click Registration
+		// 4. Event & Webinar One-Click Registration
 		$(document).on('click', '.tpd-reg-event-btn', function(e) {
 			e.preventDefault();
 			var $btn = $(this);
@@ -113,8 +203,6 @@
 						$btn.removeClass('tpd-btn-outline')
 							.addClass('tpd-btn-primary registered')
 							.html('<i class="fa-solid fa-circle-check"></i> Registered');
-						
-						// Show quick toast notification
 						showToast(res.data.message || 'Successfully registered for webinar!');
 					} else {
 						alert(res.data.message || 'Registration failed.');
@@ -128,7 +216,7 @@
 			});
 		});
 
-		// 4. Save / Bookmark Supplier Toggle
+		// 5. Save / Bookmark Supplier Toggle
 		$(document).on('click', '.tpd-toggle-favorite-btn, .tpd-btn-bookmark', function(e) {
 			e.preventDefault();
 			var $btn = $(this);
@@ -161,7 +249,7 @@
 			});
 		});
 
-		// 5. AJAX Registration Form Submission (Travel Advisor & Supplier)
+		// 6. AJAX Registration Form Submission (Travel Advisor & Supplier)
 		$('#tpd-advisor-registration-form, #tpd-supplier-registration-form').on('submit', function(e) {
 			e.preventDefault();
 
@@ -169,6 +257,16 @@
 			var $btn = $form.find('button[type="submit"]');
 			var $status = $form.find('.tpd-reg-status');
 			var originalBtnHtml = $btn.html();
+
+			// Verify password match before submitting
+			var pwd = $form.find('input[name="password"]').val();
+			var confirmPwd = $form.find('input[name="confirm_password"]').val();
+			if (pwd !== confirmPwd) {
+				$status.removeClass('success').addClass('error')
+					.html('<i class="fa-solid fa-circle-exclamation"></i> Passwords do not match.')
+					.fadeIn();
+				return;
+			}
 
 			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Processing Registration...');
 			$status.hide().removeClass('error success');
@@ -184,7 +282,7 @@
 							.fadeIn();
 						setTimeout(function() {
 							window.location.href = res.data.redirect_url || '/advisor-dashboard/';
-						}, 1200);
+						}, 1100);
 					} else {
 						$btn.prop('disabled', false).html(originalBtnHtml);
 						$status.addClass('error')
@@ -201,7 +299,7 @@
 			});
 		});
 
-		// 6. Unified Media Uploading Helper
+		// 7. Unified Media Uploading Helper
 		function uploadMediaFile(file, successCallback) {
 			if (!file) return;
 
@@ -271,12 +369,12 @@
 
 		$('#tpd-file-supp-pdf').on('change', function() {
 			var file = this.files[0];
-			uploadMediaFile(file, function(url, data) {
+			uploadMediaFile(file, function(url) {
 				showToast('<i class="fa-solid fa-file-pdf"></i> PDF Brochure uploaded successfully! Added to Advisor Resources.');
 			});
 		});
 
-		// 7. Travel Advisor Profile Editor AJAX Save
+		// 8. Travel Advisor Profile Editor AJAX Save
 		$('#tpd-advisor-profile-editor-form').on('submit', function(e) {
 			e.preventDefault();
 			var $form = $(this);
@@ -297,7 +395,7 @@
 						$status.addClass('success')
 							.html('<i class="fa-solid fa-circle-check"></i> ' + (res.data.message || 'Profile saved successfully!'))
 							.fadeIn();
-						showToast(res.data.message || 'Advisor profile updated successfully!');
+						showToast(res.data.message || 'Advisor profile updated & synced with WP Custom Post Type!');
 						if (res.data.display_name) {
 							$('.tpd-user-name').text(res.data.display_name);
 						}
@@ -319,7 +417,35 @@
 			});
 		});
 
-		// 8. Supplier Listing Showcase Editor AJAX Save
+		// 9. Supplier Representative Account Profile Save
+		$('#tpd-supplier-rep-profile-form').on('submit', function(e) {
+			e.preventDefault();
+			var $form = $(this);
+			var $btn = $form.find('button[type="submit"]');
+			var origHtml = $btn.html();
+
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Saving...');
+
+			$.ajax({
+				url: (typeof tpd_data !== 'undefined') ? tpd_data.ajax_url : '/wp-admin/admin-ajax.php',
+				type: 'POST',
+				data: $form.serialize(),
+				success: function(res) {
+					$btn.prop('disabled', false).html(origHtml);
+					if (res.success) {
+						showToast(res.data.message || 'Supplier profile updated & synced with CPT!');
+					} else {
+						alert(res.data.message || 'Update failed.');
+					}
+				},
+				error: function() {
+					$btn.prop('disabled', false).html(origHtml);
+					alert('Connection error. Please try again.');
+				}
+			});
+		});
+
+		// 10. Supplier Listing Showcase Editor AJAX Save
 		$('#tpd-supplier-listing-editor-form').on('submit', function(e) {
 			e.preventDefault();
 			var $form = $(this);
@@ -340,7 +466,7 @@
 						$status.addClass('success')
 							.html('<i class="fa-solid fa-circle-check"></i> ' + (res.data.message || 'Showcase saved successfully!'))
 							.fadeIn();
-						showToast(res.data.message || 'Supplier listing updated successfully!');
+						showToast(res.data.message || 'Supplier listing updated & synced with WP CPT!');
 					} else {
 						$status.addClass('error')
 							.html('<i class="fa-solid fa-circle-exclamation"></i> ' + (res.data.message || 'Save failed.'))
@@ -356,7 +482,102 @@
 			});
 		});
 
-		// 9. TravPro Connect Showcase Editor Sub-Tab Switching
+		// 11. User Self-Service Plan Upgrade / Change
+		$('#tpd-user-upgrade-plan-form').on('submit', function(e) {
+			e.preventDefault();
+			var $form = $(this);
+			var $btn = $form.find('button[type="submit"]');
+			var origHtml = $btn.html();
+
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Updating Plan...');
+
+			$.ajax({
+				url: (typeof tpd_data !== 'undefined') ? tpd_data.ajax_url : '/wp-admin/admin-ajax.php',
+				type: 'POST',
+				data: $form.serialize(),
+				success: function(res) {
+					$btn.prop('disabled', false).html(origHtml);
+					if (res.success) {
+						showToast(res.data.message || 'Membership plan updated!');
+						setTimeout(function() {
+							window.location.reload();
+						}, 900);
+					} else {
+						alert(res.data.message || 'Failed to update plan.');
+					}
+				},
+				error: function() {
+					$btn.prop('disabled', false).html(origHtml);
+					alert('Connection error. Please try again.');
+				}
+			});
+		});
+
+		// 12. User Password Update Form
+		$('#tpd-user-password-form').on('submit', function(e) {
+			e.preventDefault();
+			var $form = $(this);
+			var $btn = $form.find('button[type="submit"]');
+			var origHtml = $btn.html();
+
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Updating...');
+
+			$.ajax({
+				url: (typeof tpd_data !== 'undefined') ? tpd_data.ajax_url : '/wp-admin/admin-ajax.php',
+				type: 'POST',
+				data: $form.serialize(),
+				success: function(res) {
+					$btn.prop('disabled', false).html(origHtml);
+					if (res.success) {
+						$form[0].reset();
+						showToast(res.data.message || 'Password updated successfully!');
+					} else {
+						alert(res.data.message || 'Failed to update password.');
+					}
+				},
+				error: function() {
+					$btn.prop('disabled', false).html(origHtml);
+					alert('Connection error. Please try again.');
+				}
+			});
+		});
+
+		// 13. User Self-Service Account Deletion
+		$(document).on('click', '#tpd-btn-delete-own-account', function(e) {
+			e.preventDefault();
+			var confirmText = prompt('WARNING: This will permanently delete your account and remove your directory listing. Type DELETE to confirm:');
+			if (confirmText !== 'DELETE') {
+				return;
+			}
+
+			var $btn = $(this);
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Deleting Account...');
+
+			$.ajax({
+				url: (typeof tpd_data !== 'undefined') ? tpd_data.ajax_url : '/wp-admin/admin-ajax.php',
+				type: 'POST',
+				data: {
+					action: 'tpd_user_delete_own_account',
+					confirm_text: confirmText,
+					nonce: (typeof tpd_data !== 'undefined' ? tpd_data.nonce : '')
+				},
+				success: function(res) {
+					if (res.success) {
+						showToast(res.data.message || 'Account deleted.');
+						window.location.href = res.data.redirect_url || '/';
+					} else {
+						$btn.prop('disabled', false).html('<i class="fa-solid fa-trash-can"></i> Delete My Account Permanently');
+						alert(res.data.message || 'Could not delete account.');
+					}
+				},
+				error: function() {
+					$btn.prop('disabled', false).html('<i class="fa-solid fa-trash-can"></i> Delete My Account Permanently');
+					alert('Connection error.');
+				}
+			});
+		});
+
+		// 14. TravPro Connect Showcase Editor Sub-Tab Switching
 		$(document).on('click', '.tpd-tab-btn[data-target]', function(e) {
 			e.preventDefault();
 			var target = $(this).data('target');
@@ -367,10 +588,10 @@
 			$('#' + target).fadeIn(200);
 		});
 
-		// 10. Virtual Office Team Member Management
+		// 15. Virtual Office Team Member Management
 		$('#tpd-btn-save-rep').on('click', function(e) {
 			e.preventDefault();
-			var listingId = $('input[name="listing_id"]').val() || 26;
+			var listingId = $('input[name="listing_id"]').val();
 			var name = $('#tpd_rep_name').val().trim();
 			var title = $('#tpd_rep_title').val().trim();
 			var email = $('#tpd_rep_email').val().trim();
@@ -423,7 +644,7 @@
 			});
 		});
 
-		// 11. Claim Listing Search & Modal Submission
+		// 16. Claim Listing Search & Modal Submission
 		$('#tpd-claim-search-input').on('keyup', function() {
 			var q = $(this).val().toLowerCase().trim();
 			$('#tpd-supp-claim-section tbody tr').each(function() {
@@ -475,7 +696,7 @@
 			}
 		});
 
-		// 12. "Same Address as Advisor" Copy Button
+		// 17. "Same Address as Advisor" Copy Button
 		$('#tpd-btn-same-address').on('click', function(e) {
 			e.preventDefault();
 			var advLoc = $('#tpd_advisor_location_input').val();
@@ -487,7 +708,7 @@
 			}
 		});
 
-		// 13. Password Show / Hide Toggle
+		// 18. Password Show / Hide Toggle
 		$(document).on('click', '.tpd-pwd-toggle-btn', function(e) {
 			e.preventDefault();
 			var $btn = $(this);
