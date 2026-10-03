@@ -2,10 +2,13 @@
 /**
  * Plugin Name: TPD Tool - Travel Partner Directory Enterprise Suite
  * Plugin URI: https://github.com/Idris8004/TPD-tool
- * Description: Enterprise-grade travel marketplace suite featuring Dual Portals (Advisor & Supplier Dashboards), Free vs. Paid Tier Management, Real-Time Chat & Email Alerts, Analytics Engine, Saved Suppliers, Events, and Super Admin Management.
- * Version: 2.0.0
+ * Description: Enterprise-grade travel marketplace suite featuring Multi-Step Registration Wizards, Dual Portals (Advisor & Supplier Dashboards), Bi-Directional WP CPT + ACF Sync, Dynamic Membership Plan Builder, Payment Integration, Real-Time Chat, Analytics Engine, and Super Admin Control Hub.
+ * Version: 2.2.0
  * Author: Travel Partner Directory (TARC)
  * Author URI: https://github.com/Idris8004/TPD-tool
+ * GitHub Plugin URI: Idris8004/TPD-tool
+ * GitHub Branch: main
+ * Primary Branch: main
  * Text Domain: tpd-tool
  * Domain Path: /languages
  */
@@ -14,12 +17,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TPD_TOOL_VERSION', '2.1.0' );
+define( 'TPD_TOOL_VERSION', '2.2.0' );
 define( 'TPD_TOOL_FILE', __FILE__ );
 define( 'TPD_TOOL_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TPD_TOOL_URL', plugin_dir_url( __FILE__ ) );
 
 // Load Core Architecture Classes
+require_once TPD_TOOL_DIR . 'includes/class-tpd-updater.php';
 require_once TPD_TOOL_DIR . 'includes/class-tpd-roles.php';
 require_once TPD_TOOL_DIR . 'includes/class-tpd-settings.php';
 require_once TPD_TOOL_DIR . 'includes/class-tpd-tiers.php';
