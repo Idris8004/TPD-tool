@@ -113,43 +113,43 @@ $all_directory_listings = get_posts( array(
 				<li class="tpd-nav-item active">
 					<a href="#tpd-supp-overview" class="tpd-tab-link" data-view="supp-overview">
 						<i class="fa-solid fa-house"></i>
-						<span><?php esc_html_e( '1. User Dashboard', 'tpd-tool' ); ?></span>
+						<span><?php esc_html_e( 'Dashboard', 'tpd-tool' ); ?></span>
 					</a>
 				</li>
 				<li class="tpd-nav-item">
 					<a href="#tpd-supp-listings" class="tpd-tab-link" data-view="supp-listings">
 						<i class="fa-solid fa-building-flag"></i>
-						<span><?php esc_html_e( '2. My Partner Listings', 'tpd-tool' ); ?></span>
+						<span><?php esc_html_e( 'Partner Listings', 'tpd-tool' ); ?></span>
 					</a>
 				</li>
 				<li class="tpd-nav-item">
 					<a href="#tpd-supp-chat" class="tpd-tab-link" data-view="supp-chat">
 						<i class="fa-regular fa-comments"></i>
-						<span><?php esc_html_e( '3. Chat & Messages', 'tpd-tool' ); ?></span>
+						<span><?php esc_html_e( 'Chat & Messages', 'tpd-tool' ); ?></span>
 					</a>
 				</li>
 				<li class="tpd-nav-item">
 					<a href="#tpd-supp-meetings" class="tpd-tab-link" data-view="supp-meetings">
 						<i class="fa-regular fa-calendar-check"></i>
-						<span><?php esc_html_e( '4. Meeting Requests', 'tpd-tool' ); ?></span>
+						<span><?php esc_html_e( 'Meeting Requests', 'tpd-tool' ); ?></span>
 					</a>
 				</li>
 				<li class="tpd-nav-item">
 					<a href="#tpd-supp-settings" class="tpd-tab-link" data-view="supp-settings">
-						<i class="fa-solid fa-gear"></i>
-						<span><?php esc_html_e( '5. Profile & Plan Settings', 'tpd-tool' ); ?></span>
+						<i class="fa-regular fa-id-card"></i>
+						<span><?php esc_html_e( 'Account Info & Plan', 'tpd-tool' ); ?></span>
 					</a>
 				</li>
 				<li class="tpd-nav-item">
 					<a href="#tpd-supp-partnership" class="tpd-tab-link" data-view="supp-partnership">
 						<i class="fa-solid fa-handshake"></i>
-						<span><?php esc_html_e( '6. TARC Partnership', 'tpd-tool' ); ?></span>
+						<span><?php esc_html_e( 'TARC Partnership', 'tpd-tool' ); ?></span>
 					</a>
 				</li>
 				<li class="tpd-nav-item">
 					<a href="#tpd-supp-help" class="tpd-tab-link" data-view="supp-help">
 						<i class="fa-regular fa-circle-question"></i>
-						<span><?php esc_html_e( '7. Help & Support', 'tpd-tool' ); ?></span>
+						<span><?php esc_html_e( 'Help & Support', 'tpd-tool' ); ?></span>
 					</a>
 				</li>
 			</ul>

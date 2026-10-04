@@ -102,93 +102,87 @@ $news_posts = get_posts( array(
 				<li class="tpd-nav-item active">
 					<a href="#tpd-view-overview" class="tpd-tab-link" data-view="overview">
 						<i class="fa-solid fa-house"></i>
-						<span><?php esc_html_e( '1. Dashboard', 'tpd-tool' ); ?></span>
+						<span><?php esc_html_e( 'Dashboard', 'tpd-tool' ); ?></span>
 					</a>
 				</li>
 				<li class="tpd-nav-item">
 					<a href="#tpd-view-profile" class="tpd-tab-link" data-view="profile">
 						<i class="fa-regular fa-id-card"></i>
-						<span><?php esc_html_e( '2. My Profile Listing', 'tpd-tool' ); ?></span>
+						<span><?php esc_html_e( 'Account Info', 'tpd-tool' ); ?></span>
 					</a>
 				</li>
 				<li class="tpd-nav-item">
 					<a href="#tpd-view-suppliers" class="tpd-tab-link" data-view="suppliers">
 						<i class="fa-solid fa-magnifying-glass"></i>
-						<span><?php esc_html_e( '3. Search Suppliers', 'tpd-tool' ); ?></span>
+						<span><?php esc_html_e( 'Search Suppliers', 'tpd-tool' ); ?></span>
 					</a>
 				</li>
 				<li class="tpd-nav-item">
 					<a href="#tpd-view-saved" class="tpd-tab-link" data-view="saved">
 						<i class="fa-regular fa-bookmark"></i>
-						<span><?php esc_html_e( '4. Saved Suppliers', 'tpd-tool' ); ?></span>
+						<span><?php esc_html_e( 'Favorite Suppliers', 'tpd-tool' ); ?></span>
 					</a>
 				</li>
 				<li class="tpd-nav-item">
 					<a href="#tpd-view-inquiries" class="tpd-tab-link" data-view="inquiries">
 						<i class="fa-solid fa-inbox"></i>
-						<span><?php esc_html_e( '5. Client Inquiries', 'tpd-tool' ); ?></span>
+						<span><?php esc_html_e( 'Client Inquiries', 'tpd-tool' ); ?></span>
 					</a>
 				</li>
 				<li class="tpd-nav-item">
 					<a href="#tpd-view-conversations" class="tpd-tab-link" data-view="conversations">
 						<i class="fa-regular fa-comments"></i>
-						<span><?php esc_html_e( '6. Chat & Messages', 'tpd-tool' ); ?></span>
+						<span><?php esc_html_e( 'Chat & Messages', 'tpd-tool' ); ?></span>
 					</a>
 				</li>
 				<li class="tpd-nav-item">
 					<a href="#tpd-view-meetings" class="tpd-tab-link" data-view="meetings">
 						<i class="fa-regular fa-calendar"></i>
-						<span><?php esc_html_e( '7. Meeting Requests', 'tpd-tool' ); ?></span>
+						<span><?php esc_html_e( 'Meeting Requests', 'tpd-tool' ); ?></span>
 					</a>
 				</li>
 				<li class="tpd-nav-item">
 					<a href="#tpd-view-resources" class="tpd-tab-link" data-view="resources">
 						<i class="fa-solid fa-book-open"></i>
-						<span><?php esc_html_e( '8. Resources & Tools', 'tpd-tool' ); ?></span>
+						<span><?php esc_html_e( 'Resources & Tools', 'tpd-tool' ); ?></span>
 					</a>
 				</li>
 				<li class="tpd-nav-item">
 					<a href="#tpd-view-comparison" class="tpd-tab-link" data-view="comparison">
 						<i class="fa-solid fa-ship"></i>
-						<span><?php esc_html_e( '9. Cruise Comparison', 'tpd-tool' ); ?></span>
+						<span><?php esc_html_e( 'Cruise Comparison', 'tpd-tool' ); ?></span>
 						<small class="tpd-badge-tag" style="background:#fef3c7; color:#b45309; font-size:9.5px; padding:2px 6px; border-radius:4px; margin-left:auto;">Soon</small>
 					</a>
 				</li>
 				<li class="tpd-nav-item">
 					<a href="#tpd-view-connect" class="tpd-tab-link" data-view="connect">
 						<i class="fa-solid fa-users-rays"></i>
-						<span><?php esc_html_e( '10. The TARC Connect', 'tpd-tool' ); ?></span>
+						<span><?php esc_html_e( 'The TARC Connect', 'tpd-tool' ); ?></span>
 						<small class="tpd-badge-tag" style="background:#fef3c7; color:#b45309; font-size:9.5px; padding:2px 6px; border-radius:4px; margin-left:auto;">Soon</small>
 					</a>
 				</li>
 				<li class="tpd-nav-item">
 					<a href="#tpd-view-events" class="tpd-tab-link" data-view="events">
 						<i class="fa-regular fa-calendar-check"></i>
-						<span><?php esc_html_e( '11. Upcoming Events', 'tpd-tool' ); ?></span>
+						<span><?php esc_html_e( 'Upcoming Events', 'tpd-tool' ); ?></span>
 					</a>
 				</li>
 				<li class="tpd-nav-item">
 					<a href="#tpd-view-news" class="tpd-tab-link" data-view="news">
 						<i class="fa-solid fa-bullhorn"></i>
-						<span><?php esc_html_e( '12. TARC News', 'tpd-tool' ); ?></span>
+						<span><?php esc_html_e( 'TARC News', 'tpd-tool' ); ?></span>
 					</a>
 				</li>
 				<li class="tpd-nav-item">
 					<a href="#tpd-view-settings" class="tpd-tab-link" data-view="settings">
-						<i class="fa-solid fa-gear"></i>
-						<span><?php esc_html_e( '13. Settings & Plan', 'tpd-tool' ); ?></span>
+						<i class="fa-solid fa-crown"></i>
+						<span><?php esc_html_e( 'Plans & Settings', 'tpd-tool' ); ?></span>
 					</a>
 				</li>
 				<li class="tpd-nav-item">
 					<a href="#tpd-view-help" class="tpd-tab-link" data-view="help">
 						<i class="fa-regular fa-circle-question"></i>
-						<span><?php esc_html_e( '14. Help & Support', 'tpd-tool' ); ?></span>
-					</a>
-				</li>
-				<li class="tpd-nav-item">
-					<a href="#tpd-view-ads" class="tpd-tab-link" data-view="ads">
-						<i class="fa-solid fa-rectangle-ad"></i>
-						<span><?php esc_html_e( '15. Ad Space', 'tpd-tool' ); ?></span>
+						<span><?php esc_html_e( 'Help & Support', 'tpd-tool' ); ?></span>
 					</a>
 				</li>
 			</ul>
@@ -494,174 +488,412 @@ $news_posts = get_posts( array(
 				</div>
 			</div>
 
-			<!-- VIEW 2: MY PROFILE LISTING (100% Real Data + Dynamic ACF & Custom Fields) -->
+			<!-- VIEW 2: ACCOUNT INFO & PROFILE EDITOR (Matches Travel Partner Directory Account Info Design) -->
 			<div id="tpd-view-profile" class="tpd-tab-panel">
-				<div class="tpd-card-box">
-					<div class="tpd-ss-header mb-3">
-						<div>
-							<h3><i class="fa-regular fa-id-card"></i> <?php esc_html_e( 'My Profile Listing & Public Showcase', 'tpd-tool' ); ?></h3>
-							<p class="text-muted" style="margin:4px 0 0;"><?php esc_html_e( 'All edits save directly to your Travel Advisor Directory Profile and sync with WP Admin.', 'tpd-tool' ); ?></p>
-						</div>
-						<div class="tpd-profile-status-badge">
-							<?php if ( $advisor_post_id ) : ?>
-								<a href="<?php echo esc_url( get_permalink( $advisor_post_id ) ); ?>" target="_blank" class="tpd-btn tpd-btn-xs tpd-btn-outline" style="text-decoration:none;">
-									<i class="fa-solid fa-arrow-up-right-from-square"></i> <?php esc_html_e( 'View Public Profile', 'tpd-tool' ); ?>
-								</a>
-							<?php endif; ?>
-						</div>
+				<?php
+				$profile_handle   = get_user_meta( $current_user_id, 'tpd_profile_handle', true ) ?: ( $user ? $user->user_login : 'advisor' );
+				$public_prof_url  = $advisor_post_id ? get_permalink( $advisor_post_id ) : home_url( '/travel-advisors/' . sanitize_title( $profile_handle ) . '/' );
+				$has_host         = get_user_meta( $current_user_id, 'tpd_has_host', true ) ?: ( $host_agency ? 'yes' : 'no' );
+				$consult_fee      = get_user_meta( $current_user_id, 'tpd_consultation_fee', true ) ?: 'yes';
+				$year_started     = get_user_meta( $current_user_id, 'tpd_years_experience', true ) ?: '2018';
+				$group_spec       = get_user_meta( $current_user_id, 'tpd_group_travel_spec', true ) ?: 'Group travel (10+ rooms or 20+ people)';
+				$clients_per_yr   = get_user_meta( $current_user_id, 'tpd_clients_per_year', true ) ?: '1 to 50';
+				$prev_gross_sales = get_user_meta( $current_user_id, 'tpd_personal_sales_volume', true ) ?: '$100,000 - $250,000';
+				$goal_gross_sales = get_user_meta( $current_user_id, 'tpd_sales_volume_goal', true ) ?: '$250,000 - $500,000';
+				$pref_suppliers   = get_user_meta( $current_user_id, 'tpd_preferred_suppliers', true ) ?: '';
+				$travel_types_str = get_user_meta( $current_user_id, 'tpd_travel_types', true ) ?: '';
+				$airports_str     = get_user_meta( $current_user_id, 'tpd_home_airports', true ) ?: '';
+				$adv_country      = get_user_meta( $current_user_id, 'tpd_country', true ) ?: 'United States';
+				$accolades_text   = get_user_meta( $current_user_id, 'tpd_accolades', true ) ?: '';
+				$portfolio_text   = get_user_meta( $current_user_id, 'tpd_portfolio_highlights', true ) ?: '';
+				$fb_url           = get_user_meta( $current_user_id, 'tpd_social_facebook', true ) ?: '';
+				$tw_url           = get_user_meta( $current_user_id, 'tpd_social_twitter', true ) ?: '';
+				$yt_url           = get_user_meta( $current_user_id, 'tpd_social_youtube', true ) ?: '';
+				$ig_url           = get_user_meta( $current_user_id, 'tpd_social_instagram', true ) ?: '';
+				$tt_url           = get_user_meta( $current_user_id, 'tpd_social_tiktok', true ) ?: '';
+				$li_url           = get_user_meta( $current_user_id, 'tpd_social_linkedin', true ) ?: '';
+
+				$preset_banners = array(
+					'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=1200&auto=format&fit=crop&q=80',
+					'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&auto=format&fit=crop&q=80',
+					'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=1200&auto=format&fit=crop&q=80',
+					'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1200&auto=format&fit=crop&q=80',
+					'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&auto=format&fit=crop&q=80',
+					'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&auto=format&fit=crop&q=80',
+					'https://images.unsplash.com/photo-1540202404-a2f29016b523?w=1200&auto=format&fit=crop&q=80',
+					'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&auto=format&fit=crop&q=80',
+				);
+				?>
+				<div class="tpd-card-box" style="padding:28px 34px;">
+					<h2 style="margin:0 0 18px; font-size:21px; font-weight:800; color:#00798c;"><?php esc_html_e( 'Account Info', 'tpd-tool' ); ?></h2>
+
+					<!-- Horizontal Sub-Navigation Tabs (Jump / Filter Sections) -->
+					<div class="tpd-acct-subtabs" style="display:flex; gap:18px; border-bottom:1.5px solid #e2e8f0; padding-bottom:10px; margin-bottom:22px; overflow-x:auto; white-space:nowrap;">
+						<a href="#tpd-acct-sec-personal" class="tpd-acct-nav-item active" data-sec="all" style="font-size:13px; font-weight:700; color:#00798c; text-decoration:none; border-bottom:2.5px solid #00798c; padding-bottom:8px;"><?php esc_html_e( 'All Sections', 'tpd-tool' ); ?></a>
+						<a href="#tpd-acct-sec-personal" class="tpd-acct-nav-item" data-sec="personal" style="font-size:13px; font-weight:600; color:#475569; text-decoration:none; padding-bottom:8px;"><?php esc_html_e( 'Personal Info', 'tpd-tool' ); ?></a>
+						<a href="#tpd-acct-sec-about" class="tpd-acct-nav-item" data-sec="about" style="font-size:13px; font-weight:600; color:#475569; text-decoration:none; padding-bottom:8px;"><?php esc_html_e( 'About Me', 'tpd-tool' ); ?></a>
+						<a href="#tpd-acct-sec-cert" class="tpd-acct-nav-item" data-sec="cert" style="font-size:13px; font-weight:600; color:#475569; text-decoration:none; padding-bottom:8px;"><?php esc_html_e( 'Certification', 'tpd-tool' ); ?></a>
+						<a href="#tpd-acct-sec-spec" class="tpd-acct-nav-item" data-sec="spec" style="font-size:13px; font-weight:600; color:#475569; text-decoration:none; padding-bottom:8px;"><?php esc_html_e( 'Specialties', 'tpd-tool' ); ?></a>
+						<a href="#tpd-acct-sec-portfolio" class="tpd-acct-nav-item" data-sec="portfolio" style="font-size:13px; font-weight:600; color:#475569; text-decoration:none; padding-bottom:8px;"><?php esc_html_e( 'Accolade & Portfolio', 'tpd-tool' ); ?></a>
+						<a href="#tpd-acct-sec-social" class="tpd-acct-nav-item" data-sec="social" style="font-size:13px; font-weight:600; color:#475569; text-decoration:none; padding-bottom:8px;"><?php esc_html_e( 'Social & Banner', 'tpd-tool' ); ?></a>
 					</div>
 
 					<form id="tpd-advisor-profile-editor-form" method="post" enctype="multipart/form-data">
 						<input type="hidden" name="action" value="tpd_save_advisor_profile">
 						<input type="hidden" name="nonce" value="<?php echo esc_attr( wp_create_nonce( 'tpd_nonce' ) ); ?>">
 
-						<!-- Media & Visual Identity -->
-						<div class="tpd-editor-section" style="border:1px solid #e2e8f0; border-radius:14px; padding:22px; margin-bottom:24px; background:#f8fafc;">
-							<h4 style="margin:0 0 16px; font-size:15px; font-weight:700; color:#0b1526;"><i class="fa-solid fa-camera"></i> <?php esc_html_e( 'Profile Picture, Agency Logo & Banner', 'tpd-tool' ); ?></h4>
-							
-							<div style="display:grid; grid-template-columns: auto 1fr 1fr; gap:24px; align-items:start;">
-								<!-- Headshot -->
-								<div style="text-align:center;">
-									<label style="display:block; font-size:12px; font-weight:700; margin-bottom:8px;"><?php esc_html_e( 'Profile Photo', 'tpd-tool' ); ?></label>
-									<img id="tpd-preview-headshot" src="<?php echo esc_url( $avatar_src ); ?>" style="width:110px; height:110px; border-radius:50%; object-fit:cover; border:3px solid #ffffff; box-shadow:0 4px 12px rgba(0,0,0,0.1); margin-bottom:10px; display:block; margin-left:auto; margin-right:auto;">
+						<!-- Top Identity Header Bar -->
+						<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; padding-bottom:22px; margin-bottom:24px; border-bottom:1px solid #e2e8f0;">
+							<div style="display:flex; align-items:center; gap:16px;">
+								<div style="position:relative; width:76px; height:76px;">
+									<img id="tpd-preview-headshot" src="<?php echo esc_url( $avatar_src ); ?>" style="width:76px; height:76px; border-radius:50%; object-fit:cover; border:2px solid #e2e8f0;">
+									<button type="button" onclick="document.getElementById('tpd-file-headshot').click();" title="<?php esc_attr_e( 'Upload Profile Photo', 'tpd-tool' ); ?>" style="position:absolute; bottom:0; right:0; width:26px; height:26px; border-radius:50%; background:#00798c; color:#fff; border:2px solid #fff; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:11px;">
+										<i class="fa-solid fa-camera"></i>
+									</button>
 									<input type="hidden" name="headshot_url" id="tpd_headshot_url" value="<?php echo esc_attr( $headshot_url ); ?>">
 									<input type="file" id="tpd-file-headshot" accept="image/*" style="display:none;">
-									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="document.getElementById('tpd-file-headshot').click();">
-										<i class="fa-solid fa-arrow-up-from-bracket"></i> <?php esc_html_e( 'Change Photo', 'tpd-tool' ); ?>
-									</button>
 								</div>
-
-								<!-- Agency Logo -->
 								<div>
-									<label style="display:block; font-size:12px; font-weight:700; margin-bottom:8px;"><?php esc_html_e( 'Agency Logo', 'tpd-tool' ); ?></label>
-									<div style="width:100%; height:90px; border:2px dashed #cbd5e1; border-radius:10px; display:flex; align-items:center; justify-content:center; background:#ffffff; overflow:hidden;">
-										<img id="tpd-preview-logo" src="<?php echo esc_url( $logo_url ); ?>" style="<?php echo $logo_url ? 'max-height:80px;' : 'display:none;'; ?>">
-										<span id="tpd-logo-placeholder" style="<?php echo $logo_url ? 'display:none;' : ''; ?> font-size:12px; color:#94a3b8;"><i class="fa-regular fa-image"></i> <?php esc_html_e( 'Upload Agency Logo', 'tpd-tool' ); ?></span>
+									<h3 class="tpd-user-name" style="margin:0; font-size:18px; font-weight:800; color:#00798c;"><?php echo esc_html( $full_name ); ?></h3>
+									<span style="font-size:12.5px; color:#0d9488; font-weight:600;">@<?php echo esc_html( $profile_handle ); ?></span>
+									<div style="display:flex; gap:16px; flex-wrap:wrap; margin-top:4px; font-size:12.5px; color:#475569;">
+										<span><i class="fa-regular fa-envelope" style="color:#00798c;"></i> <?php echo esc_html( $user ? $user->user_email : '' ); ?></span>
+										<?php if ( $phone ) : ?>
+											<span><i class="fa-solid fa-phone" style="color:#00798c;"></i> <?php echo esc_html( $phone ); ?></span>
+										<?php endif; ?>
 									</div>
+								</div>
+							</div>
+
+							<div style="display:flex; gap:10px; align-items:center;">
+								<button type="submit" class="tpd-btn" style="background:#00798c; color:#ffffff; border:none; padding:9px 20px; border-radius:6px; font-weight:700; font-size:13px; cursor:pointer;">
+									<?php esc_html_e( 'Submit', 'tpd-tool' ); ?>
+								</button>
+								<a href="<?php echo esc_url( $public_prof_url ); ?>" target="_blank" class="tpd-btn" style="background:#013243; color:#ffffff; text-decoration:none; padding:9px 16px; border-radius:6px; font-weight:700; font-size:13px;">
+									<i class="fa-solid fa-arrow-up-right-from-square"></i> <?php esc_html_e( 'View Public Profile', 'tpd-tool' ); ?>
+								</a>
+							</div>
+						</div>
+
+						<!-- SECTION 1: PERSONAL INFO -->
+						<div id="tpd-acct-sec-personal" class="tpd-acct-section" data-sec-pane="personal">
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'First Name *', 'tpd-tool' ); ?></label>
+								<input type="text" name="first_name" required value="<?php echo esc_attr( $user ? $user->first_name : '' ); ?>" class="tpd-input" style="background:#f1f5f9;">
+							</div>
+
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'Last Name *', 'tpd-tool' ); ?></label>
+								<input type="text" name="last_name" required value="<?php echo esc_attr( $user ? $user->last_name : '' ); ?>" class="tpd-input" style="background:#f1f5f9;">
+							</div>
+
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'Phone Number *', 'tpd-tool' ); ?></label>
+								<input type="tel" name="phone" required value="<?php echo esc_attr( $phone ); ?>" class="tpd-input" style="background:#f1f5f9;">
+							</div>
+
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'Email Address *', 'tpd-tool' ); ?></label>
+								<input type="email" name="email" required value="<?php echo esc_attr( $user ? $user->user_email : '' ); ?>" class="tpd-input" style="background:#f1f5f9;">
+							</div>
+
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'Profile Handle *', 'tpd-tool' ); ?></label>
+								<input type="text" name="profile_handle" id="tpd-profile-handle-input" required value="<?php echo esc_attr( $profile_handle ); ?>" class="tpd-input" style="background:#f1f5f9;">
+							</div>
+
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'Advisor Profile URL *', 'tpd-tool' ); ?></label>
+								<input type="text" id="tpd-advisor-url-preview" readonly value="<?php echo esc_attr( $public_prof_url ); ?>" class="tpd-input" style="background:#e2e8f0; color:#475569;">
+							</div>
+
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'Address *', 'tpd-tool' ); ?> <small style="color:#dc2626; font-weight:600;"><?php esc_html_e( '(Note: Street address and zip will not be publicized)', 'tpd-tool' ); ?></small></label>
+								<input type="text" name="agency_address" required value="<?php echo esc_attr( $agency_address ?: $location ); ?>" placeholder="<?php esc_attr_e( 'Street Address, City, State, Zip', 'tpd-tool' ); ?>" class="tpd-input" style="background:#f1f5f9;">
+							</div>
+
+							<div class="tpd-form-grid-2">
+								<div class="tpd-form-group mb-3">
+									<label><?php esc_html_e( 'City / State / Public Location *', 'tpd-tool' ); ?></label>
+									<input type="text" name="location" required value="<?php echo esc_attr( $location ); ?>" placeholder="<?php esc_attr_e( 'e.g. Austin, TX', 'tpd-tool' ); ?>" class="tpd-input" style="background:#f1f5f9;">
+								</div>
+								<div class="tpd-form-group mb-3">
+									<label><?php esc_html_e( 'Travel Agency Name *', 'tpd-tool' ); ?></label>
+									<input type="text" name="agency_name" required value="<?php echo esc_attr( $agency_name ); ?>" placeholder="<?php esc_attr_e( 'Your Agency Name', 'tpd-tool' ); ?>" class="tpd-input" style="background:#f1f5f9;">
+								</div>
+							</div>
+						</div>
+
+						<!-- SECTION 2: ABOUT ME & PRACTICE METRICS -->
+						<div id="tpd-acct-sec-about" class="tpd-acct-section" data-sec-pane="about">
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'Partner Description *', 'tpd-tool' ); ?></label>
+								<textarea name="bio" rows="4" class="tpd-textarea" placeholder="<?php esc_attr_e( 'Tell clients and suppliers about your travel advisory practice, expertise, and service philosophy...', 'tpd-tool' ); ?>"><?php echo esc_textarea( $bio_content ); ?></textarea>
+							</div>
+
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'Consultation Fee(s) *', 'tpd-tool' ); ?></label>
+								<div style="display:flex; gap:24px; align-items:center; margin-top:6px;">
+									<label style="display:flex; align-items:center; gap:8px; font-weight:600; cursor:pointer;">
+										<input type="radio" name="consultation_fee" value="yes" <?php checked( $consult_fee, 'yes' ); ?>>
+										<?php esc_html_e( 'Yes (consultation fee)', 'tpd-tool' ); ?>
+									</label>
+									<label style="display:flex; align-items:center; gap:8px; font-weight:600; cursor:pointer;">
+										<input type="radio" name="consultation_fee" value="no" <?php checked( $consult_fee, 'no' ); ?>>
+										<?php esc_html_e( 'No (free first)', 'tpd-tool' ); ?>
+									</label>
+								</div>
+							</div>
+
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'When did you begin in the travel industry? *', 'tpd-tool' ); ?></label>
+								<select name="years_experience" class="tpd-select" style="background:#f1f5f9;">
+									<?php for ( $yr = (int) gmdate( 'Y' ); $yr >= 1975; $yr-- ) : ?>
+										<option value="<?php echo esc_attr( $yr ); ?>" <?php selected( (string) $year_started, (string) $yr ); ?>><?php echo esc_html( $yr ); ?></option>
+									<?php endfor; ?>
+								</select>
+							</div>
+
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'Do you specialize in group travel? *', 'tpd-tool' ); ?></label>
+								<select name="group_travel_spec" class="tpd-select" style="background:#f1f5f9;">
+									<?php
+									$grp_opts = array(
+										'Group travel (10+ rooms or 20+ people)',
+										'Small group & multi-generational travel (5–9 rooms)',
+										'Individual / FIT custom travel only',
+										'Corporate & incentive groups',
+									);
+									foreach ( $grp_opts as $go ) :
+									?>
+										<option value="<?php echo esc_attr( $go ); ?>" <?php selected( $group_spec, $go ); ?>><?php echo esc_html( $go ); ?></option>
+									<?php endforeach; ?>
+								</select>
+							</div>
+
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'How many clients do you book per year? *', 'tpd-tool' ); ?></label>
+								<select name="clients_per_year" class="tpd-select" style="background:#f1f5f9;">
+									<?php foreach ( array( '1 to 50', '51 to 100', '101 to 250', '250+' ) as $cpy ) : ?>
+										<option value="<?php echo esc_attr( $cpy ); ?>" <?php selected( $clients_per_yr, $cpy ); ?>><?php echo esc_html( $cpy ); ?></option>
+									<?php endforeach; ?>
+								</select>
+							</div>
+
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'What was your (GROSS) travel sales volume in the previous full year? *', 'tpd-tool' ); ?></label>
+								<select name="sales_volume" class="tpd-select" style="background:#f1f5f9;">
+									<?php foreach ( array( '$0 - $100,000', '$100,000 - $250,000', '$250,000 - $500,000', '$500,000 - $1,000,000', '$1,000,000+' ) as $sv_opt ) : ?>
+										<option value="<?php echo esc_attr( $sv_opt ); ?>" <?php selected( $prev_gross_sales, $sv_opt ); ?>><?php echo esc_html( $sv_opt ); ?></option>
+									<?php endforeach; ?>
+								</select>
+							</div>
+
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'What is your (GROSS) travel sales volume goal for the current full year? *', 'tpd-tool' ); ?></label>
+								<select name="sales_volume_goal" class="tpd-select" style="background:#f1f5f9;">
+									<?php foreach ( array( '$0 - $100,000', '$100,000 - $250,000', '$250,000 - $500,000', '$500,000 - $1,000,000', '$1,000,000+' ) as $svg_opt ) : ?>
+										<option value="<?php echo esc_attr( $svg_opt ); ?>" <?php selected( $goal_gross_sales, $svg_opt ); ?>><?php echo esc_html( $svg_opt ); ?></option>
+									<?php endforeach; ?>
+								</select>
+							</div>
+						</div>
+
+						<!-- SECTION 3: CERTIFICATION & HOST AGENCY -->
+						<div id="tpd-acct-sec-cert" class="tpd-acct-section" data-sec-pane="cert">
+							<div class="tpd-form-group mb-3">
+								<label class="font-bold"><?php esc_html_e( 'Industry Accreditations (Check all that apply)', 'tpd-tool' ); ?></label>
+								<div style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
+									<?php
+									$certs = array(
+										array( 'label' => 'CLIA', 'name' => 'clia_number', 'val' => $clia_num ),
+										array( 'label' => 'IATA', 'name' => 'iata_number', 'val' => $iata_num ),
+										array( 'label' => 'ARC',  'name' => 'arc_number',  'val' => $arc_num ),
+										array( 'label' => 'TRUE', 'name' => 'true_number', 'val' => $true_num ),
+									);
+									foreach ( $certs as $ct ) :
+									?>
+										<div style="display:flex; align-items:center; gap:14px;">
+											<label style="display:flex; align-items:center; gap:8px; width:90px; font-weight:700;">
+												<input type="checkbox" <?php checked( ! empty( $ct['val'] ) ); ?>> <?php echo esc_html( $ct['label'] ); ?>
+											</label>
+											<input type="text" name="<?php echo esc_attr( $ct['name'] ); ?>" value="<?php echo esc_attr( $ct['val'] ); ?>" placeholder="<?php echo esc_attr( 'Enter ' . $ct['label'] . ' Number (Optional)' ); ?>" class="tpd-input" style="max-width:320px; background:#f1f5f9;">
+										</div>
+									<?php endforeach; ?>
+								</div>
+							</div>
+
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'Current Host *', 'tpd-tool' ); ?></label>
+								<div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap; margin-top:6px;">
+									<label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+										<input type="radio" name="has_host" value="yes" <?php checked( $has_host, 'yes' ); ?>>
+										<?php esc_html_e( 'Current Host', 'tpd-tool' ); ?>
+									</label>
+									<select name="host_agency" class="tpd-select" style="max-width:260px;">
+										<?php
+										$hosts = array( 'KHM Travel Group', 'Avoya Travel', 'Nexion Travel Group', 'Travel Planners International (TPI)', 'Outside Agents', 'Cruise Planners', 'Fora Travel', 'WorldVia', 'Independent / Other' );
+										foreach ( $hosts as $h_opt ) :
+										?>
+											<option value="<?php echo esc_attr( $h_opt ); ?>" <?php selected( $host_agency, $h_opt ); ?>><?php echo esc_html( $h_opt ); ?></option>
+										<?php endforeach; ?>
+									</select>
+									<label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+										<input type="radio" name="has_host" value="no" <?php checked( $has_host, 'no' ); ?>>
+										<?php esc_html_e( 'No (I don\'t have a host)', 'tpd-tool' ); ?>
+									</label>
+								</div>
+							</div>
+
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'Consortia Affiliation', 'tpd-tool' ); ?></label>
+								<input type="text" name="consortia" value="<?php echo esc_attr( $consortia ); ?>" placeholder="e.g. Virtuoso, Signature Travel Network, Travel Leaders" class="tpd-input" style="background:#f1f5f9;">
+							</div>
+						</div>
+
+						<!-- SECTION 4: PERSONAL SPECIALTIES -->
+						<div id="tpd-acct-sec-spec" class="tpd-acct-section" data-sec-pane="spec">
+							<h4 style="margin:20px 0 12px; font-size:15px; font-weight:800; color:#0f172a;"><?php esc_html_e( 'Personal Specialties', 'tpd-tool' ); ?></h4>
+
+							<?php
+							$saved_dests  = $advisor_post_id ? wp_get_object_terms( $advisor_post_id, 'travel_destination', array( 'fields' => 'names' ) ) : array();
+							$saved_styles = $advisor_post_id ? wp_get_object_terms( $advisor_post_id, 'travel_style', array( 'fields' => 'names' ) ) : array();
+							if ( is_wp_error( $saved_dests ) ) $saved_dests = array();
+							if ( is_wp_error( $saved_styles ) ) $saved_styles = array();
+							?>
+
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'Destinations *', 'tpd-tool' ); ?> <small class="text-muted">(<?php esc_html_e( 'Select your top destination specialties', 'tpd-tool' ); ?>)</small></label>
+								<div class="tpd-checkbox-grid" style="margin-top:6px;">
+									<?php
+									$dest_choices = array( 'Western Europe', 'Mediterranean', 'Danube River', 'Caribbean', 'Alaska', 'Africa & Safari', 'Japan & Asia', 'South Pacific', 'Antarctica & Polar', 'South America', 'Mexico & Central America', 'United Kingdom & Ireland' );
+									foreach ( $dest_choices as $dc ) :
+									?>
+										<label class="tpd-pill-checkbox">
+											<input type="checkbox" name="destinations[]" value="<?php echo esc_attr( $dc ); ?>" <?php checked( in_array( $dc, $saved_dests, true ) ); ?>>
+											<span><?php echo esc_html( $dc ); ?></span>
+										</label>
+									<?php endforeach; ?>
+								</div>
+							</div>
+
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'Suppliers *', 'tpd-tool' ); ?> <small class="text-muted">(<?php esc_html_e( 'Enter or select your preferred supplier partners', 'tpd-tool' ); ?>)</small></label>
+								<input type="text" name="preferred_suppliers" value="<?php echo esc_attr( $pref_suppliers ); ?>" placeholder="<?php esc_attr_e( 'Select multiple suppliers names (e.g. Viking, Silversea, Globus, Four Seasons)', 'tpd-tool' ); ?>" class="tpd-input" style="background:#f1f5f9;">
+							</div>
+
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'Styles *', 'tpd-tool' ); ?></label>
+								<div class="tpd-checkbox-grid" style="margin-top:6px;">
+									<?php
+									$style_choices = array( 'River Cruises', 'Luxury Ocean', 'Custom Tailored', 'All-Inclusive', 'Romance & Honeymoon', 'Family & Multigen', 'Expedition & Adventure', 'Group Charters' );
+									foreach ( $style_choices as $sc ) :
+									?>
+										<label class="tpd-pill-checkbox">
+											<input type="checkbox" name="travel_styles[]" value="<?php echo esc_attr( $sc ); ?>" <?php checked( in_array( $sc, $saved_styles, true ) ); ?>>
+											<span><?php echo esc_html( $sc ); ?></span>
+										</label>
+									<?php endforeach; ?>
+								</div>
+							</div>
+
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'Types of Travel *', 'tpd-tool' ); ?></label>
+								<input type="text" name="travel_types" value="<?php echo esc_attr( $travel_types_str ); ?>" placeholder="<?php esc_attr_e( 'Select multiple travel types (e.g. Culinary, Safari, Wellness, Yacht Charters)', 'tpd-tool' ); ?>" class="tpd-input" style="background:#f1f5f9;">
+							</div>
+
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'Airports *', 'tpd-tool' ); ?></label>
+								<input type="text" name="home_airports" value="<?php echo esc_attr( $airports_str ); ?>" placeholder="<?php esc_attr_e( 'Select US/CA Airport codes (e.g. JFK, MIA, LAX, YYZ)', 'tpd-tool' ); ?>" class="tpd-input" style="background:#f1f5f9;">
+							</div>
+
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'Country *', 'tpd-tool' ); ?></label>
+								<select name="country" class="tpd-select" style="background:#f1f5f9;">
+									<?php foreach ( array( 'United States', 'Canada', 'United Kingdom', 'Australia', 'Mexico', 'Germany', 'France', 'Italy', 'Spain', 'Pakistan', 'Other' ) as $c_opt ) : ?>
+										<option value="<?php echo esc_attr( $c_opt ); ?>" <?php selected( $adv_country, $c_opt ); ?>><?php echo esc_html( $c_opt ); ?></option>
+									<?php endforeach; ?>
+								</select>
+							</div>
+						</div>
+
+						<!-- SECTION 5: ACCOLADES, EXTERNAL AGENCY & PORTFOLIO -->
+						<div id="tpd-acct-sec-portfolio" class="tpd-acct-section" data-sec-pane="portfolio">
+							<h4 style="margin:20px 0 12px; font-size:15px; font-weight:800; color:#0f172a;"><?php esc_html_e( 'Accolades, External Website & Portfolio', 'tpd-tool' ); ?></h4>
+
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'External Agency Website URL', 'tpd-tool' ); ?></label>
+								<input type="url" name="website" value="<?php echo esc_attr( $website ); ?>" placeholder="https://www.yourtravelagency.com" class="tpd-input" style="background:#f1f5f9;">
+							</div>
+
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'Accolades & Industry Recognition', 'tpd-tool' ); ?></label>
+								<input type="text" name="accolades" value="<?php echo esc_attr( $accolades_text ); ?>" placeholder="<?php esc_attr_e( 'e.g. Top 30 Under 30, President\'s Circle Producer, Certified Destination Specialist', 'tpd-tool' ); ?>" class="tpd-input" style="background:#f1f5f9;">
+							</div>
+
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'Portfolio & Signature Trip Highlights', 'tpd-tool' ); ?></label>
+								<textarea name="portfolio_highlights" rows="3" class="tpd-textarea" placeholder="<?php esc_attr_e( 'Share memorable itineraries or client trips you have curated...', 'tpd-tool' ); ?>"><?php echo esc_textarea( $portfolio_text ); ?></textarea>
+							</div>
+						</div>
+
+						<!-- SECTION 6: SOCIAL ACCOUNT PAGE LINKS & BANNER GALLERY -->
+						<div id="tpd-acct-sec-social" class="tpd-acct-section" data-sec-pane="social">
+							<h4 style="margin:20px 0 12px; font-size:15px; font-weight:800; color:#0f172a;"><?php esc_html_e( 'Social Account Page Links', 'tpd-tool' ); ?></h4>
+
+							<div class="tpd-form-group mb-2">
+								<label><?php esc_html_e( 'Facebook', 'tpd-tool' ); ?></label>
+								<input type="url" name="social_facebook" value="<?php echo esc_attr( $fb_url ); ?>" placeholder="Facebook Page URL" class="tpd-input" style="background:#f1f5f9;">
+							</div>
+							<div class="tpd-form-group mb-2">
+								<label><?php esc_html_e( 'Twitter / X', 'tpd-tool' ); ?></label>
+								<input type="url" name="social_twitter" value="<?php echo esc_attr( $tw_url ); ?>" placeholder="Twitter Page URL" class="tpd-input" style="background:#f1f5f9;">
+							</div>
+							<div class="tpd-form-group mb-2">
+								<label><?php esc_html_e( 'YouTube', 'tpd-tool' ); ?></label>
+								<input type="url" name="social_youtube" value="<?php echo esc_attr( $yt_url ); ?>" placeholder="YouTube Page URL" class="tpd-input" style="background:#f1f5f9;">
+							</div>
+							<div class="tpd-form-group mb-2">
+								<label><?php esc_html_e( 'Instagram', 'tpd-tool' ); ?></label>
+								<input type="url" name="social_instagram" value="<?php echo esc_attr( $ig_url ); ?>" placeholder="Instagram Page URL" class="tpd-input" style="background:#f1f5f9;">
+							</div>
+							<div class="tpd-form-group mb-2">
+								<label><?php esc_html_e( 'TikTok', 'tpd-tool' ); ?></label>
+								<input type="url" name="social_tiktok" value="<?php echo esc_attr( $tt_url ); ?>" placeholder="TikTok Page URL" class="tpd-input" style="background:#f1f5f9;">
+							</div>
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'LinkedIn', 'tpd-tool' ); ?></label>
+								<input type="url" name="social_linkedin" value="<?php echo esc_attr( $li_url ); ?>" placeholder="LinkedIn Profile URL" class="tpd-input" style="background:#f1f5f9;">
+							</div>
+
+							<!-- Agency Logo & Banner Image Upload + 8 Scenic Preset Gallery -->
+							<div class="tpd-form-group mt-4">
+								<label class="font-bold"><?php esc_html_e( 'Banner Image & Agency Logo', 'tpd-tool' ); ?></label>
+								<div style="border:2px dashed #cbd5e1; border-radius:12px; padding:26px; text-align:center; background:#f8fafc; margin-bottom:14px;">
+									<img id="tpd-preview-banner" src="<?php echo esc_url( $banner_url ?: $preset_banners[0] ); ?>" style="max-height:140px; width:100%; object-fit:cover; border-radius:8px; margin-bottom:14px;">
+									<input type="hidden" name="banner_url" id="tpd_banner_url" value="<?php echo esc_attr( $banner_url ?: $preset_banners[0] ); ?>">
+									<input type="file" id="tpd-file-banner" accept="image/*" style="display:none;">
 									<input type="hidden" name="logo_url" id="tpd_logo_url" value="<?php echo esc_attr( $logo_url ); ?>">
 									<input type="file" id="tpd-file-logo" accept="image/*" style="display:none;">
-									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline mt-2" onclick="document.getElementById('tpd-file-logo').click();">
-										<i class="fa-solid fa-upload"></i> <?php esc_html_e( 'Upload Logo', 'tpd-tool' ); ?>
-									</button>
-								</div>
-
-								<!-- Banner Selection -->
-								<div>
-									<label style="display:block; font-size:12px; font-weight:700; margin-bottom:8px;"><?php esc_html_e( 'Profile Banner Header', 'tpd-tool' ); ?></label>
-									<div style="width:100%; height:90px; border-radius:10px; overflow:hidden; border:1px solid #cbd5e1; position:relative;">
-										<img id="tpd-preview-banner" src="<?php echo esc_url( $banner_url ?: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=800&auto=format&fit=crop&q=80' ); ?>" style="width:100%; height:100%; object-fit:cover;">
+									<div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
+										<button type="button" class="tpd-btn" onclick="document.getElementById('tpd-file-banner').click();" style="background:#00798c; color:#fff; border:none; padding:9px 20px; border-radius:6px; font-weight:700; cursor:pointer;">
+											<?php esc_html_e( 'Select Custom Banner Image', 'tpd-tool' ); ?>
+										</button>
+										<button type="button" class="tpd-btn tpd-btn-outline" onclick="document.getElementById('tpd-file-logo').click();" style="padding:9px 18px; border-radius:6px; font-weight:600; cursor:pointer;">
+											<i class="fa-regular fa-image"></i> <?php esc_html_e( 'Upload Agency Logo', 'tpd-tool' ); ?>
+										</button>
 									</div>
-									<input type="hidden" name="banner_url" id="tpd_banner_url" value="<?php echo esc_attr( $banner_url ); ?>">
-									<input type="file" id="tpd-file-banner" accept="image/*" style="display:none;">
-									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline mt-2" onclick="document.getElementById('tpd-file-banner').click();">
-										<i class="fa-solid fa-panorama"></i> <?php esc_html_e( 'Upload Custom Banner', 'tpd-tool' ); ?>
-									</button>
 								</div>
-							</div>
-						</div>
 
-						<!-- Core Details (100% Real User & CPT Values) -->
-						<div class="tpd-form-grid-2">
-							<div class="tpd-form-group">
-								<label><?php esc_html_e( 'First Name *', 'tpd-tool' ); ?></label>
-								<input type="text" name="first_name" required value="<?php echo esc_attr( $user ? $user->first_name : '' ); ?>" placeholder="<?php esc_attr_e( 'First Name', 'tpd-tool' ); ?>" class="tpd-input">
-							</div>
-							<div class="tpd-form-group">
-								<label><?php esc_html_e( 'Last Name *', 'tpd-tool' ); ?></label>
-								<input type="text" name="last_name" required value="<?php echo esc_attr( $user ? $user->last_name : '' ); ?>" placeholder="<?php esc_attr_e( 'Last Name', 'tpd-tool' ); ?>" class="tpd-input">
-							</div>
-						</div>
-
-						<div class="tpd-form-grid-3">
-							<div class="tpd-form-group">
-								<label><?php esc_html_e( 'Agency Name *', 'tpd-tool' ); ?></label>
-								<input type="text" name="agency_name" required value="<?php echo esc_attr( $agency_name ); ?>" placeholder="<?php esc_attr_e( 'Your Travel Agency Name', 'tpd-tool' ); ?>" class="tpd-input">
-							</div>
-							<div class="tpd-form-group">
-								<label><?php esc_html_e( 'Phone Number *', 'tpd-tool' ); ?></label>
-								<input type="tel" name="phone" required value="<?php echo esc_attr( $phone ); ?>" placeholder="<?php esc_attr_e( 'Phone Number', 'tpd-tool' ); ?>" class="tpd-input">
-							</div>
-							<div class="tpd-form-group">
-								<label><?php esc_html_e( 'Email Address *', 'tpd-tool' ); ?></label>
-								<input type="email" name="email" required value="<?php echo esc_attr( $user ? $user->user_email : '' ); ?>" class="tpd-input">
-							</div>
-						</div>
-
-						<div class="tpd-form-grid-3">
-							<div class="tpd-form-group">
-								<label><?php esc_html_e( 'City, State / Region, Country *', 'tpd-tool' ); ?></label>
-								<input type="text" name="location" required value="<?php echo esc_attr( $location ); ?>" placeholder="<?php esc_attr_e( 'City, State, Country', 'tpd-tool' ); ?>" class="tpd-input">
-							</div>
-							<div class="tpd-form-group">
-								<label><?php esc_html_e( 'Agency Address', 'tpd-tool' ); ?></label>
-								<input type="text" name="agency_address" value="<?php echo esc_attr( $agency_address ); ?>" placeholder="<?php esc_attr_e( 'Street, City, State, ZIP', 'tpd-tool' ); ?>" class="tpd-input">
-							</div>
-							<div class="tpd-form-group">
-								<label><?php esc_html_e( 'Agency Website Link', 'tpd-tool' ); ?></label>
-								<input type="url" name="website" value="<?php echo esc_attr( $website ); ?>" placeholder="https://" class="tpd-input">
-							</div>
-						</div>
-
-						<div class="tpd-form-grid-3">
-							<div class="tpd-form-group">
-								<label><?php esc_html_e( 'Consortia Affiliation', 'tpd-tool' ); ?></label>
-								<input type="text" name="consortia" value="<?php echo esc_attr( $consortia ); ?>" placeholder="e.g. Virtuoso, Signature" class="tpd-input">
-							</div>
-							<div class="tpd-form-group">
-								<label><?php esc_html_e( 'Host Agency / Franchise', 'tpd-tool' ); ?></label>
-								<input type="text" name="host_agency" value="<?php echo esc_attr( $host_agency ); ?>" placeholder="e.g. Avoya, Nexion" class="tpd-input">
-							</div>
-							<div class="tpd-form-group">
-								<label><?php esc_html_e( 'CLIA / IATA Number', 'tpd-tool' ); ?></label>
-								<input type="text" name="clia_number" value="<?php echo esc_attr( $clia_num ?: $iata_num ); ?>" placeholder="Enter Verification ID" class="tpd-input">
-							</div>
-						</div>
-
-						<!-- Bio / About -->
-						<div class="tpd-form-group mt-3">
-							<label><?php esc_html_e( 'About Your Travel Practice & Client Philosophy', 'tpd-tool' ); ?></label>
-							<textarea name="bio" rows="4" class="tpd-textarea" placeholder="<?php esc_attr_e( 'Describe your travel advisory experience, specializations, and the value you deliver to travelers...', 'tpd-tool' ); ?>"><?php echo esc_textarea( $bio_content ); ?></textarea>
-						</div>
-
-						<!-- Travel Specialties -->
-						<?php
-						$saved_dests  = $advisor_post_id ? wp_get_object_terms( $advisor_post_id, 'travel_destination', array( 'fields' => 'names' ) ) : array();
-						$saved_styles = $advisor_post_id ? wp_get_object_terms( $advisor_post_id, 'travel_style', array( 'fields' => 'names' ) ) : array();
-						if ( is_wp_error( $saved_dests ) ) $saved_dests = array();
-						if ( is_wp_error( $saved_styles ) ) $saved_styles = array();
-						?>
-						<div class="tpd-form-group mt-3">
-							<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-								<label class="font-bold"><?php esc_html_e( 'Travel Specialties: Destinations', 'tpd-tool' ); ?></label>
-								<small class="text-muted"><?php printf( esc_html__( 'Current Plan Limit: Max %d selections', 'tpd-tool' ), (int) $plan_info['max_specialties'] ); ?></small>
-							</div>
-							<div class="tpd-checkbox-grid">
-								<?php
-								$dest_choices = array( 'Western Europe', 'Mediterranean', 'Danube River', 'Caribbean', 'Alaska', 'Africa & Safari', 'Japan & Asia', 'South Pacific', 'Antarctica & Polar', 'South America' );
-								foreach ( $dest_choices as $dc ) :
-								?>
-									<label class="tpd-pill-checkbox">
-										<input type="checkbox" name="destinations[]" value="<?php echo esc_attr( $dc ); ?>" <?php checked( in_array( $dc, $saved_dests, true ) ); ?>>
-										<span><?php echo esc_html( $dc ); ?></span>
-									</label>
-								<?php endforeach; ?>
-							</div>
-						</div>
-
-						<div class="tpd-form-group mt-3">
-							<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-								<label class="font-bold"><?php esc_html_e( 'Travel Specialties: Styles', 'tpd-tool' ); ?></label>
-							</div>
-							<div class="tpd-checkbox-grid">
-								<?php
-								$style_choices = array( 'River Cruises', 'Luxury Ocean', 'Custom Tailored', 'All-Inclusive', 'Romance & Honeymoon', 'Family & Multigen', 'Expedition & Adventure', 'Group Charters' );
-								foreach ( $style_choices as $sc ) :
-								?>
-									<label class="tpd-pill-checkbox">
-										<input type="checkbox" name="travel_styles[]" value="<?php echo esc_attr( $sc ); ?>" <?php checked( in_array( $sc, $saved_styles, true ) ); ?>>
-										<span><?php echo esc_html( $sc ); ?></span>
-									</label>
-								<?php endforeach; ?>
+								<label style="font-size:12.5px; color:#475569; margin-bottom:8px; display:block;"><?php esc_html_e( 'Or Choose a Preset Scenic Banner Image:', 'tpd-tool' ); ?></label>
+								<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap:12px;">
+									<?php foreach ( $preset_banners as $idx => $pb_url ) : ?>
+										<label class="tpd-preset-banner-tile" style="position:relative; cursor:pointer; border-radius:8px; overflow:hidden; height:84px; border:2px solid <?php echo ( $banner_url === $pb_url ) ? '#00798c' : 'transparent'; ?>;">
+											<input type="radio" name="preset_banner_choice" value="<?php echo esc_url( $pb_url ); ?>" class="tpd-preset-banner-radio" <?php checked( $banner_url, $pb_url ); ?> style="position:absolute; top:6px; left:6px; z-index:2;">
+											<img src="<?php echo esc_url( $pb_url ); ?>" alt="Banner <?php echo esc_attr( $idx + 1 ); ?>" style="width:100%; height:100%; object-fit:cover;">
+										</label>
+									<?php endforeach; ?>
+								</div>
 							</div>
 						</div>
 
@@ -674,9 +906,9 @@ $news_posts = get_posts( array(
 
 						<div id="tpd-advisor-profile-status" class="tpd-reg-status" style="display:none; margin-top:16px;"></div>
 
-						<div class="mt-4" style="text-align:right;">
-							<button type="submit" class="tpd-btn tpd-btn-darkblue" id="tpd-save-advisor-profile-btn" style="padding:12px 28px;">
-								<i class="fa-solid fa-floppy-disk"></i> <?php esc_html_e( 'Save Profile Changes', 'tpd-tool' ); ?>
+						<div class="mt-4" style="text-align:right; border-top:1px solid #e2e8f0; padding-top:18px;">
+							<button type="submit" class="tpd-btn" id="tpd-save-advisor-profile-btn" style="background:#00798c; color:#ffffff; border:none; padding:12px 32px; border-radius:6px; font-weight:700; cursor:pointer;">
+								<i class="fa-solid fa-floppy-disk"></i> <?php esc_html_e( 'Submit & Save Account Info', 'tpd-tool' ); ?>
 							</button>
 						</div>
 					</form>

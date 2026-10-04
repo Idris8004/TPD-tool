@@ -72,10 +72,12 @@ class TPD_Tool_Profile_Editor {
 		$display_name       = trim( $first_name . ' ' . $last_name );
 		$phone              = isset( $_POST['phone'] ) ? sanitize_text_field( wp_unslash( $_POST['phone'] ) ) : '';
 		$email              = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+		$profile_handle     = isset( $_POST['profile_handle'] ) ? sanitize_text_field( wp_unslash( $_POST['profile_handle'] ) ) : '';
 		$agency_name        = isset( $_POST['agency_name'] ) ? sanitize_text_field( wp_unslash( $_POST['agency_name'] ) ) : '';
 		$agency_address     = isset( $_POST['agency_address'] ) ? sanitize_text_field( wp_unslash( $_POST['agency_address'] ) ) : '';
 		$location           = isset( $_POST['location'] ) ? sanitize_text_field( wp_unslash( $_POST['location'] ) ) : '';
 		$website            = isset( $_POST['website'] ) ? esc_url_raw( wp_unslash( $_POST['website'] ) ) : '';
+		$has_host           = isset( $_POST['has_host'] ) ? sanitize_text_field( wp_unslash( $_POST['has_host'] ) ) : 'yes';
 		$consortia          = isset( $_POST['consortia'] ) ? sanitize_text_field( wp_unslash( $_POST['consortia'] ) ) : '';
 		$host_agency        = isset( $_POST['host_agency'] ) ? sanitize_text_field( wp_unslash( $_POST['host_agency'] ) ) : '';
 		$clia_num           = isset( $_POST['clia_number'] ) ? sanitize_text_field( wp_unslash( $_POST['clia_number'] ) ) : '';
@@ -83,9 +85,30 @@ class TPD_Tool_Profile_Editor {
 		$arc_num            = isset( $_POST['arc_number'] ) ? sanitize_text_field( wp_unslash( $_POST['arc_number'] ) ) : '';
 		$true_num           = isset( $_POST['true_number'] ) ? sanitize_text_field( wp_unslash( $_POST['true_number'] ) ) : '';
 		$bio                = isset( $_POST['bio'] ) ? wp_kses_post( wp_unslash( $_POST['bio'] ) ) : '';
+		$consultation_fee   = isset( $_POST['consultation_fee'] ) ? sanitize_text_field( wp_unslash( $_POST['consultation_fee'] ) ) : 'yes';
+		$years_experience   = isset( $_POST['years_experience'] ) ? sanitize_text_field( wp_unslash( $_POST['years_experience'] ) ) : '';
+		$group_travel_spec  = isset( $_POST['group_travel_spec'] ) ? sanitize_text_field( wp_unslash( $_POST['group_travel_spec'] ) ) : '';
+		$clients_per_year   = isset( $_POST['clients_per_year'] ) ? sanitize_text_field( wp_unslash( $_POST['clients_per_year'] ) ) : '';
+		$sales_volume       = isset( $_POST['sales_volume'] ) ? sanitize_text_field( wp_unslash( $_POST['sales_volume'] ) ) : '';
+		$sales_volume_goal  = isset( $_POST['sales_volume_goal'] ) ? sanitize_text_field( wp_unslash( $_POST['sales_volume_goal'] ) ) : '';
+		$pref_suppliers     = isset( $_POST['preferred_suppliers'] ) ? sanitize_text_field( wp_unslash( $_POST['preferred_suppliers'] ) ) : '';
+		$travel_types       = isset( $_POST['travel_types'] ) ? sanitize_text_field( wp_unslash( $_POST['travel_types'] ) ) : '';
+		$home_airports      = isset( $_POST['home_airports'] ) ? sanitize_text_field( wp_unslash( $_POST['home_airports'] ) ) : '';
+		$country            = isset( $_POST['country'] ) ? sanitize_text_field( wp_unslash( $_POST['country'] ) ) : 'United States';
+		$accolades          = isset( $_POST['accolades'] ) ? sanitize_text_field( wp_unslash( $_POST['accolades'] ) ) : '';
+		$portfolio          = isset( $_POST['portfolio_highlights'] ) ? sanitize_textarea_field( wp_unslash( $_POST['portfolio_highlights'] ) ) : '';
+		$social_facebook    = isset( $_POST['social_facebook'] ) ? esc_url_raw( wp_unslash( $_POST['social_facebook'] ) ) : '';
+		$social_twitter     = isset( $_POST['social_twitter'] ) ? esc_url_raw( wp_unslash( $_POST['social_twitter'] ) ) : '';
+		$social_youtube     = isset( $_POST['social_youtube'] ) ? esc_url_raw( wp_unslash( $_POST['social_youtube'] ) ) : '';
+		$social_instagram   = isset( $_POST['social_instagram'] ) ? esc_url_raw( wp_unslash( $_POST['social_instagram'] ) ) : '';
+		$social_tiktok      = isset( $_POST['social_tiktok'] ) ? esc_url_raw( wp_unslash( $_POST['social_tiktok'] ) ) : '';
+		$social_linkedin    = isset( $_POST['social_linkedin'] ) ? esc_url_raw( wp_unslash( $_POST['social_linkedin'] ) ) : '';
 		$headshot_url       = isset( $_POST['headshot_url'] ) ? esc_url_raw( wp_unslash( $_POST['headshot_url'] ) ) : '';
 		$logo_url           = isset( $_POST['logo_url'] ) ? esc_url_raw( wp_unslash( $_POST['logo_url'] ) ) : '';
 		$banner_url         = isset( $_POST['banner_url'] ) ? esc_url_raw( wp_unslash( $_POST['banner_url'] ) ) : '';
+		if ( ! empty( $_POST['preset_banner_choice'] ) && empty( $banner_url ) ) {
+			$banner_url = esc_url_raw( wp_unslash( $_POST['preset_banner_choice'] ) );
+		}
 
 		// Update WP User
 		$user_data = array( 'ID' => $user_id );
@@ -99,17 +122,37 @@ class TPD_Tool_Profile_Editor {
 		if ( $headshot_url ) update_user_meta( $user_id, 'tpd_headshot_url', $headshot_url );
 		if ( $logo_url ) update_user_meta( $user_id, 'tpd_logo_url', $logo_url );
 		if ( $banner_url ) update_user_meta( $user_id, 'tpd_banner_url', $banner_url );
+		update_user_meta( $user_id, 'tpd_profile_handle', $profile_handle );
 		update_user_meta( $user_id, 'tpd_phone', $phone );
 		update_user_meta( $user_id, 'tpd_agency_name', $agency_name );
 		update_user_meta( $user_id, 'tpd_agency_address', $agency_address );
 		update_user_meta( $user_id, 'tpd_location', $location );
 		update_user_meta( $user_id, 'tpd_website', $website );
+		update_user_meta( $user_id, 'tpd_has_host', $has_host );
 		update_user_meta( $user_id, 'tpd_consortia', $consortia );
 		update_user_meta( $user_id, 'tpd_host_agency', $host_agency );
 		update_user_meta( $user_id, 'tpd_clia_num', $clia_num );
 		update_user_meta( $user_id, 'tpd_iata_num', $iata_num );
 		update_user_meta( $user_id, 'tpd_arc_num', $arc_num );
 		update_user_meta( $user_id, 'tpd_true_num', $true_num );
+		update_user_meta( $user_id, 'tpd_consultation_fee', $consultation_fee );
+		update_user_meta( $user_id, 'tpd_years_experience', $years_experience );
+		update_user_meta( $user_id, 'tpd_group_travel_spec', $group_travel_spec );
+		update_user_meta( $user_id, 'tpd_clients_per_year', $clients_per_year );
+		update_user_meta( $user_id, 'tpd_personal_sales_volume', $sales_volume );
+		update_user_meta( $user_id, 'tpd_sales_volume_goal', $sales_volume_goal );
+		update_user_meta( $user_id, 'tpd_preferred_suppliers', $pref_suppliers );
+		update_user_meta( $user_id, 'tpd_travel_types', $travel_types );
+		update_user_meta( $user_id, 'tpd_home_airports', $home_airports );
+		update_user_meta( $user_id, 'tpd_country', $country );
+		update_user_meta( $user_id, 'tpd_accolades', $accolades );
+		update_user_meta( $user_id, 'tpd_portfolio_highlights', $portfolio );
+		update_user_meta( $user_id, 'tpd_social_facebook', $social_facebook );
+		update_user_meta( $user_id, 'tpd_social_twitter', $social_twitter );
+		update_user_meta( $user_id, 'tpd_social_youtube', $social_youtube );
+		update_user_meta( $user_id, 'tpd_social_instagram', $social_instagram );
+		update_user_meta( $user_id, 'tpd_social_tiktok', $social_tiktok );
+		update_user_meta( $user_id, 'tpd_social_linkedin', $social_linkedin );
 
 		// Find or create paired travel_advisor CPT
 		$query = get_posts( array(
@@ -124,6 +167,7 @@ class TPD_Tool_Profile_Editor {
 			$post_id = wp_insert_post( array(
 				'post_type'    => 'travel_advisor',
 				'post_title'   => $display_name ?: 'Travel Advisor',
+				'post_name'    => sanitize_title( $profile_handle ?: $display_name ),
 				'post_content' => $bio,
 				'post_status'  => 'publish',
 				'post_author'  => $user_id,
@@ -131,25 +175,49 @@ class TPD_Tool_Profile_Editor {
 			update_post_meta( $post_id, 'tpd_assigned_user', $user_id );
 		} else {
 			$post_id = $query[0];
-			wp_update_post( array(
+			$upd_post = array(
 				'ID'           => $post_id,
 				'post_title'   => $display_name ?: get_the_title( $post_id ),
 				'post_content' => $bio,
-			) );
+			);
+			if ( $profile_handle ) {
+				$upd_post['post_name'] = sanitize_title( $profile_handle );
+			}
+			wp_update_post( $upd_post );
 		}
 
 		if ( $post_id && ! is_wp_error( $post_id ) ) {
+			update_post_meta( $post_id, 'tpd_profile_handle', $profile_handle );
 			update_post_meta( $post_id, 'tpd_agency_name', $agency_name );
 			update_post_meta( $post_id, 'tpd_agency_address', $agency_address );
 			update_post_meta( $post_id, 'tpd_phone', $phone );
 			update_post_meta( $post_id, 'tpd_location', $location );
 			update_post_meta( $post_id, 'tpd_website', $website );
+			update_post_meta( $post_id, 'tpd_has_host', $has_host );
 			update_post_meta( $post_id, 'tpd_consortia', $consortia );
 			update_post_meta( $post_id, 'tpd_host_agency', $host_agency );
 			update_post_meta( $post_id, 'tpd_clia_number', $clia_num );
 			update_post_meta( $post_id, 'tpd_iata_number', $iata_num );
 			update_post_meta( $post_id, 'tpd_arc_number', $arc_num );
 			update_post_meta( $post_id, 'tpd_true_number', $true_num );
+			update_post_meta( $post_id, 'tpd_consultation_fee', $consultation_fee );
+			update_post_meta( $post_id, 'tpd_years_experience', $years_experience );
+			update_post_meta( $post_id, 'tpd_group_travel_spec', $group_travel_spec );
+			update_post_meta( $post_id, 'tpd_clients_per_year', $clients_per_year );
+			update_post_meta( $post_id, 'tpd_personal_sales_volume', $sales_volume );
+			update_post_meta( $post_id, 'tpd_sales_volume_goal', $sales_volume_goal );
+			update_post_meta( $post_id, 'tpd_preferred_suppliers', $pref_suppliers );
+			update_post_meta( $post_id, 'tpd_travel_types', $travel_types );
+			update_post_meta( $post_id, 'tpd_home_airports', $home_airports );
+			update_post_meta( $post_id, 'tpd_country', $country );
+			update_post_meta( $post_id, 'tpd_accolades', $accolades );
+			update_post_meta( $post_id, 'tpd_portfolio_highlights', $portfolio );
+			update_post_meta( $post_id, 'tpd_social_facebook', $social_facebook );
+			update_post_meta( $post_id, 'tpd_social_twitter', $social_twitter );
+			update_post_meta( $post_id, 'tpd_social_youtube', $social_youtube );
+			update_post_meta( $post_id, 'tpd_social_instagram', $social_instagram );
+			update_post_meta( $post_id, 'tpd_social_tiktok', $social_tiktok );
+			update_post_meta( $post_id, 'tpd_social_linkedin', $social_linkedin );
 			if ( $headshot_url ) update_post_meta( $post_id, 'tpd_headshot_url', $headshot_url );
 			if ( $logo_url ) update_post_meta( $post_id, 'tpd_logo_url', $logo_url );
 			if ( $banner_url ) update_post_meta( $post_id, 'tpd_banner_url', $banner_url );
@@ -170,7 +238,7 @@ class TPD_Tool_Profile_Editor {
 		}
 
 		wp_send_json_success( array(
-			'message'      => __( 'Advisor profile & custom fields updated and synced with directory!', 'tpd-tool' ),
+			'message'      => __( 'Account Info & Directory Profile updated and synced!', 'tpd-tool' ),
 			'display_name' => $display_name,
 			'headshot_url' => $headshot_url,
 		) );

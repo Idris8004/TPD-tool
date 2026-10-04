@@ -48,8 +48,8 @@ class TPD_Tool_Registration {
 			wp_send_json_error( array( 'message' => __( 'Passwords do not match. Please verify your password confirmation.', 'tpd-tool' ) ) );
 		}
 
-		if ( strlen( $password ) < 8 ) {
-			wp_send_json_error( array( 'message' => __( 'Password must be at least 8 characters long.', 'tpd-tool' ) ) );
+		if ( strlen( $password ) < 6 ) {
+			wp_send_json_error( array( 'message' => __( 'Password must be at least 6 characters long.', 'tpd-tool' ) ) );
 		}
 
 		if ( ! is_email( $email ) ) {
@@ -73,12 +73,15 @@ class TPD_Tool_Registration {
 		$phone_code          = isset( $_POST['phone_country_code'] ) ? sanitize_text_field( wp_unslash( $_POST['phone_country_code'] ) ) : '';
 		$raw_phone           = isset( $_POST['phone'] ) ? sanitize_text_field( wp_unslash( $_POST['phone'] ) ) : '';
 		$phone               = trim( ( $phone_code ? $phone_code . ' ' : '' ) . $raw_phone );
-		$location            = isset( $_POST['location'] ) ? sanitize_text_field( wp_unslash( $_POST['location'] ) ) : '';
+		$profile_handle      = isset( $_POST['profile_handle'] ) ? sanitize_text_field( wp_unslash( $_POST['profile_handle'] ) ) : $username;
+		$country             = isset( $_POST['country'] ) ? sanitize_text_field( wp_unslash( $_POST['country'] ) ) : 'United States';
+		$location            = isset( $_POST['location'] ) ? sanitize_text_field( wp_unslash( $_POST['location'] ) ) : $country;
 		$agency_name         = isset( $_POST['agency_name'] ) ? sanitize_text_field( wp_unslash( $_POST['agency_name'] ) ) : '';
 		$agency_address      = isset( $_POST['agency_address'] ) ? sanitize_text_field( wp_unslash( $_POST['agency_address'] ) ) : '';
 		$business_structure  = isset( $_POST['business_structure'] ) ? sanitize_text_field( wp_unslash( $_POST['business_structure'] ) ) : '';
 		$agency_structure    = isset( $_POST['agency_structure'] ) ? sanitize_text_field( wp_unslash( $_POST['agency_structure'] ) ) : '';
 		$years_experience    = isset( $_POST['years_experience'] ) ? sanitize_text_field( wp_unslash( $_POST['years_experience'] ) ) : '';
+		$clients_per_year    = isset( $_POST['clients_per_year'] ) ? sanitize_text_field( wp_unslash( $_POST['clients_per_year'] ) ) : '';
 		$agency_advisors_cnt = isset( $_POST['agency_advisors_count'] ) ? sanitize_text_field( wp_unslash( $_POST['agency_advisors_count'] ) ) : '';
 		$sales_volume        = isset( $_POST['sales_volume'] ) ? sanitize_text_field( wp_unslash( $_POST['sales_volume'] ) ) : '';
 		$agency_sales_volume = isset( $_POST['agency_sales_volume'] ) ? sanitize_text_field( wp_unslash( $_POST['agency_sales_volume'] ) ) : '';
@@ -108,6 +111,8 @@ class TPD_Tool_Registration {
 
 		// Save User Meta (100% synced for CSV export, Admin Hub, and Dashboard)
 		update_user_meta( $user_id, 'tpd_account_status', 'active' );
+		update_user_meta( $user_id, 'tpd_profile_handle', $profile_handle );
+		update_user_meta( $user_id, 'tpd_country', $country );
 		update_user_meta( $user_id, 'tpd_phone', $phone );
 		update_user_meta( $user_id, 'tpd_location', $location );
 		update_user_meta( $user_id, 'tpd_agency_name', $agency_name );
@@ -115,6 +120,7 @@ class TPD_Tool_Registration {
 		update_user_meta( $user_id, 'tpd_business_structure', $business_structure );
 		update_user_meta( $user_id, 'tpd_agency_structure', $agency_structure );
 		update_user_meta( $user_id, 'tpd_years_experience', $years_experience );
+		update_user_meta( $user_id, 'tpd_clients_per_year', $clients_per_year );
 		update_user_meta( $user_id, 'tpd_agency_advisors_count', $agency_advisors_cnt );
 		update_user_meta( $user_id, 'tpd_personal_sales_volume', $sales_volume );
 		update_user_meta( $user_id, 'tpd_agency_sales_volume', $agency_sales_volume );
@@ -135,6 +141,7 @@ class TPD_Tool_Registration {
 		$post_id = wp_insert_post( array(
 			'post_type'    => 'travel_advisor',
 			'post_title'   => $display_name ?: $username,
+			'post_name'    => sanitize_title( $profile_handle ?: $display_name ),
 			'post_content' => '',
 			'post_status'  => 'publish',
 			'post_author'  => $user_id,
@@ -142,11 +149,14 @@ class TPD_Tool_Registration {
 
 		if ( ! is_wp_error( $post_id ) ) {
 			update_post_meta( $post_id, 'tpd_assigned_user', $user_id );
+			update_post_meta( $post_id, 'tpd_profile_handle', $profile_handle );
+			update_post_meta( $post_id, 'tpd_country', $country );
 			update_post_meta( $post_id, 'tpd_agency_name', $agency_name );
 			update_post_meta( $post_id, 'tpd_agency_address', $agency_address );
 			update_post_meta( $post_id, 'tpd_business_structure', $business_structure );
 			update_post_meta( $post_id, 'tpd_agency_structure', $agency_structure );
 			update_post_meta( $post_id, 'tpd_years_experience', $years_experience );
+			update_post_meta( $post_id, 'tpd_clients_per_year', $clients_per_year );
 			update_post_meta( $post_id, 'tpd_agency_advisors_count', $agency_advisors_cnt );
 			update_post_meta( $post_id, 'tpd_personal_sales_volume', $sales_volume );
 			update_post_meta( $post_id, 'tpd_agency_sales_volume', $agency_sales_volume );
@@ -217,8 +227,8 @@ class TPD_Tool_Registration {
 			wp_send_json_error( array( 'message' => __( 'Passwords do not match. Please check your password confirmation.', 'tpd-tool' ) ) );
 		}
 
-		if ( strlen( $password ) < 8 ) {
-			wp_send_json_error( array( 'message' => __( 'Password must be at least 8 characters long.', 'tpd-tool' ) ) );
+		if ( strlen( $password ) < 6 ) {
+			wp_send_json_error( array( 'message' => __( 'Password must be at least 6 characters long.', 'tpd-tool' ) ) );
 		}
 
 		if ( ! is_email( $email ) ) {

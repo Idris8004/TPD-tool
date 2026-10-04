@@ -66,28 +66,30 @@
 
 		// 2. Multi-Step Registration Wizard Navigation & Validation
 		function goToWizardStep($form, nextStep) {
-			$form.find('.tpd-wizard-pane').removeClass('active');
-			$form.find('.tpd-wizard-pane[data-step="' + nextStep + '"]').addClass('active');
+			$form.find('.tpd-wizard-pane, .tpd-step-pane').removeClass('active');
+			$form.find('.tpd-wizard-pane[data-step="' + nextStep + '"], .tpd-step-pane[data-step-pane="' + nextStep + '"]').addClass('active');
 
-			var $stepper = $form.closest('.tpd-reg-form-panel').find('.tpd-wizard-stepper');
-			$stepper.find('.tpd-w-step').each(function() {
+			$('.tpd-w-step').each(function() {
 				var stepNum = parseInt($(this).data('step'), 10);
-				$(this).removeClass('active done');
+				$(this).removeClass('active done completed');
 				if (stepNum < nextStep) {
-					$(this).addClass('done');
+					$(this).addClass('done completed');
 				} else if (stepNum === nextStep) {
 					$(this).addClass('active');
 				}
 			});
 
-			window.scrollTo({ top: $form.closest('.tpd-reg-card').offset().top - 30, behavior: 'smooth' });
+			var $card = $form.closest('.tpd-reg-card, .tpd-split-card');
+			if ($card.length) {
+				window.scrollTo({ top: Math.max(0, $card.offset().top - 30), behavior: 'smooth' });
+			}
 		}
 
 		$(document).on('click', '.tpd-wizard-next-btn', function(e) {
 			e.preventDefault();
 			var $btn = $(this);
 			var $form = $btn.closest('form');
-			var $currentPane = $btn.closest('.tpd-wizard-pane');
+			var $currentPane = $btn.closest('.tpd-wizard-pane, .tpd-step-pane');
 			var nextStep = parseInt($btn.data('next'), 10);
 
 			// Validate required fields inside current pane
@@ -98,10 +100,10 @@
 				var val = $(this).val();
 				if (!val || $.trim(val) === '') {
 					isValid = false;
-					$(this).css('border-color', '#ef4444');
+					$(this).css({ 'border-color': '#ef4444', 'border-bottom-color': '#ef4444' });
 					if (!firstInvalid) firstInvalid = $(this);
 				} else {
-					$(this).css('border-color', '#cbd5e1');
+					$(this).css({ 'border-color': '#cbd5e1', 'border-bottom-color': '#334155' });
 				}
 			});
 
@@ -111,17 +113,17 @@
 				return;
 			}
 
-			// Step 1 password match check
+			// Step password match check if password fields are inside current pane
 			var $pwd = $currentPane.find('input[name="password"]');
 			var $confirmPwd = $currentPane.find('input[name="confirm_password"]');
 			if ($pwd.length && $confirmPwd.length) {
 				if ($pwd.val().length < 6) {
-					$pwd.css('border-color', '#ef4444').focus();
+					$pwd.css({ 'border-color': '#ef4444', 'border-bottom-color': '#ef4444' }).focus();
 					showToast('<i class="fa-solid fa-lock"></i> Password must be at least 6 characters.');
 					return;
 				}
 				if ($pwd.val() !== $confirmPwd.val()) {
-					$confirmPwd.css('border-color', '#ef4444').focus();
+					$confirmPwd.css({ 'border-color': '#ef4444', 'border-bottom-color': '#ef4444' }).focus();
 					showToast('<i class="fa-solid fa-triangle-exclamation"></i> Passwords do not match. Please verify Confirm Password.');
 					return;
 				}
@@ -153,6 +155,40 @@
 				} else {
 					$checkoutBox.slideUp(200);
 				}
+			}
+		});
+
+		// Account Info Horizontal Sub-Tab Filtering (Personal Info, About Me, Certification, Specialties, etc.)
+		$(document).on('click', '.tpd-acct-nav-item[data-sec]', function(e) {
+			e.preventDefault();
+			var sec = $(this).data('sec');
+			$('.tpd-acct-nav-item').removeClass('active').css({ 'color': '#475569', 'border-bottom': 'none', 'font-weight': '600' });
+			$(this).addClass('active').css({ 'color': '#00798c', 'border-bottom': '2.5px solid #00798c', 'font-weight': '700' });
+
+			if (sec === 'all') {
+				$('.tpd-acct-section').show();
+			} else {
+				$('.tpd-acct-section').hide();
+				$('.tpd-acct-section[data-sec-pane="' + sec + '"]').fadeIn(200);
+			}
+		});
+
+		// Live Update Advisor Profile URL when Profile Handle changes
+		$(document).on('input', '#tpd-profile-handle-input', function() {
+			var slug = $(this).val().toLowerCase().replace(/[^a-z0-9-_]/g, '');
+			var base = (typeof tpd_data !== 'undefined' && tpd_data.site_url) ? tpd_data.site_url : window.location.origin;
+			$('#tpd-advisor-url-preview').val(base.replace(/\/$/, '') + '/travel-advisors/' + (slug || 'advisor') + '/');
+		});
+
+		// Preset Scenic Banner Image Radio Selection
+		$(document).on('change', '.tpd-preset-banner-radio', function() {
+			var url = $(this).val();
+			if (url) {
+				$('#tpd-preview-banner').attr('src', url);
+				$('#tpd_banner_url').val(url);
+				$('.tpd-preset-banner-tile').css('border-color', 'transparent');
+				$(this).closest('.tpd-preset-banner-tile').css('border-color', '#00798c');
+				showToast('<i class="fa-regular fa-image"></i> Preset banner selected! Click Submit to save.');
 			}
 		});
 
