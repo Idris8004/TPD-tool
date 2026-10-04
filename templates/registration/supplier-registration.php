@@ -559,7 +559,7 @@ if ( is_user_logged_in() && ! isset( $_GET['preview_form'] ) ) {
 
 				<!-- Footer Links inside Card -->
 				<div class="tpd-card-Support-links">
-					<span><?php esc_html_e( 'Already Registered ?', 'tpd-tool' ); ?> <a href="<?php echo esc_url( wp_login_url( home_url( '/supplier-dashboard/' ) ) ); ?>"><?php esc_html_e( 'Login', 'tpd-tool' ); ?></a></span>
+					<span><?php esc_html_e( 'Already Registered ?', 'tpd-tool' ); ?> <a href="<?php echo esc_url( home_url( '/supplier-login/' ) ); ?>"><?php esc_html_e( 'Login', 'tpd-tool' ); ?></a></span>
 					<a href="mailto:support@travelpartnerdirectory.com"><?php esc_html_e( 'Contact Support', 'tpd-tool' ); ?></a>
 					<a href="<?php echo esc_url( home_url( '/supplier-dashboard/#supp-help' ) ); ?>"><?php esc_html_e( 'How to Guide', 'tpd-tool' ); ?></a>
 				</div>

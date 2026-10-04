@@ -15,6 +15,10 @@ class TPD_Tool_Shortcodes {
 		add_shortcode( 'tpd_admin_dashboard', array( __CLASS__, 'render_admin_dashboard' ) );
 		add_shortcode( 'tpd_advisor_registration', array( __CLASS__, 'render_advisor_registration' ) );
 		add_shortcode( 'tpd_supplier_registration', array( __CLASS__, 'render_supplier_registration' ) );
+		add_shortcode( 'tpd_advisor_login', array( __CLASS__, 'render_advisor_login' ) );
+		add_shortcode( 'tpd_member_login', array( __CLASS__, 'render_advisor_login' ) );
+		add_shortcode( 'tpd_login', array( __CLASS__, 'render_advisor_login' ) );
+		add_shortcode( 'tpd_supplier_login', array( __CLASS__, 'render_supplier_login' ) );
 		add_shortcode( 'tpd_chat_inbox', array( __CLASS__, 'render_chat_inbox' ) );
 		add_shortcode( 'tpd_saved_suppliers', array( __CLASS__, 'render_saved_suppliers' ) );
 		add_shortcode( 'tpd_events_list', array( __CLASS__, 'render_events_list' ) );
@@ -41,6 +45,24 @@ class TPD_Tool_Shortcodes {
 	public static function render_admin_dashboard( $atts ) {
 		ob_start();
 		$template = TPD_TOOL_DIR . 'templates/admin/super-admin-dashboard.php';
+		if ( file_exists( $template ) ) {
+			include $template;
+		}
+		return ob_get_clean();
+	}
+
+	public static function render_advisor_login( $atts ) {
+		ob_start();
+		$template = TPD_TOOL_DIR . 'templates/auth/advisor-login.php';
+		if ( file_exists( $template ) ) {
+			include $template;
+		}
+		return ob_get_clean();
+	}
+
+	public static function render_supplier_login( $atts ) {
+		ob_start();
+		$template = TPD_TOOL_DIR . 'templates/auth/supplier-login.php';
 		if ( file_exists( $template ) ) {
 			include $template;
 		}

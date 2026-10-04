@@ -19,6 +19,12 @@ class TPD_Tool_Registration {
 		add_action( 'wp_ajax_tpd_register_supplier', array( __CLASS__, 'ajax_register_supplier' ) );
 		add_action( 'wp_ajax_nopriv_tpd_register_supplier', array( __CLASS__, 'ajax_register_supplier' ) );
 
+		add_action( 'wp_ajax_tpd_user_login', array( __CLASS__, 'ajax_user_login' ) );
+		add_action( 'wp_ajax_nopriv_tpd_user_login', array( __CLASS__, 'ajax_user_login' ) );
+
+		add_action( 'wp_ajax_tpd_forgot_password', array( __CLASS__, 'ajax_forgot_password' ) );
+		add_action( 'wp_ajax_nopriv_tpd_forgot_password', array( __CLASS__, 'ajax_forgot_password' ) );
+
 		add_shortcode( 'tpd_advisor_registration', array( __CLASS__, 'render_advisor_registration' ) );
 		add_shortcode( 'tpd_supplier_registration', array( __CLASS__, 'render_supplier_registration' ) );
 	}
@@ -315,6 +321,90 @@ class TPD_Tool_Registration {
 		wp_send_json_success( array(
 			'message'      => __( 'Supplier account & company listing created! Opening your Supplier Dashboard...', 'tpd-tool' ),
 			'redirect_url' => home_url( '/supplier-dashboard/' ),
+		) );
+	}
+
+	/**
+	 * AJAX Handler: Dedicated Frontend Login (Advisor & Supplier)
+	 * Authenticates user and automatically redirects to their role-specific dashboard.
+	 */
+	public static function ajax_user_login() {
+		check_ajax_referer( 'tpd_nonce', 'nonce' );
+
+		$username    = isset( $_POST['username'] ) ? sanitize_text_field( wp_unslash( $_POST['username'] ) ) : '';
+		$password    = isset( $_POST['password'] ) ? $_POST['password'] : '';
+		$remember    = ! empty( $_POST['remember'] );
+		$portal_type = isset( $_POST['portal_type'] ) ? sanitize_key( wp_unslash( $_POST['portal_type'] ) ) : 'advisor';
+
+		if ( empty( $username ) || empty( $password ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid username or password', 'tpd-tool' ) ) );
+		}
+
+		// Allow login with either Username or Email Address
+		if ( is_email( $username ) ) {
+			$u_obj = get_user_by( 'email', $username );
+			if ( $u_obj ) {
+				$username = $u_obj->user_login;
+			}
+		}
+
+		$creds = array(
+			'user_login'    => $username,
+			'user_password' => $password,
+			'remember'      => $remember,
+		);
+
+		$user = wp_signon( $creds, is_ssl() );
+		if ( is_wp_error( $user ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid username or password', 'tpd-tool' ) ) );
+		}
+
+		// Check if user account is suspended by Super Admin
+		$status = get_user_meta( $user->ID, 'tpd_account_status', true );
+		if ( 'suspended' === $status ) {
+			wp_logout();
+			wp_send_json_error( array( 'message' => __( 'Your account has been suspended. Please contact support.', 'tpd-tool' ) ) );
+		}
+
+		wp_set_current_user( $user->ID );
+		wp_set_auth_cookie( $user->ID, $remember );
+
+		// Determine automatic dashboard redirect based on user role
+		$roles = (array) $user->roles;
+		if ( in_array( 'supplier', $roles, true ) || in_array( 'supplier_partner', $roles, true ) ) {
+			$redirect_url = home_url( '/supplier-dashboard/' );
+		} elseif ( in_array( 'travel_advisor', $roles, true ) ) {
+			$redirect_url = home_url( '/advisor-dashboard/' );
+		} elseif ( in_array( 'administrator', $roles, true ) ) {
+			$redirect_url = ( 'supplier' === $portal_type ) ? home_url( '/supplier-dashboard/' ) : home_url( '/advisor-dashboard/' );
+		} else {
+			$redirect_url = ( 'supplier' === $portal_type ) ? home_url( '/supplier-dashboard/' ) : home_url( '/advisor-dashboard/' );
+		}
+
+		wp_send_json_success( array(
+			'message'      => __( 'Login successful! Redirecting to your dashboard...', 'tpd-tool' ),
+			'redirect_url' => $redirect_url,
+		) );
+	}
+
+	/**
+	 * AJAX Handler: Inline Forgot Password Request
+	 */
+	public static function ajax_forgot_password() {
+		check_ajax_referer( 'tpd_nonce', 'nonce' );
+
+		$user_login = isset( $_POST['user_login'] ) ? sanitize_text_field( wp_unslash( $_POST['user_login'] ) ) : '';
+		if ( empty( $user_login ) ) {
+			wp_send_json_error( array( 'message' => __( 'Please enter your username or email address.', 'tpd-tool' ) ) );
+		}
+
+		$result = retrieve_password( $user_login );
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array( 'message' => __( 'If an account matches that username or email, a password reset link has been sent.', 'tpd-tool' ) ) );
+		}
+
+		wp_send_json_success( array(
+			'message' => __( 'A password reset link has been emailed to your registered address.', 'tpd-tool' ),
 		) );
 	}
 

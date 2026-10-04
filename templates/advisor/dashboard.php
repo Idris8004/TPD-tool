@@ -222,7 +222,7 @@ $news_posts = get_posts( array(
 					</div>
 				</div>
 
-				<a href="<?php echo esc_url( wp_logout_url( home_url( '/advisor-registration/' ) ) ); ?>" class="tpd-top-icon-btn" title="<?php esc_attr_e( 'Log Out', 'tpd-tool' ); ?>" style="text-decoration:none; color:#64748b;">
+				<a href="<?php echo esc_url( wp_logout_url( home_url( '/advisor-login/' ) ) ); ?>" class="tpd-top-icon-btn" title="<?php esc_attr_e( 'Log Out', 'tpd-tool' ); ?>" style="text-decoration:none; color:#64748b;">
 					<i class="fa-solid fa-right-from-bracket"></i>
 				</a>
 			</div>

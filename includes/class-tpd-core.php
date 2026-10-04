@@ -128,6 +128,24 @@ class TPD_Tool_Core {
 			}
 		}
 
+		// Advisor / Member Login Page
+		if ( in_array( $uri, array( 'advisor-login', 'member-login', 'tpd-login' ), true ) || is_page( array( 'advisor-login', 'member-login', 'tpd-login' ) ) ) {
+			$file = TPD_TOOL_DIR . 'templates/auth/advisor-login.php';
+			if ( file_exists( $file ) ) {
+				status_header( 200 );
+				return $file;
+			}
+		}
+
+		// Supplier Login Page
+		if ( $uri === 'supplier-login' || is_page( 'supplier-login' ) ) {
+			$file = TPD_TOOL_DIR . 'templates/auth/supplier-login.php';
+			if ( file_exists( $file ) ) {
+				status_header( 200 );
+				return $file;
+			}
+		}
+
 		return $template;
 	}
 
