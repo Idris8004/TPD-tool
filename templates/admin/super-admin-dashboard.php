@@ -1018,6 +1018,66 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 						</button>
 					</form>
 				</div>
+
+				<!-- Elementor Dynamic Tags, ACF Keys & Shortcodes Reference -->
+				<div class="tpd-sa-card">
+					<h3 class="tpd-sa-card-title"><i class="fa-brands fa-elementor" style="color:#92003b;"></i> <?php esc_html_e( 'Elementor Dynamic Tags, ACF Field Keys & Shortcodes Reference', 'tpd-tool' ); ?></h3>
+					<p style="font-size:13px; color:#64748b; margin-top:-6px; margin-bottom:16px;">
+						<?php esc_html_e( 'Every Advisor and Supplier dashboard field is automatically registered as an ACF Field Group, exposed to Elementor Dynamic Tags ("TPD Directory & Dashboard Fields"), available in the "TPD Dynamic Field" Elementor Widget, and callable via shortcode.', 'tpd-tool' ); ?>
+					</p>
+					<?php
+					$master_catalog = class_exists( 'TPD_Tool_CPT' ) ? TPD_Tool_CPT::get_master_field_catalog() : array();
+					?>
+					<div style="display:grid; grid-template-columns: 1fr 1fr; gap:18px;">
+						<div>
+							<h4 style="margin:0 0 10px; font-size:14px; color:#164e87;"><?php esc_html_e( 'Travel Advisor Fields (CPT: travel_advisor)', 'tpd-tool' ); ?></h4>
+							<div style="max-height:340px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px;">
+								<table class="tpd-sa-table" style="font-size:12px;">
+									<thead>
+										<tr>
+											<th>Field Label</th>
+											<th>ACF / Meta Key</th>
+											<th>Shortcode</th>
+										</tr>
+									</thead>
+									<tbody>
+										<?php if ( ! empty( $master_catalog['advisor'] ) ) : foreach ( $master_catalog['advisor'] as $f_key => $f_cfg ) : ?>
+											<tr>
+												<td><strong><?php echo esc_html( $f_cfg['label'] ); ?></strong></td>
+												<td><code><?php echo esc_html( $f_cfg['meta_key'] ); ?></code></td>
+												<td><code>[tpd_field key="<?php echo esc_attr( $f_key ); ?>"]</code></td>
+											</tr>
+										<?php endforeach; endif; ?>
+									</tbody>
+								</table>
+							</div>
+						</div>
+
+						<div>
+							<h4 style="margin:0 0 10px; font-size:14px; color:#164e87;"><?php esc_html_e( 'Supplier Listing Fields (CPT: supplier_listing)', 'tpd-tool' ); ?></h4>
+							<div style="max-height:340px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px;">
+								<table class="tpd-sa-table" style="font-size:12px;">
+									<thead>
+										<tr>
+											<th>Field Label</th>
+											<th>ACF / Meta Key</th>
+											<th>Shortcode</th>
+										</tr>
+									</thead>
+									<tbody>
+										<?php if ( ! empty( $master_catalog['supplier'] ) ) : foreach ( $master_catalog['supplier'] as $f_key => $f_cfg ) : ?>
+											<tr>
+												<td><strong><?php echo esc_html( $f_cfg['label'] ); ?></strong></td>
+												<td><code><?php echo esc_html( $f_cfg['meta_key'] ); ?></code></td>
+												<td><code>[tpd_field key="<?php echo esc_attr( $f_key ); ?>"]</code></td>
+											</tr>
+										<?php endforeach; endif; ?>
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
 
 			<!-- =========================================================================

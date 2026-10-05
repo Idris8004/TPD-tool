@@ -1,8 +1,7 @@
 <?php
 /**
- * Custom Post Types, Taxonomies, Native Meta Boxes, Bi-Directional Sync & Dynamic ACF Bridge for TPD Tool
- * Connects WP Admin Custom Post Types (travel_advisor, supplier_listing, supplier_blog, tpd_event, tpd_inquiry)
- * 100% bi-directionally with the Frontend Advisor & Supplier Dashboards and ACF Field Groups.
+ * Custom Post Types, Taxonomies, Native Meta Boxes, Bi-Directional Sync,
+ * Full ACF Field Groups & Universal Elementor/ACF Field Resolver for TPD Tool.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -14,10 +13,11 @@ class TPD_Tool_CPT {
 	/**
 	 * Built-in ACF group keys so we don't duplicate core fields when rendering user-created ACF groups
 	 */
-	const BUILTIN_ACF_GROUPS = array( 'group_tpd_tool_advisor', 'group_tpd_tool_supplier' );
+	const BUILTIN_ACF_GROUPS = array( 'group_tpd_tool_advisor', 'group_tpd_tool_supplier', 'group_tpd_tool_event' );
 
 	public static function init() {
 		add_action( 'init', array( __CLASS__, 'register_all' ), 0 );
+		add_action( 'init', array( __CLASS__, 'register_rest_meta' ), 15 );
 		add_action( 'acf/init', array( __CLASS__, 'register_acf_fields' ) );
 		add_action( 'add_meta_boxes', array( __CLASS__, 'register_native_meta_boxes' ) );
 		add_action( 'save_post', array( __CLASS__, 'save_native_meta_boxes_and_sync_user' ), 20, 2 );
@@ -33,6 +33,315 @@ class TPD_Tool_CPT {
 	public static function register_all() {
 		self::register_taxonomies();
 		self::register_cpts();
+	}
+
+	/**
+	 * Master Catalog of All Dashboard & Directory Fields (Advisor, Supplier, Event & Analytics)
+	 * Used by ACF Local Field Groups, WP REST API, Elementor Dynamic Tags, Elementor Widgets, and Shortcodes.
+	 */
+	public static function get_master_field_catalog() {
+		$catalog = array(
+			'advisor' => array(
+				// Identity & Contact
+				'display_name'             => array( 'label' => 'Advisor Full Name', 'type' => 'text', 'meta_key' => 'display_name' ),
+				'first_name'               => array( 'label' => 'Advisor First Name', 'type' => 'text', 'meta_key' => 'first_name' ),
+				'last_name'                => array( 'label' => 'Advisor Last Name', 'type' => 'text', 'meta_key' => 'last_name' ),
+				'email'                    => array( 'label' => 'Advisor Email Address', 'type' => 'email', 'meta_key' => 'user_email' ),
+				'tpd_phone'                => array( 'label' => 'Advisor Phone Number', 'type' => 'text', 'meta_key' => 'tpd_phone' ),
+				'tpd_profile_handle'       => array( 'label' => 'Advisor Profile Handle / Slug', 'type' => 'text', 'meta_key' => 'tpd_profile_handle' ),
+				'tpd_location'             => array( 'label' => 'Advisor Location (City, State)', 'type' => 'text', 'meta_key' => 'tpd_location' ),
+				'tpd_country'              => array( 'label' => 'Advisor Country', 'type' => 'text', 'meta_key' => 'tpd_country' ),
+				'tpd_home_airports'        => array( 'label' => 'Home Airport(s)', 'type' => 'text', 'meta_key' => 'tpd_home_airports' ),
+				'tpd_website'              => array( 'label' => 'Advisor Website URL', 'type' => 'url', 'meta_key' => 'tpd_website' ),
+				'bio'                      => array( 'label' => 'Advisor Biography / About Me', 'type' => 'wysiwyg', 'meta_key' => 'post_content' ),
+
+				// Agency & Affiliation
+				'tpd_agency_name'           => array( 'label' => 'Agency Name', 'type' => 'text', 'meta_key' => 'tpd_agency_name' ),
+				'tpd_agency_address'        => array( 'label' => 'Agency Street Address', 'type' => 'text', 'meta_key' => 'tpd_agency_address' ),
+				'tpd_business_structure'    => array( 'label' => 'Advisor Role / Business Structure', 'type' => 'text', 'meta_key' => 'tpd_business_structure' ),
+				'tpd_agency_structure'      => array( 'label' => 'Agency Structure (Host / Independent)', 'type' => 'text', 'meta_key' => 'tpd_agency_structure' ),
+				'tpd_has_host'              => array( 'label' => 'Affiliated with Host Agency (Yes/No)', 'type' => 'text', 'meta_key' => 'tpd_has_host' ),
+				'tpd_consortia'             => array( 'label' => 'Consortia Affiliation', 'type' => 'text', 'meta_key' => 'tpd_consortia' ),
+				'tpd_host_agency'           => array( 'label' => 'Host Agency / Franchise Name', 'type' => 'text', 'meta_key' => 'tpd_host_agency' ),
+
+				// Experience, Sales & Credentials
+				'tpd_years_experience'      => array( 'label' => 'Year Started / Years in Industry', 'type' => 'text', 'meta_key' => 'tpd_years_experience' ),
+				'tpd_clients_per_year'      => array( 'label' => 'Clients Booked Per Year', 'type' => 'text', 'meta_key' => 'tpd_clients_per_year' ),
+				'tpd_personal_sales_volume' => array( 'label' => 'Annual Gross Sales Volume', 'type' => 'text', 'meta_key' => 'tpd_personal_sales_volume' ),
+				'tpd_sales_volume_goal'     => array( 'label' => 'Current Year Sales Volume Goal', 'type' => 'text', 'meta_key' => 'tpd_sales_volume_goal' ),
+				'tpd_agency_sales_volume'   => array( 'label' => 'Agency Total Sales Volume', 'type' => 'text', 'meta_key' => 'tpd_agency_sales_volume' ),
+				'tpd_agency_advisors_count' => array( 'label' => 'Number of Advisors in Agency', 'type' => 'text', 'meta_key' => 'tpd_agency_advisors_count' ),
+				'tpd_consultation_fee'      => array( 'label' => 'Charges Consultation Fee (Yes/No)', 'type' => 'text', 'meta_key' => 'tpd_consultation_fee' ),
+				'tpd_group_travel_spec'     => array( 'label' => 'Group Travel Specialty', 'type' => 'text', 'meta_key' => 'tpd_group_travel_spec' ),
+				'tpd_clia_number'           => array( 'label' => 'CLIA Number', 'type' => 'text', 'meta_key' => 'tpd_clia_number' ),
+				'tpd_iata_number'           => array( 'label' => 'IATA Number', 'type' => 'text', 'meta_key' => 'tpd_iata_number' ),
+				'tpd_arc_number'            => array( 'label' => 'ARC Number', 'type' => 'text', 'meta_key' => 'tpd_arc_number' ),
+				'tpd_true_number'           => array( 'label' => 'TRUE Number', 'type' => 'text', 'meta_key' => 'tpd_true_number' ),
+
+				// Specialties, Taxonomies & Portfolio
+				'tpd_travel_types'          => array( 'label' => 'Travel Types / Specialties', 'type' => 'text', 'meta_key' => 'tpd_travel_types' ),
+				'tpd_preferred_suppliers'   => array( 'label' => 'Preferred Suppliers', 'type' => 'text', 'meta_key' => 'tpd_preferred_suppliers' ),
+				'tpd_accolades'             => array( 'label' => 'Certifications & Accolades', 'type' => 'text', 'meta_key' => 'tpd_accolades' ),
+				'tpd_portfolio_highlights'  => array( 'label' => 'Portfolio Highlights', 'type' => 'textarea', 'meta_key' => 'tpd_portfolio_highlights' ),
+				'tax_destinations'          => array( 'label' => 'Destinations (Taxonomy List)', 'type' => 'text', 'meta_key' => 'tax:travel_destination' ),
+				'tax_travel_styles'         => array( 'label' => 'Travel Styles (Taxonomy List)', 'type' => 'text', 'meta_key' => 'tax:travel_style' ),
+				'tpd_user_tier'             => array( 'label' => 'Membership Plan Tier', 'type' => 'text', 'meta_key' => 'tpd_user_tier' ),
+
+				// Media & Social Links
+				'tpd_headshot_url'          => array( 'label' => 'Advisor Headshot Photo', 'type' => 'image', 'meta_key' => 'tpd_headshot_url' ),
+				'tpd_logo_url'              => array( 'label' => 'Agency Logo Image', 'type' => 'image', 'meta_key' => 'tpd_logo_url' ),
+				'tpd_banner_url'            => array( 'label' => 'Profile Cover Banner Image', 'type' => 'image', 'meta_key' => 'tpd_banner_url' ),
+				'tpd_social_facebook'       => array( 'label' => 'Facebook URL', 'type' => 'url', 'meta_key' => 'tpd_social_facebook' ),
+				'tpd_social_instagram'      => array( 'label' => 'Instagram URL', 'type' => 'url', 'meta_key' => 'tpd_social_instagram' ),
+				'tpd_social_linkedin'       => array( 'label' => 'LinkedIn URL', 'type' => 'url', 'meta_key' => 'tpd_social_linkedin' ),
+				'tpd_social_youtube'        => array( 'label' => 'YouTube URL', 'type' => 'url', 'meta_key' => 'tpd_social_youtube' ),
+				'tpd_social_tiktok'         => array( 'label' => 'TikTok URL', 'type' => 'url', 'meta_key' => 'tpd_social_tiktok' ),
+				'tpd_social_twitter'        => array( 'label' => 'X / Twitter URL', 'type' => 'url', 'meta_key' => 'tpd_social_twitter' ),
+			),
+
+			'supplier' => array(
+				// Brand & Showcase Info
+				'tpd_company_name'         => array( 'label' => 'Supplier / Company Name', 'type' => 'text', 'meta_key' => 'tpd_company_name' ),
+				'tpd_tagline'              => array( 'label' => 'Brand Tagline / Value Proposition', 'type' => 'text', 'meta_key' => 'tpd_tagline' ),
+				'supplier_description'     => array( 'label' => 'Supplier Full Description / Overview', 'type' => 'wysiwyg', 'meta_key' => 'post_content' ),
+				'tpd_headquarters'         => array( 'label' => 'Headquarters Location', 'type' => 'text', 'meta_key' => 'tpd_headquarters' ),
+				'tpd_country_of_residence' => array( 'label' => 'Supplier Country', 'type' => 'text', 'meta_key' => 'tpd_country_of_residence' ),
+				'tpd_booking_portal_url'   => array( 'label' => 'Advisor Booking Portal URL', 'type' => 'url', 'meta_key' => 'tpd_booking_portal_url' ),
+				'tpd_primary_rep_phone'    => array( 'label' => 'Trade Desk / Rep Phone Number', 'type' => 'text', 'meta_key' => 'tpd_primary_rep_phone' ),
+				'tpd_position_title'       => array( 'label' => 'Primary Rep Position / Title', 'type' => 'text', 'meta_key' => 'tpd_position_title' ),
+				'rep_full_name'            => array( 'label' => 'Primary Rep Full Name', 'type' => 'text', 'meta_key' => 'display_name' ),
+				'rep_email'                => array( 'label' => 'Primary Rep Email Address', 'type' => 'email', 'meta_key' => 'user_email' ),
+
+				// Trade Programs & Memberships
+				'tpd_agent_rewards'        => array( 'label' => 'Agent Rewards Program (Yes/No)', 'type' => 'text', 'meta_key' => 'tpd_agent_rewards' ),
+				'tpd_member_ustoa'         => array( 'label' => 'Member of USTOA (Yes/No)', 'type' => 'text', 'meta_key' => 'tpd_member_ustoa' ),
+				'tpd_member_asta'          => array( 'label' => 'Member of ASTA (Yes/No)', 'type' => 'text', 'meta_key' => 'tpd_member_asta' ),
+				'tpd_featured_supplier'    => array( 'label' => 'Featured Spotlight Status (yes/no)', 'type' => 'text', 'meta_key' => 'tpd_featured_supplier' ),
+				'tpd_promo_title'          => array( 'label' => 'Advisor Incentive / Promo Headline', 'type' => 'text', 'meta_key' => 'tpd_promo_title' ),
+				'tpd_promo_desc'           => array( 'label' => 'Advisor Incentive / Promo Details', 'type' => 'textarea', 'meta_key' => 'tpd_promo_desc' ),
+
+				// Media
+				'tpd_logo_url'             => array( 'label' => 'Supplier Brand Logo Image', 'type' => 'image', 'meta_key' => 'tpd_logo_url' ),
+				'tpd_banner_url'           => array( 'label' => 'Supplier Showcase Hero Banner', 'type' => 'image', 'meta_key' => 'tpd_banner_url' ),
+				'tpd_main_video_url'       => array( 'label' => 'Main Showcase Video URL', 'type' => 'url', 'meta_key' => 'tpd_main_video_url' ),
+			),
+
+			'event' => array(
+				'_tpd_event_date'          => array( 'label' => 'Event Date (YYYY-MM-DD)', 'type' => 'text', 'meta_key' => '_tpd_event_date' ),
+				'_tpd_event_month'         => array( 'label' => 'Event Month (3-Letter)', 'type' => 'text', 'meta_key' => '_tpd_event_month' ),
+				'_tpd_event_day'           => array( 'label' => 'Event Day (DD)', 'type' => 'text', 'meta_key' => '_tpd_event_day' ),
+				'_tpd_event_time'          => array( 'label' => 'Event Time', 'type' => 'text', 'meta_key' => '_tpd_event_time' ),
+				'_tpd_event_series'        => array( 'label' => 'Event Series / Host Name', 'type' => 'text', 'meta_key' => '_tpd_event_series' ),
+			),
+		);
+
+		// Append any custom fields created in the TPD Super Admin Hub
+		if ( class_exists( 'TPD_Tool_Settings' ) ) {
+			$custom_fields = TPD_Tool_Settings::get_custom_fields( 'all' );
+			foreach ( $custom_fields as $cf_key => $cf ) {
+				$target = ! empty( $cf['target'] ) ? $cf['target'] : 'advisor';
+				$entry  = array(
+					'label'    => $cf['label'] . ' (Custom)',
+					'type'     => ! empty( $cf['type'] ) ? $cf['type'] : 'text',
+					'meta_key' => $cf_key,
+				);
+				if ( 'advisor' === $target || 'both' === $target ) {
+					$catalog['advisor'][ $cf_key ] = $entry;
+				}
+				if ( 'supplier' === $target || 'both' === $target ) {
+					$catalog['supplier'][ $cf_key ] = $entry;
+				}
+			}
+		}
+
+		return $catalog;
+	}
+
+	/**
+	 * Universal Field Resolver for Elementor Dynamic Tags, Widgets, and Shortcodes
+	 * Automatically resolves from Current Post / Loop Item OR Logged-In User.
+	 */
+	public static function resolve_field_value( $field_key, $post_id = 0, $user_id = 0, $source_mode = 'auto' ) {
+		$field_key = trim( (string) $field_key );
+		if ( '' === $field_key ) {
+			return '';
+		}
+
+		// Determine post_id and user_id based on source_mode
+		if ( 'current_user' === $source_mode ) {
+			$user_id = $user_id ?: get_current_user_id();
+			if ( $user_id && ! $post_id ) {
+				$linked = get_posts( array(
+					'post_type'      => array( 'travel_advisor', 'supplier_listing' ),
+					'posts_per_page' => 1,
+					'meta_key'       => 'tpd_assigned_user',
+					'meta_value'     => $user_id,
+					'fields'         => 'ids',
+				) );
+				if ( ! empty( $linked ) ) {
+					$post_id = $linked[0];
+				}
+			}
+		} else {
+			if ( ! $post_id ) {
+				$post_id = get_the_ID();
+			}
+			// If current page is not a TPD CPT, fall back to logged-in user's paired CPT
+			$pt = $post_id ? get_post_type( $post_id ) : '';
+			if ( ! in_array( $pt, array( 'travel_advisor', 'supplier_listing', 'supplier_blog', 'tpd_event', 'tpd_inquiry' ), true ) ) {
+				if ( ! $user_id ) {
+					$user_id = get_current_user_id();
+				}
+				if ( $user_id ) {
+					$linked = get_posts( array(
+						'post_type'      => array( 'travel_advisor', 'supplier_listing' ),
+						'posts_per_page' => 1,
+						'meta_key'       => 'tpd_assigned_user',
+						'meta_value'     => $user_id,
+						'fields'         => 'ids',
+					) );
+					if ( ! empty( $linked ) ) {
+						$post_id = $linked[0];
+					}
+				}
+			} elseif ( ! $user_id && $post_id ) {
+				$user_id = (int) get_post_meta( $post_id, 'tpd_assigned_user', true );
+				if ( ! $user_id ) {
+					$user_id = (int) get_post_field( 'post_author', $post_id );
+				}
+			}
+		}
+
+		// Special taxonomy prefix: tax:travel_destination, tax:travel_style, etc.
+		if ( 0 === strpos( $field_key, 'tax:' ) && $post_id ) {
+			$tax  = substr( $field_key, 4 );
+			$terms = get_the_terms( $post_id, $tax );
+			if ( ! empty( $terms ) && ! is_wp_error( $terms ) ) {
+				return implode( ', ', wp_list_pluck( $terms, 'name' ) );
+			}
+			return '';
+		}
+		if ( 'tax_destinations' === $field_key && $post_id ) {
+			$terms = get_the_terms( $post_id, 'travel_destination' );
+			return ( ! empty( $terms ) && ! is_wp_error( $terms ) ) ? implode( ', ', wp_list_pluck( $terms, 'name' ) ) : '';
+		}
+		if ( 'tax_travel_styles' === $field_key && $post_id ) {
+			$terms = get_the_terms( $post_id, 'travel_style' );
+			return ( ! empty( $terms ) && ! is_wp_error( $terms ) ) ? implode( ', ', wp_list_pluck( $terms, 'name' ) ) : '';
+		}
+
+		// Special WP Post / User core fields
+		if ( in_array( $field_key, array( 'bio', 'supplier_description', 'post_content' ), true ) && $post_id ) {
+			return get_post_field( 'post_content', $post_id );
+		}
+		if ( 'permalink' === $field_key || 'public_url' === $field_key ) {
+			return $post_id ? get_permalink( $post_id ) : home_url( '/' );
+		}
+		if ( in_array( $field_key, array( 'display_name', 'rep_full_name', 'first_name', 'last_name', 'email', 'user_email', 'rep_email', 'username', 'user_login' ), true ) ) {
+			$u = $user_id ? get_userdata( $user_id ) : null;
+			if ( $u ) {
+				if ( 'display_name' === $field_key || 'rep_full_name' === $field_key ) return $u->display_name;
+				if ( 'first_name' === $field_key ) return $u->first_name ?: $u->display_name;
+				if ( 'last_name' === $field_key ) return $u->last_name;
+				if ( 'email' === $field_key || 'user_email' === $field_key || 'rep_email' === $field_key ) return $u->user_email;
+				if ( 'username' === $field_key || 'user_login' === $field_key ) return $u->user_login;
+			}
+			if ( $post_id && ( 'display_name' === $field_key || 'rep_full_name' === $field_key ) ) {
+				return get_the_title( $post_id );
+			}
+		}
+
+		// Try candidate meta keys (with and without 'tpd_' prefix)
+		$candidates = array( $field_key );
+		if ( 0 !== strpos( $field_key, 'tpd_' ) && 0 !== strpos( $field_key, '_tpd_' ) ) {
+			$candidates[] = 'tpd_' . $field_key;
+			$candidates[] = '_tpd_' . $field_key;
+		} else {
+			$stripped = preg_replace( '/^_?tpd_/', '', $field_key );
+			$candidates[] = $stripped;
+		}
+		// Handle common aliases (clia_num <-> tpd_clia_number)
+		$alias_map = array(
+			'tpd_clia_number' => 'tpd_clia_num',
+			'tpd_clia_num'    => 'tpd_clia_number',
+			'tpd_iata_number' => 'tpd_iata_num',
+			'tpd_iata_num'    => 'tpd_iata_number',
+			'tpd_arc_number'  => 'tpd_arc_num',
+			'tpd_arc_num'     => 'tpd_arc_number',
+			'tpd_true_number' => 'tpd_true_num',
+			'tpd_true_num'    => 'tpd_true_number',
+		);
+		foreach ( $candidates as $cand ) {
+			if ( isset( $alias_map[ $cand ] ) ) {
+				$candidates[] = $alias_map[ $cand ];
+			}
+		}
+		$candidates = array_unique( $candidates );
+
+		// 1. Check Post Meta / ACF first
+		if ( $post_id ) {
+			foreach ( $candidates as $mk ) {
+				$val = get_post_meta( $post_id, $mk, true );
+				if ( '' !== $val && null !== $val && false !== $val ) {
+					return is_array( $val ) ? implode( ', ', $val ) : (string) $val;
+				}
+				if ( function_exists( 'get_field' ) ) {
+					$acf_val = get_field( $mk, $post_id );
+					if ( ! empty( $acf_val ) ) {
+						if ( is_array( $acf_val ) && isset( $acf_val['url'] ) ) {
+							return (string) $acf_val['url'];
+						}
+						return is_array( $acf_val ) ? implode( ', ', $acf_val ) : (string) $acf_val;
+					}
+				}
+			}
+		}
+
+		// 2. Check User Meta fallback
+		if ( $user_id ) {
+			foreach ( $candidates as $mk ) {
+				$u_val = get_user_meta( $user_id, $mk, true );
+				if ( '' !== $u_val && null !== $u_val && false !== $u_val ) {
+					return is_array( $u_val ) ? implode( ', ', $u_val ) : (string) $u_val;
+				}
+			}
+		}
+
+		return '';
+	}
+
+	/**
+	 * Expose all TPD Meta Fields to WordPress REST API (`show_in_rest => true`)
+	 * so Elementor, Gutenberg, and REST consumers can bind to every field.
+	 */
+	public static function register_rest_meta() {
+		$catalog = self::get_master_field_catalog();
+
+		foreach ( $catalog['advisor'] as $f_key => $f_cfg ) {
+			$mk = $f_cfg['meta_key'];
+			if ( 0 === strpos( $mk, 'tax:' ) || in_array( $mk, array( 'display_name', 'first_name', 'last_name', 'user_email', 'post_content' ), true ) ) {
+				continue;
+			}
+			register_post_meta( 'travel_advisor', $mk, array(
+				'show_in_rest'  => true,
+				'single'        => true,
+				'type'          => 'string',
+				'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
+			) );
+		}
+
+		foreach ( $catalog['supplier'] as $f_key => $f_cfg ) {
+			$mk = $f_cfg['meta_key'];
+			if ( 0 === strpos( $mk, 'tax:' ) || in_array( $mk, array( 'display_name', 'user_email', 'post_content' ), true ) ) {
+				continue;
+			}
+			register_post_meta( 'supplier_listing', $mk, array(
+				'show_in_rest'  => true,
+				'single'        => true,
+				'type'          => 'string',
+				'auth_callback' => function() { return current_user_can( 'edit_posts' ); },
+			) );
+		}
 	}
 
 	private static function register_taxonomies() {
@@ -323,7 +632,7 @@ class TPD_Tool_CPT {
 	public static function register_native_meta_boxes() {
 		add_meta_box(
 			'tpd_advisor_meta_box',
-			__( 'TPD Advisor Profile, Agency & Credentials (Synced with Advisor Dashboard)', 'tpd-tool' ),
+			__( 'TPD Advisor Profile, Agency & Credentials (Synced with Advisor Dashboard, ACF & Elementor)', 'tpd-tool' ),
 			array( __CLASS__, 'render_advisor_meta_box' ),
 			'travel_advisor',
 			'normal',
@@ -332,7 +641,7 @@ class TPD_Tool_CPT {
 
 		add_meta_box(
 			'tpd_supplier_meta_box',
-			__( 'TPD Supplier Listing, Showcase & Representative Info (Synced with Supplier Dashboard)', 'tpd-tool' ),
+			__( 'TPD Supplier Listing, Showcase & Representative Info (Synced with Supplier Dashboard, ACF & Elementor)', 'tpd-tool' ),
 			array( __CLASS__, 'render_supplier_meta_box' ),
 			'supplier_listing',
 			'normal',
@@ -360,34 +669,12 @@ class TPD_Tool_CPT {
 
 	public static function render_advisor_meta_box( $post ) {
 		wp_nonce_field( 'tpd_save_cpt_meta', 'tpd_cpt_meta_nonce' );
-		$pid = $post->ID;
-		$uid = (int) get_post_meta( $pid, 'tpd_assigned_user', true );
-		$users = get_users( array( 'role__in' => array( 'travel_advisor', 'administrator' ) ) );
-		$plans = class_exists( 'TPD_Tool_Settings' ) ? TPD_Tool_Settings::get_plans( 'advisor' ) : array();
+		$pid      = $post->ID;
+		$uid      = (int) get_post_meta( $pid, 'tpd_assigned_user', true );
+		$users    = get_users( array( 'role__in' => array( 'travel_advisor', 'administrator' ) ) );
+		$plans    = class_exists( 'TPD_Tool_Settings' ) ? TPD_Tool_Settings::get_plans( 'advisor' ) : array();
 		$cur_tier = $uid ? TPD_Tool_Tiers::get_user_tier( $uid ) : ( get_post_meta( $pid, 'tpd_user_tier', true ) ?: 'basic' );
-
-		$fields = array(
-			'tpd_agency_name'           => __( 'Agency Name', 'tpd-tool' ),
-			'tpd_agency_address'        => __( 'Agency Address', 'tpd-tool' ),
-			'tpd_phone'                 => __( 'Phone Number', 'tpd-tool' ),
-			'tpd_location'              => __( 'Advisor Location (City, State, Country)', 'tpd-tool' ),
-			'tpd_website'               => __( 'Website URL', 'tpd-tool' ),
-			'tpd_business_structure'    => __( 'Advisor Role', 'tpd-tool' ),
-			'tpd_agency_structure'      => __( 'Agency Structure', 'tpd-tool' ),
-			'tpd_years_experience'      => __( 'Years in Industry', 'tpd-tool' ),
-			'tpd_agency_advisors_count' => __( 'Advisors Count in Agency', 'tpd-tool' ),
-			'tpd_personal_sales_volume' => __( 'Personal Annual Sales Volume', 'tpd-tool' ),
-			'tpd_agency_sales_volume'   => __( 'Agency Annual Sales Volume', 'tpd-tool' ),
-			'tpd_consortia'             => __( 'Consortia Affiliation', 'tpd-tool' ),
-			'tpd_host_agency'           => __( 'Host Agency / Franchise', 'tpd-tool' ),
-			'tpd_clia_number'           => __( 'CLIA Number', 'tpd-tool' ),
-			'tpd_iata_number'           => __( 'IATA Number', 'tpd-tool' ),
-			'tpd_arc_number'            => __( 'ARC Number', 'tpd-tool' ),
-			'tpd_true_number'           => __( 'TRUE Number', 'tpd-tool' ),
-			'tpd_headshot_url'          => __( 'Headshot Photo URL', 'tpd-tool' ),
-			'tpd_logo_url'              => __( 'Agency Logo URL', 'tpd-tool' ),
-			'tpd_banner_url'            => __( 'Profile Banner URL', 'tpd-tool' ),
-		);
+		$catalog  = self::get_master_field_catalog();
 		?>
 		<div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; padding:12px 0;">
 			<div>
@@ -411,15 +698,22 @@ class TPD_Tool_CPT {
 					<?php endforeach; ?>
 				</select>
 			</div>
-			<?php foreach ( $fields as $meta_key => $label ) :
+			<?php foreach ( $catalog['advisor'] as $f_key => $f_cfg ) :
+				$meta_key = $f_cfg['meta_key'];
+				if ( 0 === strpos( $meta_key, 'tax:' ) || in_array( $meta_key, array( 'display_name', 'first_name', 'last_name', 'user_email', 'post_content', 'tpd_user_tier' ), true ) ) {
+					continue;
+				}
 				$val = get_post_meta( $pid, $meta_key, true );
 				if ( '' === $val && $uid ) {
 					$val = get_user_meta( $uid, $meta_key, true );
 				}
 			?>
 				<div>
-					<label style="font-weight:600; display:block; margin-bottom:4px;"><?php echo esc_html( $label ); ?></label>
-					<input type="text" name="<?php echo esc_attr( $meta_key ); ?>" value="<?php echo esc_attr( $val ); ?>" style="width:100%; padding:7px 10px;">
+					<label style="font-weight:600; display:block; margin-bottom:4px;">
+						<?php echo esc_html( $f_cfg['label'] ); ?>
+						<code style="font-size:11px; color:#64748b; font-weight:400; margin-left:4px;"><?php echo esc_html( $meta_key ); ?></code>
+					</label>
+					<input type="text" name="<?php echo esc_attr( $meta_key ); ?>" value="<?php echo esc_attr( is_scalar( $val ) ? $val : '' ); ?>" style="width:100%; padding:7px 10px;">
 				</div>
 			<?php endforeach; ?>
 		</div>
@@ -428,28 +722,13 @@ class TPD_Tool_CPT {
 
 	public static function render_supplier_meta_box( $post ) {
 		wp_nonce_field( 'tpd_save_cpt_meta', 'tpd_cpt_meta_nonce' );
-		$pid = $post->ID;
-		$uid = (int) get_post_meta( $pid, 'tpd_assigned_user', true );
-		$users = get_users( array( 'role__in' => array( 'supplier', 'administrator' ) ) );
-		$plans = class_exists( 'TPD_Tool_Settings' ) ? TPD_Tool_Settings::get_plans( 'supplier' ) : array();
+		$pid      = $post->ID;
+		$uid      = (int) get_post_meta( $pid, 'tpd_assigned_user', true );
+		$users    = get_users( array( 'role__in' => array( 'supplier', 'administrator' ) ) );
+		$plans    = class_exists( 'TPD_Tool_Settings' ) ? TPD_Tool_Settings::get_plans( 'supplier' ) : array();
 		$cur_tier = $uid ? TPD_Tool_Tiers::get_user_tier( $uid ) : ( get_post_meta( $pid, 'tpd_user_tier', true ) ?: 'basic' );
 		$featured = get_post_meta( $pid, 'tpd_featured_supplier', true ) ?: 'no';
-
-		$fields = array(
-			'tpd_company_name'         => __( 'Company / Brand Name', 'tpd-tool' ),
-			'tpd_tagline'              => __( 'Tagline / Value Proposition', 'tpd-tool' ),
-			'tpd_position_title'       => __( 'Primary Rep Position / Title', 'tpd-tool' ),
-			'tpd_primary_rep_phone'    => __( 'Advisor Booking / Rep Phone', 'tpd-tool' ),
-			'tpd_booking_portal_url'   => __( 'Advisor Booking Portal URL', 'tpd-tool' ),
-			'tpd_headquarters'         => __( 'Headquarters Location', 'tpd-tool' ),
-			'tpd_country_of_residence' => __( 'Country', 'tpd-tool' ),
-			'tpd_agent_rewards'        => __( 'Agent Rewards Program (Yes/No)', 'tpd-tool' ),
-			'tpd_member_ustoa'         => __( 'Member of USTOA (Yes/No)', 'tpd-tool' ),
-			'tpd_member_asta'          => __( 'Member of ASTA (Yes/No)', 'tpd-tool' ),
-			'tpd_logo_url'             => __( 'Brand Logo URL', 'tpd-tool' ),
-			'tpd_banner_url'           => __( 'Showcase Banner URL', 'tpd-tool' ),
-			'tpd_main_video_url'       => __( 'Main Showcase Video URL', 'tpd-tool' ),
-		);
+		$catalog  = self::get_master_field_catalog();
 		?>
 		<div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:16px; padding:12px 0;">
 			<div>
@@ -482,12 +761,19 @@ class TPD_Tool_CPT {
 			</div>
 		</div>
 		<div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; padding-top:8px;">
-			<?php foreach ( $fields as $meta_key => $label ) :
+			<?php foreach ( $catalog['supplier'] as $f_key => $f_cfg ) :
+				$meta_key = $f_cfg['meta_key'];
+				if ( 0 === strpos( $meta_key, 'tax:' ) || in_array( $meta_key, array( 'display_name', 'user_email', 'post_content', 'tpd_featured_supplier' ), true ) ) {
+					continue;
+				}
 				$val = get_post_meta( $pid, $meta_key, true );
 			?>
 				<div>
-					<label style="font-weight:600; display:block; margin-bottom:4px;"><?php echo esc_html( $label ); ?></label>
-					<input type="text" name="<?php echo esc_attr( $meta_key ); ?>" value="<?php echo esc_attr( $val ); ?>" style="width:100%; padding:7px 10px;">
+					<label style="font-weight:600; display:block; margin-bottom:4px;">
+						<?php echo esc_html( $f_cfg['label'] ); ?>
+						<code style="font-size:11px; color:#64748b; font-weight:400; margin-left:4px;"><?php echo esc_html( $meta_key ); ?></code>
+					</label>
+					<input type="text" name="<?php echo esc_attr( $meta_key ); ?>" value="<?php echo esc_attr( is_scalar( $val ) ? $val : '' ); ?>" style="width:100%; padding:7px 10px;">
 				</div>
 			<?php endforeach; ?>
 		</div>
@@ -563,18 +849,20 @@ class TPD_Tool_CPT {
 			}
 		}
 
+		$catalog = self::get_master_field_catalog();
 		$all_meta_keys = array(
-			'tpd_agency_name', 'tpd_agency_address', 'tpd_phone', 'tpd_location', 'tpd_website',
-			'tpd_business_structure', 'tpd_agency_structure', 'tpd_years_experience', 'tpd_agency_advisors_count',
-			'tpd_personal_sales_volume', 'tpd_agency_sales_volume', 'tpd_consortia', 'tpd_host_agency',
-			'tpd_clia_number', 'tpd_iata_number', 'tpd_arc_number', 'tpd_true_number',
-			'tpd_headshot_url', 'tpd_logo_url', 'tpd_banner_url',
-			'tpd_company_name', 'tpd_tagline', 'tpd_position_title', 'tpd_primary_rep_phone',
-			'tpd_booking_portal_url', 'tpd_headquarters', 'tpd_country_of_residence',
-			'tpd_agent_rewards', 'tpd_member_ustoa', 'tpd_member_asta', 'tpd_main_video_url',
 			'tpd_featured_supplier', '_tpd_event_date', '_tpd_event_time', '_tpd_event_series',
 			'_tpd_traveler_name', '_tpd_destination', '_tpd_budget',
 		);
+		foreach ( array( 'advisor', 'supplier', 'event' ) as $grp ) {
+			foreach ( $catalog[ $grp ] as $f_cfg ) {
+				$mk = $f_cfg['meta_key'];
+				if ( 0 !== strpos( $mk, 'tax:' ) && ! in_array( $mk, array( 'display_name', 'first_name', 'last_name', 'user_email', 'post_content' ), true ) ) {
+					$all_meta_keys[] = $mk;
+				}
+			}
+		}
+		$all_meta_keys = array_unique( $all_meta_keys );
 
 		foreach ( $all_meta_keys as $mk ) {
 			if ( isset( $_POST[ $mk ] ) ) {
@@ -596,69 +884,52 @@ class TPD_Tool_CPT {
 	}
 
 	/**
-	 * Register ACF Field Groups (Aligned with Frontend Dashboard Meta Keys)
+	 * Register Complete ACF Field Groups (100% Aligned with Advisor & Supplier Dashboards & Elementor Dynamic Tags)
 	 */
 	public static function register_acf_fields() {
 		if ( ! function_exists( 'acf_add_local_field_group' ) ) {
 			return;
 		}
 
-		// Field Group: Advisor Profile
-		acf_add_local_field_group( array(
-			'key'      => 'group_tpd_tool_advisor',
-			'title'    => __( 'Advisor Profile & Credentials', 'tpd-tool' ),
-			'fields'   => array(
-				array(
-					'key'   => 'field_tpd_assigned_user',
-					'label' => __( 'Linked WP User Account', 'tpd-tool' ),
-					'name'  => 'tpd_assigned_user',
-					'type'  => 'user',
-					'role'  => array( 'travel_advisor', 'administrator' ),
-				),
-				array(
-					'key'   => 'field_tpd_agency_name',
-					'label' => __( 'Agency Name', 'tpd-tool' ),
-					'name'  => 'tpd_agency_name',
-					'type'  => 'text',
-				),
-				array(
-					'key'   => 'field_tpd_phone',
-					'label' => __( 'Direct Phone', 'tpd-tool' ),
-					'name'  => 'tpd_phone',
-					'type'  => 'text',
-				),
-				array(
-					'key'   => 'field_tpd_location',
-					'label' => __( 'Location (City, State, Country)', 'tpd-tool' ),
-					'name'  => 'tpd_location',
-					'type'  => 'text',
-				),
-				array(
-					'key'   => 'field_tpd_website',
-					'label' => __( 'Website URL', 'tpd-tool' ),
-					'name'  => 'tpd_website',
-					'type'  => 'url',
-				),
-				array(
-					'key'   => 'field_tpd_headshot_url',
-					'label' => __( 'Headshot Photo URL', 'tpd-tool' ),
-					'name'  => 'tpd_headshot_url',
-					'type'  => 'text',
-				),
-				array(
-					'key'   => 'field_tpd_logo_url',
-					'label' => __( 'Agency Logo URL', 'tpd-tool' ),
-					'name'  => 'tpd_logo_url',
-					'type'  => 'text',
-				),
-				array(
-					'key'   => 'field_tpd_banner_url',
-					'label' => __( 'Banner Photo URL', 'tpd-tool' ),
-					'name'  => 'tpd_banner_url',
-					'type'  => 'text',
-				),
+		$catalog = self::get_master_field_catalog();
+
+		// 1. Build Full Travel Advisor ACF Fields
+		$advisor_acf_fields = array(
+			array(
+				'key'   => 'field_tpd_assigned_user',
+				'label' => __( 'Linked WP User Account', 'tpd-tool' ),
+				'name'  => 'tpd_assigned_user',
+				'type'  => 'user',
+				'role'  => array( 'travel_advisor', 'administrator' ),
 			),
-			'location' => array(
+		);
+		foreach ( $catalog['advisor'] as $f_key => $f_cfg ) {
+			$mk = $f_cfg['meta_key'];
+			if ( 0 === strpos( $mk, 'tax:' ) || in_array( $mk, array( 'display_name', 'first_name', 'last_name', 'user_email', 'post_content' ), true ) ) {
+				continue;
+			}
+			$acf_type = 'text';
+			if ( 'url' === $f_cfg['type'] ) {
+				$acf_type = 'url';
+			} elseif ( 'textarea' === $f_cfg['type'] ) {
+				$acf_type = 'textarea';
+			} elseif ( 'email' === $f_cfg['type'] ) {
+				$acf_type = 'email';
+			}
+			$advisor_acf_fields[] = array(
+				'key'   => 'field_adv_' . sanitize_key( $mk ),
+				'label' => $f_cfg['label'],
+				'name'  => $mk,
+				'type'  => $acf_type,
+			);
+		}
+
+		acf_add_local_field_group( array(
+			'key'                   => 'group_tpd_tool_advisor',
+			'title'                 => __( 'TPD — Travel Advisor Profile & Dashboard Fields', 'tpd-tool' ),
+			'fields'                => $advisor_acf_fields,
+			'show_in_rest'          => 1,
+			'location'              => array(
 				array(
 					array(
 						'param'    => 'post_type',
@@ -669,49 +940,74 @@ class TPD_Tool_CPT {
 			),
 		) );
 
-		// Field Group: Supplier Profile
-		acf_add_local_field_group( array(
-			'key'      => 'group_tpd_tool_supplier',
-			'title'    => __( 'Supplier Company Listing', 'tpd-tool' ),
-			'fields'   => array(
-				array(
-					'key'   => 'field_tpd_supp_assigned_user',
-					'label' => __( 'Linked WP User Account', 'tpd-tool' ),
-					'name'  => 'tpd_assigned_user',
-					'type'  => 'user',
-					'role'  => array( 'supplier', 'administrator' ),
-				),
-				array(
-					'key'   => 'field_tpd_company_name',
-					'label' => __( 'Company Name', 'tpd-tool' ),
-					'name'  => 'tpd_company_name',
-					'type'  => 'text',
-				),
-				array(
-					'key'   => 'field_tpd_tagline',
-					'label' => __( 'Tagline', 'tpd-tool' ),
-					'name'  => 'tpd_tagline',
-					'type'  => 'text',
-				),
-				array(
-					'key'   => 'field_tpd_supp_logo_url',
-					'label' => __( 'Logo URL', 'tpd-tool' ),
-					'name'  => 'tpd_logo_url',
-					'type'  => 'text',
-				),
-				array(
-					'key'   => 'field_tpd_supp_banner_url',
-					'label' => __( 'Showcase Banner URL', 'tpd-tool' ),
-					'name'  => 'tpd_banner_url',
-					'type'  => 'text',
-				),
+		// 2. Build Full Supplier Listing ACF Fields
+		$supplier_acf_fields = array(
+			array(
+				'key'   => 'field_tpd_supp_assigned_user',
+				'label' => __( 'Linked WP User Account', 'tpd-tool' ),
+				'name'  => 'tpd_assigned_user',
+				'type'  => 'user',
+				'role'  => array( 'supplier', 'administrator' ),
 			),
-			'location' => array(
+		);
+		foreach ( $catalog['supplier'] as $f_key => $f_cfg ) {
+			$mk = $f_cfg['meta_key'];
+			if ( 0 === strpos( $mk, 'tax:' ) || in_array( $mk, array( 'display_name', 'user_email', 'post_content' ), true ) ) {
+				continue;
+			}
+			$acf_type = 'text';
+			if ( 'url' === $f_cfg['type'] ) {
+				$acf_type = 'url';
+			} elseif ( 'textarea' === $f_cfg['type'] ) {
+				$acf_type = 'textarea';
+			}
+			$supplier_acf_fields[] = array(
+				'key'   => 'field_supp_' . sanitize_key( $mk ),
+				'label' => $f_cfg['label'],
+				'name'  => $mk,
+				'type'  => $acf_type,
+			);
+		}
+
+		acf_add_local_field_group( array(
+			'key'                   => 'group_tpd_tool_supplier',
+			'title'                 => __( 'TPD — Supplier Listing & Showcase Fields', 'tpd-tool' ),
+			'fields'                => $supplier_acf_fields,
+			'show_in_rest'          => 1,
+			'location'              => array(
 				array(
 					array(
 						'param'    => 'post_type',
 						'operator' => '==',
 						'value'    => 'supplier_listing',
+					),
+				),
+			),
+		) );
+
+		// 3. Build Event & Webinar ACF Fields
+		$event_acf_fields = array();
+		foreach ( $catalog['event'] as $f_key => $f_cfg ) {
+			$mk = $f_cfg['meta_key'];
+			$event_acf_fields[] = array(
+				'key'   => 'field_ev_' . sanitize_key( $mk ),
+				'label' => $f_cfg['label'],
+				'name'  => $mk,
+				'type'  => 'text',
+			);
+		}
+
+		acf_add_local_field_group( array(
+			'key'          => 'group_tpd_tool_event',
+			'title'        => __( 'TPD — Event & Webinar Fields', 'tpd-tool' ),
+			'fields'       => $event_acf_fields,
+			'show_in_rest' => 1,
+			'location'     => array(
+				array(
+					array(
+						'param'    => 'post_type',
+						'operator' => '==',
+						'value'    => 'tpd_event',
 					),
 				),
 			),
@@ -790,7 +1086,7 @@ class TPD_Tool_CPT {
 					<i class="fa-solid fa-wand-magic-sparkles text-blue"></i> <?php esc_html_e( 'Additional Custom & ACF Profile Fields', 'tpd-tool' ); ?>
 				</h4>
 				<span style="font-size:11px; color:#64748b; background:#f1f5f9; padding:3px 8px; border-radius:6px;">
-					<?php esc_html_e( 'Synced with WP Admin & ACF', 'tpd-tool' ); ?>
+					<?php esc_html_e( 'Synced with WP Admin, ACF & Elementor', 'tpd-tool' ); ?>
 				</span>
 			</div>
 			<div class="tpd-form-grid-2">

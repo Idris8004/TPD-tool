@@ -1,6 +1,7 @@
 <?php
 /**
  * Shortcodes Registry for TPD Tool
+ * Includes Full Portal Shortcodes, Auth Shortcodes, and Universal Dynamic Field Shortcodes ([tpd_field]).
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -22,6 +23,76 @@ class TPD_Tool_Shortcodes {
 		add_shortcode( 'tpd_chat_inbox', array( __CLASS__, 'render_chat_inbox' ) );
 		add_shortcode( 'tpd_saved_suppliers', array( __CLASS__, 'render_saved_suppliers' ) );
 		add_shortcode( 'tpd_events_list', array( __CLASS__, 'render_events_list' ) );
+
+		// Universal Dynamic Field Shortcodes for Elementor / Gutenberg / Theme Templates
+		add_shortcode( 'tpd_field', array( __CLASS__, 'render_dynamic_field' ) );
+		add_shortcode( 'tpd_advisor_field', array( __CLASS__, 'render_dynamic_field' ) );
+		add_shortcode( 'tpd_supplier_field', array( __CLASS__, 'render_dynamic_field' ) );
+	}
+
+	/**
+	 * Universal Dynamic Field Shortcode:
+	 * [tpd_field key="tpd_agency_name" source="auto" render="text|badges|image|button" default=""]
+	 */
+	public static function render_dynamic_field( $atts ) {
+		$atts = shortcode_atts(
+			array(
+				'key'     => 'display_name',
+				'post_id' => 0,
+				'user_id' => 0,
+				'source'  => 'auto',
+				'render'  => 'text',
+				'label'   => '',
+				'default' => '',
+				'class'   => '',
+			),
+			$atts,
+			'tpd_field'
+		);
+
+		$val = class_exists( 'TPD_Tool_CPT' )
+			? TPD_Tool_CPT::resolve_field_value( $atts['key'], absint( $atts['post_id'] ), absint( $atts['user_id'] ), $atts['source'] )
+			: '';
+
+		if ( '' === $val ) {
+			$val = $atts['default'];
+		}
+		if ( '' === $val ) {
+			return '';
+		}
+
+		$cls = sanitize_html_class( $atts['class'] );
+
+		if ( 'image' === $atts['render'] ) {
+			return sprintf(
+				'<img src="%s" alt="%s" class="tpd-sc-img %s" style="max-width:100%%; height:auto;" />',
+				esc_url( $val ),
+				esc_attr( $atts['key'] ),
+				esc_attr( $cls )
+			);
+		}
+
+		if ( 'badges' === $atts['render'] ) {
+			$items = array_filter( array_map( 'trim', explode( ',', $val ) ) );
+			$out   = '<span class="tpd-sc-badges ' . esc_attr( $cls ) . '" style="display:inline-flex; flex-wrap:wrap; gap:6px;">';
+			foreach ( $items as $item ) {
+				$out .= '<span style="background:#e0f2fe; color:#0369a1; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:600;">' . esc_html( $item ) . '</span>';
+			}
+			$out .= '</span>';
+			return $out;
+		}
+
+		if ( 'button' === $atts['render'] ) {
+			$btn_label = ! empty( $atts['label'] ) ? $atts['label'] : $val;
+			return sprintf(
+				'<a href="%s" class="tpd-btn tpd-btn-sm tpd-btn-primary %s" style="text-decoration:none;">%s</a>',
+				esc_url( $val ),
+				esc_attr( $cls ),
+				esc_html( $btn_label )
+			);
+		}
+
+		return wp_kses_post( $val );
 	}
 
 	public static function render_advisor_dashboard( $atts ) {
