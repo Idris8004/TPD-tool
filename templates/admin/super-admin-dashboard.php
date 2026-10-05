@@ -189,9 +189,14 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 	.tpd-status-pill.inactive { background: #b91c1c; color: #ffffff; }
 	/* Modal Overlay */
 	.tpd-sa-modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 99999; display: none; align-items: center; justify-content: center; padding: 20px; }
+	.tpd-sa-modal-backdrop.open { display: flex !important; }
 	.tpd-sa-modal { background: #ffffff; border-radius: 14px; max-width: 680px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 28px; box-shadow: 0 20px 50px rgba(0,0,0,0.25); }
+	.tpd-sa-blue-card.tpd-sa-jump-pane { cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+	.tpd-sa-blue-card.tpd-sa-jump-pane:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(22, 78, 135, 0.25); }
 	@media (max-width: 1100px) { .tpd-sa-kpi-row-4, .tpd-sa-kpi-row-3 { grid-template-columns: 1fr 1fr; } .tpd-sa-shell { flex-direction: column; } .tpd-sa-sidebar { width: 100%; } }
 </style>
+
+<input type="hidden" id="tpd_sa_admin_nonce" value="<?php echo esc_attr( wp_create_nonce( 'tpd_admin_nonce' ) ); ?>">
 
 <div class="tpd-sa-shell">
 	<!-- LEFT SIDEBAR (Matching Old Admin Panel Screenshot) -->
@@ -289,7 +294,7 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 			<div id="sa-dashboard" class="tpd-sa-pane active">
 				<!-- Row 1: 4 Blue KPI Cards (Total + Last 7 Days) -->
 				<div class="tpd-sa-kpi-row-4">
-					<div class="tpd-sa-blue-card">
+					<div class="tpd-sa-blue-card tpd-sa-jump-pane" data-pane="sa-pro-users" title="<?php esc_attr_e( 'Click to manage Travel Advisors', 'tpd-tool' ); ?>">
 						<div class="tpd-sa-bc-title"><i class="fa-solid fa-user-tie"></i> <?php esc_html_e( 'Travel Advisors', 'tpd-tool' ); ?></div>
 						<div class="tpd-sa-bc-stats">
 							<span class="tpd-sa-bc-main-num"><?php echo count( $advisors ); ?></span>
@@ -300,7 +305,7 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 						</div>
 					</div>
 
-					<div class="tpd-sa-blue-card">
+					<div class="tpd-sa-blue-card tpd-sa-jump-pane" data-pane="sa-supplier-users" title="<?php esc_attr_e( 'Click to manage Supplier Users', 'tpd-tool' ); ?>">
 						<div class="tpd-sa-bc-title"><i class="fa-solid fa-building-user"></i> <?php esc_html_e( 'Supplier Users', 'tpd-tool' ); ?></div>
 						<div class="tpd-sa-bc-stats">
 							<span class="tpd-sa-bc-main-num"><?php echo count( $suppliers ); ?></span>
@@ -311,7 +316,7 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 						</div>
 					</div>
 
-					<div class="tpd-sa-blue-card">
+					<div class="tpd-sa-blue-card tpd-sa-jump-pane" data-pane="sa-blogs" title="<?php esc_attr_e( 'Click to manage Blogs & Articles', 'tpd-tool' ); ?>">
 						<div class="tpd-sa-bc-title"><i class="fa-solid fa-newspaper"></i> <?php esc_html_e( 'Blogs', 'tpd-tool' ); ?></div>
 						<div class="tpd-sa-bc-stats">
 							<span class="tpd-sa-bc-main-num"><?php echo count( $blogs ); ?></span>
@@ -322,7 +327,7 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 						</div>
 					</div>
 
-					<div class="tpd-sa-blue-card">
+					<div class="tpd-sa-blue-card tpd-sa-jump-pane" data-pane="sa-events" title="<?php esc_attr_e( 'Click to manage Events & Webinars', 'tpd-tool' ); ?>">
 						<div class="tpd-sa-bc-title"><i class="fa-regular fa-calendar-check"></i> <?php esc_html_e( 'Events', 'tpd-tool' ); ?></div>
 						<div class="tpd-sa-bc-stats">
 							<span class="tpd-sa-bc-main-num"><?php echo count( $events ); ?></span>
@@ -336,7 +341,7 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 
 				<!-- Row 2: 3 Plan KPI Cards (Basic, Standard, Premium with Last 7 Days) -->
 				<div class="tpd-sa-kpi-row-3">
-					<div class="tpd-sa-blue-card">
+					<div class="tpd-sa-blue-card tpd-sa-jump-pane" data-pane="sa-plans">
 						<div class="tpd-sa-bc-title"><i class="fa-solid fa-layer-group"></i> <?php esc_html_e( 'Basic Plan', 'tpd-tool' ); ?></div>
 						<div class="tpd-sa-bc-stats">
 							<span class="tpd-sa-bc-main-num"><?php echo isset( $plan_totals['basic'] ) ? (int) $plan_totals['basic'] : 0; ?></span>
@@ -347,7 +352,7 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 						</div>
 					</div>
 
-					<div class="tpd-sa-blue-card">
+					<div class="tpd-sa-blue-card tpd-sa-jump-pane" data-pane="sa-plans">
 						<div class="tpd-sa-bc-title"><i class="fa-solid fa-gem"></i> <?php esc_html_e( 'Standard Plan', 'tpd-tool' ); ?></div>
 						<div class="tpd-sa-bc-stats">
 							<span class="tpd-sa-bc-main-num"><?php echo isset( $plan_totals['standard'] ) ? (int) $plan_totals['standard'] : 0; ?></span>
@@ -358,7 +363,7 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 						</div>
 					</div>
 
-					<div class="tpd-sa-blue-card">
+					<div class="tpd-sa-blue-card tpd-sa-jump-pane" data-pane="sa-plans">
 						<div class="tpd-sa-bc-title"><i class="fa-solid fa-crown"></i> <?php esc_html_e( 'Premium Plan', 'tpd-tool' ); ?></div>
 						<div class="tpd-sa-bc-stats">
 							<span class="tpd-sa-bc-main-num"><?php echo isset( $plan_totals['premium'] ) ? (int) $plan_totals['premium'] : 0; ?></span>
@@ -1219,7 +1224,7 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 	<div class="tpd-sa-modal">
 		<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:12px; margin-bottom:16px;">
 			<h3 style="margin:0;" id="tpd-view-modal-title"><?php esc_html_e( 'User Profile Details', 'tpd-tool' ); ?></h3>
-			<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="jQuery('#tpd-sa-view-user-modal').fadeOut(150);">Close</button>
+			<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="jQuery('#tpd-sa-view-user-modal').removeClass('open').fadeOut(150);">Close</button>
 		</div>
 		<div id="tpd-view-modal-body" style="font-size:13.5px; line-height:1.7;"></div>
 	</div>
@@ -1232,7 +1237,7 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 	<div class="tpd-sa-modal">
 		<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:12px; margin-bottom:16px;">
 			<h3 style="margin:0;" id="tpd-edit-modal-title"><?php esc_html_e( 'Add / Edit User Account', 'tpd-tool' ); ?></h3>
-			<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="jQuery('#tpd-sa-edit-user-modal').fadeOut(150);">Cancel</button>
+			<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="jQuery('#tpd-sa-edit-user-modal').removeClass('open').fadeOut(150);">Cancel</button>
 		</div>
 
 		<form id="tpd-sa-save-user-form">
@@ -1328,6 +1333,47 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 		</form>
 	</div>
 </div>
+
+<script>
+(function() {
+	function activateAdminPane(paneId) {
+		if (!paneId) return;
+		paneId = String(paneId).replace(/^#/, '');
+
+		var navItems = document.querySelectorAll('.tpd-sa-nav li');
+		navItems.forEach(function(li) { li.classList.remove('active'); });
+
+		var navLinks = document.querySelectorAll('.tpd-sa-nav-link');
+		navLinks.forEach(function(a) {
+			a.classList.remove('active');
+			if (a.getAttribute('data-pane') === paneId) {
+				a.classList.add('active');
+				if (a.parentElement) a.parentElement.classList.add('active');
+			}
+		});
+
+		var panes = document.querySelectorAll('.tpd-sa-pane');
+		panes.forEach(function(p) {
+			if (p.id === paneId || p.id === ('tpd-sa-pane-' + paneId)) {
+				p.classList.add('active');
+				p.style.display = 'block';
+			} else {
+				p.classList.remove('active');
+				p.style.display = 'none';
+			}
+		});
+	}
+
+	document.addEventListener('click', function(e) {
+		var trigger = e.target.closest('.tpd-sa-nav-link[data-pane], .tpd-sa-jump-pane[data-pane]');
+		if (trigger) {
+			e.preventDefault();
+			var paneId = trigger.getAttribute('data-pane');
+			activateAdminPane(paneId);
+		}
+	});
+})();
+</script>
 
 <?php
 if ( ! $is_in_admin ) {
