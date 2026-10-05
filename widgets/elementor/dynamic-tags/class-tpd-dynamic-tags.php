@@ -1,32 +1,57 @@
 <?php
 /**
- * Native Elementor Dynamic Tags for TPD Tool (Text, Image, and URL Dynamic Tags)
- * Enables clicking the Dynamic Tag icon on ANY Elementor Heading, Text, Image, Background,
- * Button, or Link control and binding directly to Advisor, Supplier, Event, or ACF fields.
+ * Native Elementor Pro / Free Dynamic Tags for TPD Tool
+ * Populates the Elementor Dynamic Tags dropdown menu (stacked coins icon) on Headings,
+ * Text Editors, Images, Backgrounds, Buttons, and Links with:
+ *   - TPD — Travel Advisor (Full Name, Agency Name, Phone, Email, Location, Bio, Consortia, Certifications, Specialties, Headshot, Logo, Banner, Social URLs, etc.)
+ *   - TPD — Supplier Partner (Company Name, Tagline, Description, Headquarters, Rep Info, Phone, Promo, Badges, Brand Logo, Showcase Banner, Booking Portal URL, Video URL, etc.)
+ *   - TPD — Custom & ACF Fields (Any Advisor, Supplier, Event, or Admin Custom Field)
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Helper to build field dropdown options without depending on Widget_Base
+ */
+function tpd_get_elementor_dynamic_field_options( $group = 'all' ) {
+	$options = array();
+	if ( class_exists( 'TPD_Tool_CPT' ) ) {
+		$catalog = TPD_Tool_CPT::get_master_field_catalog();
+		if ( 'all' === $group || 'advisor' === $group ) {
+			foreach ( $catalog['advisor'] as $k => $info ) {
+				$prefix = ( 'all' === $group ) ? 'Advisor: ' : '';
+				$options[ $k ] = $prefix . $info['label'];
+			}
+		}
+		if ( 'all' === $group || 'supplier' === $group ) {
+			foreach ( $catalog['supplier'] as $k => $info ) {
+				$prefix = ( 'all' === $group ) ? 'Supplier: ' : '';
+				$options[ $k ] = $prefix . $info['label'];
+			}
+		}
+		if ( 'all' === $group || 'event' === $group ) {
+			foreach ( $catalog['event'] as $k => $info ) {
+				$prefix = ( 'all' === $group ) ? 'Event: ' : '';
+				$options[ $k ] = $prefix . $info['label'];
+			}
+		}
+	}
+	$options['permalink']   = 'Public Directory Profile URL';
+	$options['custom_meta'] = 'Custom ACF / Meta Key...';
+	return $options;
+}
+
 if ( class_exists( '\Elementor\Core\DynamicTags\Tag' ) ) {
 
 	/**
-	 * 1. TPD Dynamic Text / Meta / Number Tag
+	 * Base Reusable Text Dynamic Tag for TPD
 	 */
-	class TPD_Dynamic_Tag_Text extends \Elementor\Core\DynamicTags\Tag {
+	abstract class TPD_Abstract_Text_Tag extends \Elementor\Core\DynamicTags\Tag {
 
-		public function get_name() {
-			return 'tpd-dynamic-text';
-		}
-
-		public function get_title() {
-			return __( 'TPD Profile / Dashboard Field', 'tpd-tool' );
-		}
-
-		public function get_group() {
-			return 'tpd-dynamic-tags';
-		}
+		protected $default_field = 'display_name';
+		protected $field_group   = 'all';
 
 		public function get_categories() {
 			return array(
@@ -37,15 +62,13 @@ if ( class_exists( '\Elementor\Core\DynamicTags\Tag' ) ) {
 		}
 
 		protected function register_controls() {
-			$options = class_exists( 'TPD_Elementor_Dynamic_Field' ) ? TPD_Elementor_Dynamic_Field::get_field_options() : array( 'display_name' => 'Full Name' );
-
 			$this->add_control(
 				'field_key',
 				array(
-					'label'   => __( 'TPD / ACF Field', 'tpd-tool' ),
+					'label'   => __( 'Field to Display', 'tpd-tool' ),
 					'type'    => \Elementor\Controls_Manager::SELECT,
-					'default' => 'display_name',
-					'options' => $options,
+					'default' => $this->default_field,
+					'options' => tpd_get_elementor_dynamic_field_options( $this->field_group ),
 				)
 			);
 
@@ -64,7 +87,7 @@ if ( class_exists( '\Elementor\Core\DynamicTags\Tag' ) ) {
 			$this->add_control(
 				'source_mode',
 				array(
-					'label'   => __( 'Data Context', 'tpd-tool' ),
+					'label'   => __( 'Data Source', 'tpd-tool' ),
 					'type'    => \Elementor\Controls_Manager::SELECT,
 					'default' => 'auto',
 					'options' => array(
@@ -77,11 +100,11 @@ if ( class_exists( '\Elementor\Core\DynamicTags\Tag' ) ) {
 		}
 
 		public function render() {
-			$field_key   = $this->get_settings( 'field_key' );
+			$field_key   = $this->get_settings( 'field_key' ) ?: $this->default_field;
 			$custom_key  = $this->get_settings( 'custom_meta_key' );
 			$source_mode = $this->get_settings( 'source_mode' ) ?: 'auto';
 
-			if ( 'custom_meta' === $field_key ) {
+			if ( 'custom_meta' === $field_key && ! empty( $custom_key ) ) {
 				$field_key = $custom_key;
 			}
 
@@ -89,12 +112,156 @@ if ( class_exists( '\Elementor\Core\DynamicTags\Tag' ) ) {
 			echo wp_kses_post( $val );
 		}
 	}
+
+	// =========================================================================
+	// GROUP 1: TPD — TRAVEL ADVISOR TAGS (Appears directly in Dynamic Tags Menu)
+	// =========================================================================
+
+	class TPD_Tag_Advisor_Name extends TPD_Abstract_Text_Tag {
+		protected $default_field = 'display_name';
+		protected $field_group   = 'advisor';
+		public function get_name()  { return 'tpd-advisor-name'; }
+		public function get_title() { return __( 'Advisor Full Name', 'tpd-tool' ); }
+		public function get_group() { return 'tpd-advisor-tags'; }
+	}
+
+	class TPD_Tag_Advisor_Agency extends TPD_Abstract_Text_Tag {
+		protected $default_field = 'tpd_agency_name';
+		protected $field_group   = 'advisor';
+		public function get_name()  { return 'tpd-advisor-agency'; }
+		public function get_title() { return __( 'Advisor Agency Name', 'tpd-tool' ); }
+		public function get_group() { return 'tpd-advisor-tags'; }
+	}
+
+	class TPD_Tag_Advisor_Contact extends TPD_Abstract_Text_Tag {
+		protected $default_field = 'tpd_phone';
+		protected $field_group   = 'advisor';
+		public function get_name()  { return 'tpd-advisor-contact'; }
+		public function get_title() { return __( 'Advisor Phone / Email / Handle', 'tpd-tool' ); }
+		public function get_group() { return 'tpd-advisor-tags'; }
+	}
+
+	class TPD_Tag_Advisor_Location extends TPD_Abstract_Text_Tag {
+		protected $default_field = 'tpd_location';
+		protected $field_group   = 'advisor';
+		public function get_name()  { return 'tpd-advisor-location'; }
+		public function get_title() { return __( 'Advisor Location & Country', 'tpd-tool' ); }
+		public function get_group() { return 'tpd-advisor-tags'; }
+	}
+
+	class TPD_Tag_Advisor_Bio extends TPD_Abstract_Text_Tag {
+		protected $default_field = 'bio';
+		protected $field_group   = 'advisor';
+		public function get_name()  { return 'tpd-advisor-bio'; }
+		public function get_title() { return __( 'Advisor Biography / About Me', 'tpd-tool' ); }
+		public function get_group() { return 'tpd-advisor-tags'; }
+	}
+
+	class TPD_Tag_Advisor_Affiliation extends TPD_Abstract_Text_Tag {
+		protected $default_field = 'tpd_consortia';
+		protected $field_group   = 'advisor';
+		public function get_name()  { return 'tpd-advisor-affiliation'; }
+		public function get_title() { return __( 'Advisor Consortia & Host Agency', 'tpd-tool' ); }
+		public function get_group() { return 'tpd-advisor-tags'; }
+	}
+
+	class TPD_Tag_Advisor_Certifications extends TPD_Abstract_Text_Tag {
+		protected $default_field = 'tpd_clia_number';
+		protected $field_group   = 'advisor';
+		public function get_name()  { return 'tpd-advisor-certifications'; }
+		public function get_title() { return __( 'Advisor Certifications (CLIA / IATA / ARC / TRUE)', 'tpd-tool' ); }
+		public function get_group() { return 'tpd-advisor-tags'; }
+	}
+
+	class TPD_Tag_Advisor_Experience extends TPD_Abstract_Text_Tag {
+		protected $default_field = 'tpd_years_experience';
+		protected $field_group   = 'advisor';
+		public function get_name()  { return 'tpd-advisor-experience'; }
+		public function get_title() { return __( 'Advisor Experience & Sales Volume', 'tpd-tool' ); }
+		public function get_group() { return 'tpd-advisor-tags'; }
+	}
+
+	class TPD_Tag_Advisor_Specialties extends TPD_Abstract_Text_Tag {
+		protected $default_field = 'tpd_travel_types';
+		protected $field_group   = 'advisor';
+		public function get_name()  { return 'tpd-advisor-specialties'; }
+		public function get_title() { return __( 'Advisor Specialties & Destinations', 'tpd-tool' ); }
+		public function get_group() { return 'tpd-advisor-tags'; }
+	}
+
+	class TPD_Tag_Advisor_Any_Field extends TPD_Abstract_Text_Tag {
+		protected $default_field = 'tpd_agency_name';
+		protected $field_group   = 'all';
+		public function get_name()  { return 'tpd-dynamic-text'; }
+		public function get_title() { return __( 'All TPD / ACF Advisor & Supplier Fields', 'tpd-tool' ); }
+		public function get_group() { return 'tpd-advisor-tags'; }
+	}
+
+	// =========================================================================
+	// GROUP 2: TPD — SUPPLIER PARTNER TAGS (Appears directly in Dynamic Tags Menu)
+	// =========================================================================
+
+	class TPD_Tag_Supplier_Company extends TPD_Abstract_Text_Tag {
+		protected $default_field = 'tpd_company_name';
+		protected $field_group   = 'supplier';
+		public function get_name()  { return 'tpd-supplier-company'; }
+		public function get_title() { return __( 'Supplier / Company Name', 'tpd-tool' ); }
+		public function get_group() { return 'tpd-supplier-tags'; }
+	}
+
+	class TPD_Tag_Supplier_Tagline extends TPD_Abstract_Text_Tag {
+		protected $default_field = 'tpd_tagline';
+		protected $field_group   = 'supplier';
+		public function get_name()  { return 'tpd-supplier-tagline'; }
+		public function get_title() { return __( 'Supplier Brand Tagline', 'tpd-tool' ); }
+		public function get_group() { return 'tpd-supplier-tags'; }
+	}
+
+	class TPD_Tag_Supplier_Description extends TPD_Abstract_Text_Tag {
+		protected $default_field = 'supplier_description';
+		protected $field_group   = 'supplier';
+		public function get_name()  { return 'tpd-supplier-description'; }
+		public function get_title() { return __( 'Supplier Overview / Description', 'tpd-tool' ); }
+		public function get_group() { return 'tpd-supplier-tags'; }
+	}
+
+	class TPD_Tag_Supplier_Headquarters extends TPD_Abstract_Text_Tag {
+		protected $default_field = 'tpd_headquarters';
+		protected $field_group   = 'supplier';
+		public function get_name()  { return 'tpd-supplier-headquarters'; }
+		public function get_title() { return __( 'Supplier Headquarters & Country', 'tpd-tool' ); }
+		public function get_group() { return 'tpd-supplier-tags'; }
+	}
+
+	class TPD_Tag_Supplier_Rep extends TPD_Abstract_Text_Tag {
+		protected $default_field = 'rep_full_name';
+		protected $field_group   = 'supplier';
+		public function get_name()  { return 'tpd-supplier-rep'; }
+		public function get_title() { return __( 'Supplier Rep Name, Title & Phone', 'tpd-tool' ); }
+		public function get_group() { return 'tpd-supplier-tags'; }
+	}
+
+	class TPD_Tag_Supplier_Promo extends TPD_Abstract_Text_Tag {
+		protected $default_field = 'tpd_promo_title';
+		protected $field_group   = 'supplier';
+		public function get_name()  { return 'tpd-supplier-promo'; }
+		public function get_title() { return __( 'Supplier Advisor Promo / Incentive', 'tpd-tool' ); }
+		public function get_group() { return 'tpd-supplier-tags'; }
+	}
+
+	class TPD_Tag_Supplier_Programs extends TPD_Abstract_Text_Tag {
+		protected $default_field = 'tpd_agent_rewards';
+		protected $field_group   = 'supplier';
+		public function get_name()  { return 'tpd-supplier-programs'; }
+		public function get_title() { return __( 'Supplier Rewards / USTOA / ASTA Status', 'tpd-tool' ); }
+		public function get_group() { return 'tpd-supplier-tags'; }
+	}
 }
 
 if ( class_exists( '\Elementor\Core\DynamicTags\Data_Tag' ) ) {
 
 	/**
-	 * 2. TPD Dynamic Image Tag (Headshot, Agency/Supplier Logo, Cover Banner)
+	 * TPD Dynamic Image Tag (Headshot, Agency/Supplier Logo, Cover Banner)
 	 */
 	class TPD_Dynamic_Tag_Image extends \Elementor\Core\DynamicTags\Data_Tag {
 
@@ -107,7 +274,7 @@ if ( class_exists( '\Elementor\Core\DynamicTags\Data_Tag' ) ) {
 		}
 
 		public function get_group() {
-			return 'tpd-dynamic-tags';
+			return 'tpd-advisor-tags';
 		}
 
 		public function get_categories() {
@@ -199,7 +366,7 @@ if ( class_exists( '\Elementor\Core\DynamicTags\Data_Tag' ) ) {
 	}
 
 	/**
-	 * 3. TPD Dynamic URL / Social / Booking Link Tag
+	 * TPD Dynamic URL / Social / Booking Link Tag
 	 */
 	class TPD_Dynamic_Tag_URL extends \Elementor\Core\DynamicTags\Data_Tag {
 
@@ -212,7 +379,7 @@ if ( class_exists( '\Elementor\Core\DynamicTags\Data_Tag' ) ) {
 		}
 
 		public function get_group() {
-			return 'tpd-dynamic-tags';
+			return 'tpd-advisor-tags';
 		}
 
 		public function get_categories() {

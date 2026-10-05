@@ -2,7 +2,7 @@
 /**
  * Elementor Integration for TPD Tool
  * Registers custom Elementor category, Portal/Auth/Dynamic Field widgets,
- * and Native Elementor Dynamic Tags (Text, Image, URL) synced with Advisor/Supplier Dashboards & ACF.
+ * and Native Elementor Dynamic Tags (Advisor & Supplier groups) synced with Dashboards & ACF.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -62,26 +62,52 @@ class TPD_Tool_Elementor {
 			return;
 		}
 
-		require_once TPD_TOOL_DIR . 'widgets/elementor/widget-dynamic-field.php';
 		require_once TPD_TOOL_DIR . 'widgets/elementor/dynamic-tags/class-tpd-dynamic-tags.php';
 
 		if ( method_exists( $dynamic_tags_manager, 'register_group' ) ) {
 			$dynamic_tags_manager->register_group(
-				'tpd-dynamic-tags',
+				'tpd-advisor-tags',
 				array(
-					'title' => __( 'TPD Directory & Dashboard Fields (ACF Sync)', 'tpd-tool' ),
+					'title' => __( 'TPD — Travel Advisor Fields', 'tpd-tool' ),
+				)
+			);
+			$dynamic_tags_manager->register_group(
+				'tpd-supplier-tags',
+				array(
+					'title' => __( 'TPD — Supplier Partner Fields', 'tpd-tool' ),
 				)
 			);
 		}
 
-		if ( class_exists( 'TPD_Dynamic_Tag_Text' ) ) {
-			$dynamic_tags_manager->register( new \TPD_Dynamic_Tag_Text() );
-		}
-		if ( class_exists( 'TPD_Dynamic_Tag_Image' ) ) {
-			$dynamic_tags_manager->register( new \TPD_Dynamic_Tag_Image() );
-		}
-		if ( class_exists( 'TPD_Dynamic_Tag_URL' ) ) {
-			$dynamic_tags_manager->register( new \TPD_Dynamic_Tag_URL() );
+		$tag_classes = array(
+			// Advisor Tags
+			'TPD_Tag_Advisor_Name',
+			'TPD_Tag_Advisor_Agency',
+			'TPD_Tag_Advisor_Contact',
+			'TPD_Tag_Advisor_Location',
+			'TPD_Tag_Advisor_Bio',
+			'TPD_Tag_Advisor_Affiliation',
+			'TPD_Tag_Advisor_Certifications',
+			'TPD_Tag_Advisor_Experience',
+			'TPD_Tag_Advisor_Specialties',
+			'TPD_Tag_Advisor_Any_Field',
+			// Supplier Tags
+			'TPD_Tag_Supplier_Company',
+			'TPD_Tag_Supplier_Tagline',
+			'TPD_Tag_Supplier_Description',
+			'TPD_Tag_Supplier_Headquarters',
+			'TPD_Tag_Supplier_Rep',
+			'TPD_Tag_Supplier_Promo',
+			'TPD_Tag_Supplier_Programs',
+			// Media & Link Tags
+			'TPD_Dynamic_Tag_Image',
+			'TPD_Dynamic_Tag_URL',
+		);
+
+		foreach ( $tag_classes as $tc ) {
+			if ( class_exists( $tc ) ) {
+				$dynamic_tags_manager->register( new $tc() );
+			}
 		}
 	}
 }
