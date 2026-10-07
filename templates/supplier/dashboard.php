@@ -9,11 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+TPD_Tool_Roles::enforce_portal_access( 'supplier' );
 $current_user_id = get_current_user_id();
-if ( ! $current_user_id ) {
-	$supp_users = get_users( array( 'role' => 'supplier', 'number' => 1, 'orderby' => 'ID', 'order' => 'DESC' ) );
-	$current_user_id = ! empty( $supp_users ) ? $supp_users[0]->ID : 1;
-}
 
 $user       = get_userdata( $current_user_id );
 $user_tier  = tpd_get_user_tier( $current_user_id );
@@ -184,6 +181,12 @@ $all_directory_listings = get_posts( array(
 					</a>
 				<?php endif; ?>
 
+				<?php if ( TPD_Tool_Roles::is_dual_role( $current_user_id ) || current_user_can( 'manage_options' ) ) : ?>
+					<a href="<?php echo esc_url( home_url( '/advisor-dashboard/' ) ); ?>" class="tpd-btn tpd-btn-xs tpd-btn-outline" style="text-decoration:none; border-color:#00798c; color:#00798c; font-weight:700;">
+						<i class="fa-solid fa-repeat"></i> <?php esc_html_e( 'Switch to Advisor Portal', 'tpd-tool' ); ?>
+					</a>
+				<?php endif; ?>
+
 				<!-- Company Pill (Real Company Name) -->
 				<div class="tpd-company-pill-dropdown tpd-tab-link" data-view="supp-listings" style="cursor:pointer;">
 					<i class="fa-solid fa-crown text-gold"></i>
@@ -206,6 +209,20 @@ $all_directory_listings = get_posts( array(
 		</header>
 
 		<main class="tpd-workspace-content">
+			<?php if ( isset( $_GET['cross_role_notice'] ) && 'advisor' === $_GET['cross_role_notice'] && ! TPD_Tool_Roles::is_advisor( $current_user_id ) ) : ?>
+				<div style="background:#f0fdfa; border:1.5px solid #00798c; border-radius:12px; padding:16px 22px; margin-bottom:22px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+					<div style="display:flex; align-items:center; gap:12px;">
+						<i class="fa-solid fa-user-tie" style="font-size:22px; color:#00798c;"></i>
+						<div>
+							<strong style="color:#013243; font-size:14.5px; display:block;"><?php esc_html_e( 'Your email is currently registered as a Supplier Partner only.', 'tpd-tool' ); ?></strong>
+							<span style="color:#475569; font-size:13px;"><?php esc_html_e( 'Would you like to also register as a Travel Advisor with the same email and access both dashboards?', 'tpd-tool' ); ?></span>
+						</div>
+					</div>
+					<a href="<?php echo esc_url( home_url( '/advisor-registration/?cross_role=1' ) ); ?>" class="tpd-btn tpd-btn-sm tpd-btn-primary" style="text-decoration:none; background:#00798c; border-color:#00798c;">
+						<i class="fa-solid fa-plus-circle"></i> <?php esc_html_e( 'Continue as Travel Advisor Also', 'tpd-tool' ); ?>
+					</a>
+				</div>
+			<?php endif; ?>
 			<!-- VIEW 1: OVERVIEW -->
 			<div id="tpd-supp-overview" class="tpd-tab-panel active">
 				<!-- Welcome Banner (Real Company Name & Banner) -->

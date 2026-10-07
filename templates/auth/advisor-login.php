@@ -9,14 +9,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if ( is_user_logged_in() && ! isset( $_GET['preview_login'] ) && ! ( defined( 'ELEMENTOR_VERSION' ) && \Elementor\Plugin::$instance->editor->is_edit_mode() ) ) {
+if ( is_user_logged_in() && ! isset( $_GET['preview_login'] ) && ! TPD_Tool_Roles::is_elementor_editor_context() ) {
 	$uid = get_current_user_id();
-	if ( TPD_Tool_Roles::is_supplier( $uid ) ) {
-		wp_safe_redirect( home_url( '/supplier-dashboard/' ) );
+	if ( TPD_Tool_Roles::is_advisor( $uid ) || TPD_Tool_Roles::is_admin( $uid ) ) {
+		wp_safe_redirect( home_url( '/advisor-dashboard/' ) );
 		exit;
 	}
-	wp_safe_redirect( home_url( '/advisor-dashboard/' ) );
-	exit;
+}
+
+$initial_notice = '';
+if ( isset( $_GET['auth_required'] ) ) {
+	$initial_notice = __( 'Please log in with your Travel Advisor credentials to access the Advisor Dashboard.', 'tpd-tool' );
+} elseif ( isset( $_GET['account_suspended'] ) ) {
+	$initial_notice = __( 'Your account is currently inactive or suspended. Please contact support.', 'tpd-tool' );
+} elseif ( isset( $_GET['role_restricted'] ) ) {
+	$initial_notice = __( 'Access denied: A Travel Advisor account is required for this dashboard.', 'tpd-tool' );
 }
 
 $is_standalone = ! did_action( 'wp_head' );
@@ -235,7 +242,9 @@ if ( $is_standalone ) {
 	<div class="tpd-member-login-box">
 		<h1 class="tpd-ml-title"><span>Member</span> Login</h1>
 
-		<div id="tpd-advisor-login-error" class="tpd-ml-error-pill"><?php esc_html_e( 'Invalid username or password', 'tpd-tool' ); ?></div>
+		<div id="tpd-advisor-login-error" class="tpd-ml-error-pill" style="<?php echo ! empty( $initial_notice ) ? 'display:block;' : ''; ?>">
+			<?php echo ! empty( $initial_notice ) ? esc_html( $initial_notice ) : esc_html__( 'Invalid username or password', 'tpd-tool' ); ?>
+		</div>
 		<div id="tpd-advisor-login-success" class="tpd-ml-success-pill"></div>
 
 		<form id="tpd-advisor-login-form" method="post" novalidate>
@@ -332,7 +341,18 @@ if ( $is_standalone ) {
 				} else {
 					btn.disabled = false;
 					btn.textContent = origText;
-					errPill.textContent = (res.data && res.data.message) ? res.data.message : 'Invalid username or password';
+					var msg = (res.data && res.data.message) ? res.data.message : 'Invalid username or password';
+					errPill.textContent = msg;
+					if (res.data && res.data.cross_role_url) {
+						var linkWrap = document.createElement('div');
+						linkWrap.style.marginTop = '8px';
+						var a = document.createElement('a');
+						a.href = res.data.cross_role_url;
+						a.style.cssText = 'display:inline-block; background:#00798c; color:#fff; padding:6px 14px; border-radius:4px; text-decoration:none; font-size:13px; font-weight:700;';
+						a.textContent = res.data.cross_role_btn || 'Continue & Register as Travel Advisor Also';
+						linkWrap.appendChild(a);
+						errPill.appendChild(linkWrap);
+					}
 					errPill.style.display = 'block';
 				}
 			})

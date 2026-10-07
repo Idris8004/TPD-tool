@@ -361,7 +361,8 @@ if ( $is_standalone ) {
 </style>
 
 <?php
-if ( is_user_logged_in() && ! isset( $_GET['preview_form'] ) ) {
+$logged_in_uid = get_current_user_id();
+if ( is_user_logged_in() && TPD_Tool_Roles::is_advisor( $logged_in_uid ) && ! isset( $_GET['preview_form'] ) ) {
 	$current_user = wp_get_current_user();
 	?>
 	<div class="tpd-split-auth-shell">
@@ -377,7 +378,7 @@ if ( is_user_logged_in() && ! isset( $_GET['preview_form'] ) ) {
 				<div class="tpd-split-card" style="text-align:center;">
 					<i class="fa-solid fa-circle-check" style="font-size:44px; color:#00798c; margin-bottom:14px;"></i>
 					<h3 style="margin:0 0 8px; color:#013243;"><?php printf( esc_html__( 'Welcome, %s', 'tpd-tool' ), esc_html( $current_user->display_name ) ); ?></h3>
-					<p style="color:#64748b; font-size:14px; margin-bottom:24px;"><?php esc_html_e( 'You are already signed in. Continue to your Advisor Dashboard or preview the registration steps.', 'tpd-tool' ); ?></p>
+					<p style="color:#64748b; font-size:14px; margin-bottom:24px;"><?php esc_html_e( 'Your Travel Advisor account is active. Continue to your Advisor Dashboard or preview the registration steps.', 'tpd-tool' ); ?></p>
 					<div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap;">
 						<a href="<?php echo esc_url( home_url( '/advisor-dashboard/' ) ); ?>" class="tpd-btn-teal-solid" style="width:auto; text-decoration:none; padding:12px 28px;">
 							<?php esc_html_e( 'Open Advisor Dashboard', 'tpd-tool' ); ?>
@@ -397,6 +398,15 @@ if ( is_user_logged_in() && ! isset( $_GET['preview_form'] ) ) {
 	}
 	return;
 }
+
+// Pre-fill if logged in as a Supplier Partner activating a Travel Advisor profile
+$is_logged_in_supplier = ( is_user_logged_in() && TPD_Tool_Roles::is_supplier( $logged_in_uid ) && ! TPD_Tool_Roles::is_advisor( $logged_in_uid ) );
+$prefill_user          = $is_logged_in_supplier ? get_userdata( $logged_in_uid ) : null;
+$prefill_fname         = $prefill_user ? $prefill_user->first_name : '';
+$prefill_lname         = $prefill_user ? $prefill_user->last_name : '';
+$prefill_email         = $prefill_user ? $prefill_user->user_email : ( isset( $_GET['cross_role_email'] ) ? sanitize_email( wp_unslash( $_GET['cross_role_email'] ) ) : '' );
+$prefill_phone         = $prefill_user ? get_user_meta( $logged_in_uid, 'tpd_phone', true ) : '';
+$prefill_username      = $prefill_user ? $prefill_user->user_login : '';
 ?>
 
 <div class="tpd-split-auth-shell">
@@ -444,6 +454,36 @@ if ( is_user_logged_in() && ! isset( $_GET['preview_form'] ) ) {
 				<form id="tpd-advisor-registration-form" class="tpd-reg-form" method="post" novalidate>
 					<input type="hidden" name="action" value="tpd_register_advisor">
 					<input type="hidden" name="nonce" value="<?php echo esc_attr( wp_create_nonce( 'tpd_nonce' ) ); ?>">
+					<input type="hidden" name="confirm_cross_role" id="tpd_adv_confirm_cross_role" value="<?php echo $is_logged_in_supplier ? '1' : '0'; ?>">
+
+					<!-- Cross-Role Detection Prompt Banner -->
+					<div id="tpd-adv-cross-role-banner" style="<?php echo $is_logged_in_supplier ? 'display:block;' : 'display:none;'; ?> background:#f0fdfa; border:1.5px solid #00798c; border-radius:10px; padding:16px 20px; margin-bottom:22px;">
+						<div style="display:flex; align-items:flex-start; gap:12px;">
+							<i class="fa-solid fa-layer-group" style="color:#00798c; font-size:20px; margin-top:2px;"></i>
+							<div style="flex:1;">
+								<strong id="tpd-adv-cr-title" style="color:#013243; font-size:14px; display:block; margin-bottom:4px;">
+									<?php esc_html_e( 'Your email is already registered as a Supplier Partner!', 'tpd-tool' ); ?>
+								</strong>
+								<p id="tpd-adv-cr-desc" style="color:#334155; font-size:13px; margin:0 0 10px; line-height:1.45;">
+									<?php esc_html_e( 'Do you want to continue and also register as a Travel Advisor? Complete your Advisor information below and you will be able to log into both dashboards (using the same or a separate username & password).', 'tpd-tool' ); ?>
+								</p>
+								<div id="tpd-adv-cr-actions" style="<?php echo $is_logged_in_supplier ? 'display:none;' : 'display:flex;'; ?> gap:10px; flex-wrap:wrap;">
+									<button type="button" id="tpd-adv-cr-accept-btn" style="background:#00798c; color:#fff; border:none; padding:8px 16px; border-radius:5px; font-size:12.5px; font-weight:700; cursor:pointer;">
+										<i class="fa-solid fa-check"></i> <?php esc_html_e( 'Yes, Continue as Travel Advisor Also', 'tpd-tool' ); ?>
+									</button>
+									<a href="<?php echo esc_url( home_url( '/supplier-login/' ) ); ?>" style="background:#fff; color:#00798c; border:1px solid #00798c; padding:7px 14px; border-radius:5px; font-size:12.5px; font-weight:700; text-decoration:none;">
+										<?php esc_html_e( 'Go to Supplier Login', 'tpd-tool' ); ?>
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Same-Role Duplicate Email Alert Banner -->
+					<div id="tpd-adv-same-role-alert" style="display:none; background:#fef2f2; border:1.5px solid #ef4444; border-radius:10px; padding:14px 18px; margin-bottom:20px; color:#991b1b; font-size:13.5px; font-weight:600;">
+						<span id="tpd-adv-same-role-msg"></span>
+						<a href="<?php echo esc_url( home_url( '/advisor-login/' ) ); ?>" style="margin-left:10px; color:#00798c; text-decoration:underline; font-weight:700;"><?php esc_html_e( 'Log In Here', 'tpd-tool' ); ?></a>
+					</div>
 
 					<!-- STEP 1: TELL US ABOUT YOURSELF -->
 					<div class="tpd-step-pane tpd-wizard-pane active" data-step="1" data-step-pane="1">
@@ -452,33 +492,33 @@ if ( is_user_logged_in() && ! isset( $_GET['preview_form'] ) ) {
 						<div class="tpd-f-row-2">
 							<div class="tpd-f-group">
 								<label><?php esc_html_e( 'First Name *', 'tpd-tool' ); ?></label>
-								<input type="text" name="first_name" required placeholder="<?php esc_attr_e( 'Enter First Name', 'tpd-tool' ); ?>" class="tpd-line-input">
+								<input type="text" name="first_name" id="tpd_adv_first_name" required value="<?php echo esc_attr( $prefill_fname ); ?>" placeholder="<?php esc_attr_e( 'Enter First Name', 'tpd-tool' ); ?>" class="tpd-line-input">
 							</div>
 							<div class="tpd-f-group">
 								<label><?php esc_html_e( 'Last Name *', 'tpd-tool' ); ?></label>
-								<input type="text" name="last_name" required placeholder="<?php esc_attr_e( 'Enter Last Name', 'tpd-tool' ); ?>" class="tpd-line-input">
+								<input type="text" name="last_name" id="tpd_adv_last_name" required value="<?php echo esc_attr( $prefill_lname ); ?>" placeholder="<?php esc_attr_e( 'Enter Last Name', 'tpd-tool' ); ?>" class="tpd-line-input">
 							</div>
 						</div>
 
 						<div class="tpd-f-row-2">
 							<div class="tpd-f-group">
 								<label><?php esc_html_e( 'Phone Number *', 'tpd-tool' ); ?></label>
-								<input type="tel" name="phone" required placeholder="<?php esc_attr_e( 'Enter Phone Number Here', 'tpd-tool' ); ?>" class="tpd-line-input">
+								<input type="tel" name="phone" id="tpd_adv_phone" required value="<?php echo esc_attr( $prefill_phone ); ?>" placeholder="<?php esc_attr_e( 'Enter Phone Number Here', 'tpd-tool' ); ?>" class="tpd-line-input">
 							</div>
 							<div class="tpd-f-group">
 								<label><?php esc_html_e( 'Username *', 'tpd-tool' ); ?></label>
-								<input type="text" name="username" required placeholder="<?php esc_attr_e( 'Example: TravelPro123', 'tpd-tool' ); ?>" class="tpd-line-input">
+								<input type="text" name="username" id="tpd_adv_username" required value="<?php echo esc_attr( $prefill_username ); ?>" placeholder="<?php esc_attr_e( 'Example: TravelPro123', 'tpd-tool' ); ?>" class="tpd-line-input">
 							</div>
 						</div>
 
 						<div class="tpd-f-row-2">
 							<div class="tpd-f-group">
 								<label><?php esc_html_e( 'Profile Handle *', 'tpd-tool' ); ?></label>
-								<input type="text" name="profile_handle" required placeholder="<?php esc_attr_e( 'Example: JaneDoe1', 'tpd-tool' ); ?>" class="tpd-line-input">
+								<input type="text" name="profile_handle" id="tpd_adv_handle" required value="<?php echo esc_attr( $prefill_username ); ?>" placeholder="<?php esc_attr_e( 'Example: JaneDoe1', 'tpd-tool' ); ?>" class="tpd-line-input">
 							</div>
 							<div class="tpd-f-group">
 								<label><?php esc_html_e( 'Email Address *', 'tpd-tool' ); ?></label>
-								<input type="email" name="email" required placeholder="<?php esc_attr_e( 'Enter Email Address', 'tpd-tool' ); ?>" class="tpd-line-input">
+								<input type="email" name="email" id="tpd_adv_email" required value="<?php echo esc_attr( $prefill_email ); ?>" placeholder="<?php esc_attr_e( 'Enter Email Address', 'tpd-tool' ); ?>" class="tpd-line-input">
 							</div>
 						</div>
 
@@ -577,11 +617,11 @@ if ( is_user_logged_in() && ! isset( $_GET['preview_form'] ) ) {
 							<div class="tpd-f-row-2" style="margin-top:18px;">
 								<div class="tpd-f-group">
 									<label><?php esc_html_e( 'Password *', 'tpd-tool' ); ?></label>
-									<input type="password" name="password" required placeholder="<?php esc_attr_e( 'Create Password (min 6 chars)', 'tpd-tool' ); ?>" class="tpd-line-input">
+									<input type="password" name="password" <?php echo $is_logged_in_supplier ? '' : 'required'; ?> placeholder="<?php esc_attr_e( 'Create Password (min 6 chars)', 'tpd-tool' ); ?>" class="tpd-line-input">
 								</div>
 								<div class="tpd-f-group">
 									<label><?php esc_html_e( 'Confirm Password *', 'tpd-tool' ); ?></label>
-									<input type="password" name="confirm_password" required placeholder="<?php esc_attr_e( 'Confirm Password', 'tpd-tool' ); ?>" class="tpd-line-input">
+									<input type="password" name="confirm_password" <?php echo $is_logged_in_supplier ? '' : 'required'; ?> placeholder="<?php esc_attr_e( 'Confirm Password', 'tpd-tool' ); ?>" class="tpd-line-input">
 								</div>
 							</div>
 							<input type="hidden" name="tier" value="basic">
@@ -610,11 +650,35 @@ if ( is_user_logged_in() && ! isset( $_GET['preview_form'] ) ) {
 					<div class="tpd-step-pane tpd-wizard-pane" data-step="3" data-step-pane="3">
 						<h3 class="tpd-pane-heading"><?php esc_html_e( 'One Final Step — Account Security & Plan', 'tpd-tool' ); ?></h3>
 
-						<div class="tpd-f-row-2">
+						<!-- Dual-Portal Credential Mode Selector (Shown when upgrading a Supplier email to also have Advisor access) -->
+						<div id="tpd-adv-dual-cred-box" style="<?php echo $is_logged_in_supplier ? 'display:block;' : 'display:none;'; ?> background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:10px; padding:18px; margin-bottom:22px;">
+							<strong style="display:block; font-size:13.5px; color:#013243; margin-bottom:10px;">
+								<i class="fa-solid fa-key" style="color:#00798c;"></i> <?php esc_html_e( 'Dual-Dashboard Login Preference', 'tpd-tool' ); ?>
+							</strong>
+							<label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#1e293b; margin-bottom:8px; cursor:pointer;">
+								<input type="radio" name="credential_mode" value="same" checked class="tpd-adv-cred-mode-radio">
+								<span><?php esc_html_e( 'Use the SAME Username & Password as my Supplier account for both dashboards', 'tpd-tool' ); ?></span>
+							</label>
+							<label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#1e293b; cursor:pointer;">
+								<input type="radio" name="credential_mode" value="separate" class="tpd-adv-cred-mode-radio">
+								<span><?php esc_html_e( 'Create a DIFFERENT Username & Password specifically for my Advisor Dashboard', 'tpd-tool' ); ?></span>
+							</label>
+
+							<?php if ( ! $is_logged_in_supplier ) : ?>
+								<div id="tpd-adv-verify-existing-pwd-wrap" style="margin-top:14px; padding-top:12px; border-top:1px dashed #cbd5e1;">
+									<label style="font-size:12.5px; font-weight:700; color:#00798c; display:block; margin-bottom:4px;">
+										<?php esc_html_e( 'Verify Your Current Supplier Password * (Required to link accounts)', 'tpd-tool' ); ?>
+									</label>
+									<input type="password" name="existing_account_password" id="tpd_adv_existing_pwd" placeholder="<?php esc_attr_e( 'Enter your existing Supplier password', 'tpd-tool' ); ?>" class="tpd-line-input">
+								</div>
+							<?php endif; ?>
+						</div>
+
+						<div class="tpd-f-row-2" id="tpd-adv-new-pwd-row" style="<?php echo $is_logged_in_supplier ? 'display:none;' : ''; ?>">
 							<div class="tpd-f-group">
-								<label><?php esc_html_e( 'Password *', 'tpd-tool' ); ?></label>
+								<label id="tpd-adv-pwd-label"><?php esc_html_e( 'Password *', 'tpd-tool' ); ?></label>
 								<div style="position:relative;">
-									<input type="password" name="password" id="tpd_advisor_password" required placeholder="<?php esc_attr_e( 'Enter Password (min 6 chars)', 'tpd-tool' ); ?>" class="tpd-line-input" style="padding-right:34px;">
+									<input type="password" name="password" id="tpd_advisor_password" <?php echo $is_logged_in_supplier ? '' : 'required'; ?> placeholder="<?php esc_attr_e( 'Enter Password (min 6 chars)', 'tpd-tool' ); ?>" class="tpd-line-input" style="padding-right:34px;">
 									<button type="button" class="tpd-pwd-toggle-btn" style="position:absolute; right:4px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:#64748b;">
 										<i class="fa-solid fa-eye"></i>
 									</button>
@@ -623,7 +687,7 @@ if ( is_user_logged_in() && ! isset( $_GET['preview_form'] ) ) {
 							<div class="tpd-f-group">
 								<label><?php esc_html_e( 'Confirm Password *', 'tpd-tool' ); ?></label>
 								<div style="position:relative;">
-									<input type="password" name="confirm_password" id="tpd_advisor_confirm_password" required placeholder="<?php esc_attr_e( 'Confirm Password', 'tpd-tool' ); ?>" class="tpd-line-input" style="padding-right:34px;">
+									<input type="password" name="confirm_password" id="tpd_advisor_confirm_password" <?php echo $is_logged_in_supplier ? '' : 'required'; ?> placeholder="<?php esc_attr_e( 'Confirm Password', 'tpd-tool' ); ?>" class="tpd-line-input" style="padding-right:34px;">
 									<button type="button" class="tpd-pwd-toggle-btn" style="position:absolute; right:4px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:#64748b;">
 										<i class="fa-solid fa-eye"></i>
 									</button>
@@ -713,6 +777,131 @@ if ( is_user_logged_in() && ! isset( $_GET['preview_form'] ) ) {
 
 <script>
 (function() {
+	var ajaxUrl = '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>';
+	var nonce = '<?php echo esc_js( wp_create_nonce( 'tpd_nonce' ) ); ?>';
+	var sameRoleBlocked = false;
+
+	function activateCrossRoleAdvisorMode(data) {
+		document.getElementById('tpd_adv_confirm_cross_role').value = '1';
+		var banner = document.getElementById('tpd-adv-cross-role-banner');
+		if (banner) banner.style.display = 'block';
+		var dualCredBox = document.getElementById('tpd-adv-dual-cred-box');
+		if (dualCredBox) dualCredBox.style.display = 'block';
+
+		if (data) {
+			var fn = document.getElementById('tpd_adv_first_name');
+			var ln = document.getElementById('tpd_adv_last_name');
+			var ph = document.getElementById('tpd_adv_phone');
+			var un = document.getElementById('tpd_adv_username');
+			var hd = document.getElementById('tpd_adv_handle');
+			if (fn && !fn.value && data.first_name) fn.value = data.first_name;
+			if (ln && !ln.value && data.last_name) ln.value = data.last_name;
+			if (ph && !ph.value && data.phone) ph.value = data.phone;
+			if (un && !un.value && data.existing_username) un.value = data.existing_username;
+			if (hd && !hd.value && data.existing_username) hd.value = data.existing_username;
+		}
+		updateAdvisorCredentialFields();
+	}
+
+	function updateAdvisorCredentialFields() {
+		var isCrossRole = document.getElementById('tpd_adv_confirm_cross_role').value === '1';
+		var checkedRadio = document.querySelector('input.tpd-adv-cred-mode-radio:checked');
+		var mode = checkedRadio ? checkedRadio.value : 'same';
+		var pwdRow = document.getElementById('tpd-adv-new-pwd-row');
+		var pwdInp = document.getElementById('tpd_advisor_password');
+		var cnfInp = document.getElementById('tpd_advisor_confirm_password');
+		var pwdLbl = document.getElementById('tpd-adv-pwd-label');
+
+		if (!isCrossRole) {
+			if (pwdRow) pwdRow.style.display = '';
+			if (pwdInp) pwdInp.required = true;
+			if (cnfInp) cnfInp.required = true;
+			return;
+		}
+
+		if (mode === 'same') {
+			if (pwdRow) pwdRow.style.display = 'none';
+			if (pwdInp) { pwdInp.required = false; pwdInp.value = ''; }
+			if (cnfInp) { cnfInp.required = false; cnfInp.value = ''; }
+		} else {
+			if (pwdRow) pwdRow.style.display = '';
+			if (pwdLbl) pwdLbl.textContent = 'New Separate Advisor Password *';
+			if (pwdInp) pwdInp.required = true;
+			if (cnfInp) cnfInp.required = true;
+		}
+	}
+
+	document.querySelectorAll('.tpd-adv-cred-mode-radio').forEach(function(r) {
+		r.addEventListener('change', updateAdvisorCredentialFields);
+	});
+
+	var acceptBtn = document.getElementById('tpd-adv-cr-accept-btn');
+	if (acceptBtn) {
+		acceptBtn.addEventListener('click', function() {
+			document.getElementById('tpd-adv-cr-actions').style.display = 'none';
+			activateCrossRoleAdvisorMode();
+		});
+	}
+
+	function checkAdvisorEmail(email, callback) {
+		if (!email || email.indexOf('@') === -1) {
+			if (callback) callback('available');
+			return;
+		}
+		var fd = new FormData();
+		fd.append('action', 'tpd_check_registration_email');
+		fd.append('email', email);
+		fd.append('target_role', 'travel_advisor');
+		fd.append('nonce', nonce);
+
+		fetch(ajaxUrl, { method: 'POST', body: fd, credentials: 'same-origin' })
+			.then(function(r) { return r.json(); })
+			.then(function(res) {
+				var sameAlert = document.getElementById('tpd-adv-same-role-alert');
+				var crossBanner = document.getElementById('tpd-adv-cross-role-banner');
+				if (res.success && res.data) {
+					if (res.data.status === 'same_role_exists') {
+						sameRoleBlocked = true;
+						if (crossBanner) crossBanner.style.display = 'none';
+						if (sameAlert) {
+							document.getElementById('tpd-adv-same-role-msg').textContent = res.data.message;
+							sameAlert.style.display = 'block';
+						}
+						if (callback) callback('same_role_exists');
+					} else if (res.data.status === 'cross_role_available') {
+						sameRoleBlocked = false;
+						if (sameAlert) sameAlert.style.display = 'none';
+						activateCrossRoleAdvisorMode(res.data);
+						if (callback) callback('cross_role_available');
+					} else {
+						sameRoleBlocked = false;
+						if (sameAlert) sameAlert.style.display = 'none';
+						if (crossBanner) crossBanner.style.display = 'none';
+						document.getElementById('tpd_adv_confirm_cross_role').value = '0';
+						var dualCredBox = document.getElementById('tpd-adv-dual-cred-box');
+						if (dualCredBox) dualCredBox.style.display = 'none';
+						updateAdvisorCredentialFields();
+						if (callback) callback('available');
+					}
+				} else if (callback) {
+					callback('available');
+				}
+			})
+			.catch(function() {
+				if (callback) callback('available');
+			});
+	}
+
+	var emailInp = document.getElementById('tpd_adv_email');
+	if (emailInp) {
+		emailInp.addEventListener('blur', function() {
+			checkAdvisorEmail(emailInp.value.trim());
+		});
+		if (emailInp.value.trim()) {
+			checkAdvisorEmail(emailInp.value.trim());
+		}
+	}
+
 	function switchAdvisorStep(targetStep) {
 		var form = document.getElementById('tpd-advisor-registration-form');
 		if (!form) return;
@@ -757,6 +946,16 @@ if ( is_user_logged_in() && ! isset( $_GET['preview_form'] ) ) {
 				if (firstBad) firstBad.focus();
 				return;
 			}
+
+			if (nextStep === 2 && emailInp) {
+				checkAdvisorEmail(emailInp.value.trim(), function(status) {
+					if (status !== 'same_role_exists') {
+						switchAdvisorStep(nextStep);
+					}
+				});
+				return;
+			}
+
 			switchAdvisorStep(nextStep);
 			return;
 		}

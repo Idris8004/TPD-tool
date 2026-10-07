@@ -47,6 +47,7 @@ class TPD_Tool_Settings {
 		add_action( 'wp_ajax_tpd_user_upgrade_plan', array( __CLASS__, 'ajax_user_upgrade_plan' ) );
 		add_action( 'wp_ajax_tpd_user_update_account_security', array( __CLASS__, 'ajax_user_update_account_security' ) );
 		add_action( 'wp_ajax_tpd_delete_own_account', array( __CLASS__, 'ajax_delete_own_account' ) );
+		add_action( 'wp_ajax_tpd_user_delete_own_account', array( __CLASS__, 'ajax_delete_own_account' ) );
 	}
 
 	/**
@@ -1078,30 +1079,40 @@ class TPD_Tool_Settings {
 	}
 
 	/**
-	 * AJAX: User Self-Service Password Update
+	 * AJAX: User Self-Service Password Update (Supports Primary & Portal-Specific Passwords)
 	 */
 	public static function ajax_user_update_account_security() {
 		check_ajax_referer( 'tpd_nonce', 'nonce' );
 		$user_id = get_current_user_id();
-		if ( ! $user_id ) {
+		if ( ! $user_id || ! TPD_Tool_Roles::is_account_active( $user_id ) ) {
 			wp_send_json_error( array( 'message' => 'Authentication required.' ) );
 		}
 
-		$new_pass = isset( $_POST['new_password'] ) ? $_POST['new_password'] : '';
-		$confirm  = isset( $_POST['confirm_password'] ) ? $_POST['confirm_password'] : '';
+		$new_pass     = isset( $_POST['new_password'] ) ? (string) wp_unslash( $_POST['new_password'] ) : '';
+		$confirm      = isset( $_POST['confirm_password'] ) ? (string) wp_unslash( $_POST['confirm_password'] ) : '';
+		$portal_scope = isset( $_POST['portal_scope'] ) ? sanitize_key( wp_unslash( $_POST['portal_scope'] ) ) : 'all';
 
-		if ( empty( $new_pass ) || strlen( $new_pass ) < 8 ) {
-			wp_send_json_error( array( 'message' => 'Password must be at least 8 characters long.' ) );
+		if ( empty( $new_pass ) || strlen( $new_pass ) < 6 ) {
+			wp_send_json_error( array( 'message' => 'Password must be at least 6 characters long.' ) );
 		}
 		if ( $new_pass !== $confirm ) {
 			wp_send_json_error( array( 'message' => 'Passwords do not match.' ) );
 		}
 
-		wp_set_password( $new_pass, $user_id );
-		wp_set_current_user( $user_id );
-		wp_set_auth_cookie( $user_id, true );
+		if ( 'advisor' === $portal_scope ) {
+			update_user_meta( $user_id, 'tpd_advisor_password_hash', wp_hash_password( $new_pass ) );
+		} elseif ( 'supplier' === $portal_scope ) {
+			update_user_meta( $user_id, 'tpd_supplier_password_hash', wp_hash_password( $new_pass ) );
+		} else {
+			wp_set_password( $new_pass, $user_id );
+			delete_user_meta( $user_id, 'tpd_advisor_password_hash' );
+			delete_user_meta( $user_id, 'tpd_supplier_password_hash' );
+		}
 
-		wp_send_json_success( array( 'message' => 'Your password has been updated successfully!' ) );
+		wp_set_current_user( $user_id );
+		wp_set_auth_cookie( $user_id, true, is_ssl() );
+
+		wp_send_json_success( array( 'message' => 'Your password has been securely hashed and updated!' ) );
 	}
 
 	/**

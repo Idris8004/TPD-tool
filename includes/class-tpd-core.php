@@ -83,8 +83,9 @@ class TPD_Tool_Core {
 	public function template_loader( $template ) {
 		$uri = trim( parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH ), '/' );
 
-		// Advisor Dashboard
+		// Advisor Dashboard — Strictly Protected
 		if ( $uri === 'advisor-dashboard' || is_page( 'advisor-dashboard' ) || $uri === 'advisor-portal' ) {
+			TPD_Tool_Roles::enforce_portal_access( 'advisor' );
 			$file = TPD_TOOL_DIR . 'templates/advisor/dashboard.php';
 			if ( file_exists( $file ) ) {
 				status_header( 200 );
@@ -92,8 +93,9 @@ class TPD_Tool_Core {
 			}
 		}
 
-		// Supplier Dashboard
+		// Supplier Dashboard — Strictly Protected
 		if ( $uri === 'supplier-dashboard' || is_page( 'supplier-dashboard' ) || $uri === 'supplier-portal' ) {
+			TPD_Tool_Roles::enforce_portal_access( 'supplier' );
 			$file = TPD_TOOL_DIR . 'templates/supplier/dashboard.php';
 			if ( file_exists( $file ) ) {
 				status_header( 200 );
@@ -101,8 +103,9 @@ class TPD_Tool_Core {
 			}
 		}
 
-		// Super Admin Dashboard
+		// Super Admin Dashboard — Strictly Protected (Admins Only)
 		if ( $uri === 'tpd-admin' || is_page( 'tpd-admin' ) ) {
+			TPD_Tool_Roles::enforce_portal_access( 'admin' );
 			$file = TPD_TOOL_DIR . 'templates/admin/super-admin-dashboard.php';
 			if ( file_exists( $file ) ) {
 				status_header( 200 );

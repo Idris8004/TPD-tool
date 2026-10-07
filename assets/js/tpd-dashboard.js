@@ -294,14 +294,19 @@
 			var $status = $form.find('.tpd-reg-status');
 			var originalBtnHtml = $btn.html();
 
-			// Verify password match before submitting
-			var pwd = $form.find('input[name="password"]').val();
-			var confirmPwd = $form.find('input[name="confirm_password"]').val();
-			if (pwd !== confirmPwd) {
-				$status.removeClass('success').addClass('error')
-					.html('<i class="fa-solid fa-circle-exclamation"></i> Passwords do not match.')
-					.fadeIn();
-				return;
+			// Verify password match before submitting (when new password fields are visible)
+			var isCrossRole = $form.find('input[name="confirm_cross_role"]').val() === '1';
+			var credMode = $form.find('input[name="credential_mode"]:checked').val() || 'same';
+			var pwd = $form.find('input[name="password"]').val() || '';
+			var confirmPwd = $form.find('input[name="confirm_password"]').val() || '';
+
+			if (!isCrossRole || credMode === 'separate') {
+				if (pwd !== confirmPwd) {
+					$status.removeClass('success').addClass('error')
+						.html('<i class="fa-solid fa-circle-exclamation"></i> Passwords do not match.')
+						.fadeIn();
+					return;
+				}
 			}
 
 			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Processing Registration...');
@@ -321,8 +326,13 @@
 						}, 1100);
 					} else {
 						$btn.prop('disabled', false).html(originalBtnHtml);
+						if (res.data && res.data.cross_role_prompt) {
+							$form.find('input[name="confirm_cross_role"]').val('1');
+							$('#tpd-adv-cross-role-banner, #tpd-supp-cross-role-banner').slideDown(200);
+							$('#tpd-adv-dual-cred-box, #tpd-supp-dual-cred-box').slideDown(200);
+						}
 						$status.addClass('error')
-							.html('<i class="fa-solid fa-circle-exclamation"></i> ' + (res.data.message || 'Registration failed. Please check required fields.'))
+							.html('<i class="fa-solid fa-circle-exclamation"></i> ' + ((res.data && res.data.message) ? res.data.message : 'Registration failed. Please check required fields.'))
 							.fadeIn();
 					}
 				},

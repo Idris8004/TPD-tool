@@ -28,19 +28,35 @@ class TPD_Tool_Profile_Editor {
 	public static function ajax_upload_media() {
 		check_ajax_referer( 'tpd_nonce', 'nonce' );
 
-		if ( ! is_user_logged_in() ) {
+		if ( ! is_user_logged_in() || ! TPD_Tool_Roles::is_account_active() ) {
 			wp_send_json_error( array( 'message' => __( 'Authentication required.', 'tpd-tool' ) ) );
 		}
 
-		if ( empty( $_FILES['file'] ) ) {
+		if ( empty( $_FILES['file'] ) || empty( $_FILES['file']['name'] ) ) {
 			wp_send_json_error( array( 'message' => __( 'No file was uploaded.', 'tpd-tool' ) ) );
+		}
+
+		// Validate file extension and MIME type against strict allowlist
+		$allowed_mimes = array(
+			'jpg|jpeg|jpe' => 'image/jpeg',
+			'png'          => 'image/png',
+			'gif'          => 'image/gif',
+			'webp'         => 'image/webp',
+			'pdf'          => 'application/pdf',
+		);
+		$filetype = wp_check_filetype( sanitize_file_name( wp_unslash( $_FILES['file']['name'] ) ), $allowed_mimes );
+		if ( empty( $filetype['ext'] ) || empty( $filetype['type'] ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security Error: Only JPG, PNG, GIF, WEBP images and PDF documents are allowed.', 'tpd-tool' ) ) );
 		}
 
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 
-		$upload_overrides = array( 'test_form' => false );
+		$upload_overrides = array(
+			'test_form' => false,
+			'mimes'     => $allowed_mimes,
+		);
 		$attachment_id = media_handle_upload( 'file', 0, array(), $upload_overrides );
 
 		if ( is_wp_error( $attachment_id ) ) {
@@ -63,8 +79,11 @@ class TPD_Tool_Profile_Editor {
 		check_ajax_referer( 'tpd_nonce', 'nonce' );
 
 		$user_id = get_current_user_id();
-		if ( ! $user_id ) {
+		if ( ! $user_id || ! TPD_Tool_Roles::is_account_active( $user_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Authentication required.', 'tpd-tool' ) ) );
+		}
+		if ( ! TPD_Tool_Roles::is_advisor( $user_id ) && ! TPD_Tool_Roles::is_admin( $user_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized: Travel Advisor role required.', 'tpd-tool' ) ) );
 		}
 
 		$first_name         = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
@@ -251,11 +270,22 @@ class TPD_Tool_Profile_Editor {
 		check_ajax_referer( 'tpd_nonce', 'nonce' );
 
 		$user_id = get_current_user_id();
-		if ( ! $user_id ) {
+		if ( ! $user_id || ! TPD_Tool_Roles::is_account_active( $user_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Authentication required.', 'tpd-tool' ) ) );
+		}
+		if ( ! TPD_Tool_Roles::is_supplier( $user_id ) && ! TPD_Tool_Roles::is_admin( $user_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized: Supplier Partner role required.', 'tpd-tool' ) ) );
 		}
 
 		$listing_id   = isset( $_POST['listing_id'] ) ? absint( $_POST['listing_id'] ) : 0;
+		if ( $listing_id > 0 && ! TPD_Tool_Roles::is_admin( $user_id ) ) {
+			$post_obj      = get_post( $listing_id );
+			$assigned_user = (int) get_post_meta( $listing_id, 'tpd_assigned_user', true );
+			if ( ! $post_obj || 'supplier_listing' !== $post_obj->post_type || ( (int) $post_obj->post_author !== $user_id && $assigned_user !== $user_id ) ) {
+				wp_send_json_error( array( 'message' => __( 'Unauthorized: You do not own this supplier listing.', 'tpd-tool' ) ) );
+			}
+		}
+
 		$company_name = isset( $_POST['company_name'] ) ? sanitize_text_field( wp_unslash( $_POST['company_name'] ) ) : '';
 		$tagline      = isset( $_POST['tagline'] ) ? sanitize_text_field( wp_unslash( $_POST['tagline'] ) ) : '';
 		$phone        = isset( $_POST['phone'] ) ? sanitize_text_field( wp_unslash( $_POST['phone'] ) ) : '';
@@ -326,8 +356,11 @@ class TPD_Tool_Profile_Editor {
 		check_ajax_referer( 'tpd_nonce', 'nonce' );
 
 		$user_id = get_current_user_id();
-		if ( ! $user_id ) {
+		if ( ! $user_id || ! TPD_Tool_Roles::is_account_active( $user_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Authentication required.', 'tpd-tool' ) ) );
+		}
+		if ( ! TPD_Tool_Roles::is_supplier( $user_id ) && ! TPD_Tool_Roles::is_admin( $user_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized: Supplier Partner role required.', 'tpd-tool' ) ) );
 		}
 
 		$first_name     = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
@@ -433,6 +466,11 @@ class TPD_Tool_Profile_Editor {
 	public static function ajax_manage_team_member() {
 		check_ajax_referer( 'tpd_nonce', 'nonce' );
 
+		$user_id = get_current_user_id();
+		if ( ! $user_id || ! TPD_Tool_Roles::is_account_active( $user_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Authentication required.', 'tpd-tool' ) ) );
+		}
+
 		$listing_id  = isset( $_POST['listing_id'] ) ? absint( $_POST['listing_id'] ) : 0;
 		$member_name = isset( $_POST['member_name'] ) ? sanitize_text_field( wp_unslash( $_POST['member_name'] ) ) : '';
 		$title       = isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '';
@@ -442,6 +480,14 @@ class TPD_Tool_Profile_Editor {
 
 		if ( ! $listing_id || empty( $member_name ) ) {
 			wp_send_json_error( array( 'message' => __( 'Listing ID and Member Name are required.', 'tpd-tool' ) ) );
+		}
+
+		if ( ! TPD_Tool_Roles::is_admin( $user_id ) ) {
+			$post_obj      = get_post( $listing_id );
+			$assigned_user = (int) get_post_meta( $listing_id, 'tpd_assigned_user', true );
+			if ( ! $post_obj || ( (int) $post_obj->post_author !== $user_id && $assigned_user !== $user_id ) ) {
+				wp_send_json_error( array( 'message' => __( 'Unauthorized: You do not own this supplier listing.', 'tpd-tool' ) ) );
+			}
 		}
 
 		$team = get_post_meta( $listing_id, '_tpd_team_members', true );
