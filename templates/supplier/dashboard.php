@@ -156,7 +156,7 @@ $all_directory_listings = get_posts( array(
 			<a href="<?php echo esc_url( $public_url ); ?>" target="_blank" class="tpd-btn tpd-btn-outline-white tpd-btn-sm tpd-btn-block mb-3" style="text-decoration:none; text-align:center;">
 				<i class="fa-solid fa-arrow-up-right-from-square"></i> <?php esc_html_e( 'View My Public Listing', 'tpd-tool' ); ?>
 			</a>
-			<div class="tpd-sb-help-prompt">
+			<div class="tpd-sb-help-prompt tpd-tab-link" data-view="supp-help" style="cursor:pointer;">
 				<i class="fa-regular fa-circle-question"></i>
 				<div>
 					<strong><?php esc_html_e( 'Need Help?', 'tpd-tool' ); ?></strong>
@@ -294,7 +294,7 @@ $all_directory_listings = get_posts( array(
 									<h4><?php esc_html_e( 'VIRTUAL OFFICE', 'tpd-tool' ); ?></h4>
 									<span class="tpd-online-badge-text"><i class="fa-solid fa-circle text-green"></i> <?php echo count( $team_members ); ?> Team Member<?php echo count( $team_members ) > 1 ? 's' : ''; ?> Online</span>
 								</div>
-								<a href="#tpd-supp-listings" class="tpd-clean-link tpd-tab-link" data-view="supp-listings"><?php esc_html_e( 'Manage Team', 'tpd-tool' ); ?></a>
+								<a href="#tpd-supp-listings" class="tpd-clean-link tpd-tab-link" data-view="supp-listings" data-subtab="set-team"><?php esc_html_e( 'Manage Team', 'tpd-tool' ); ?></a>
 							</div>
 
 							<div class="tpd-vo-members-list">
@@ -319,22 +319,22 @@ $all_directory_listings = get_posts( array(
 						<div class="tpd-card-box tpd-manage-content-card">
 							<h4><?php esc_html_e( 'MANAGE YOUR CONTENT', 'tpd-tool' ); ?></h4>
 							<div class="tpd-myc-grid-8">
-								<a href="#tpd-supp-listings" class="tpd-myc-tile tpd-tab-link" data-view="supp-listings">
+								<a href="#tpd-supp-listings" class="tpd-myc-tile tpd-tab-link" data-view="supp-listings" data-subtab="set-basic">
 									<i class="fa-regular fa-file-lines"></i>
 									<strong>Basic Information</strong>
 									<p>Update description, tagline, booking portal.</p>
 								</a>
-								<a href="#tpd-supp-listings" class="tpd-myc-tile tpd-tab-link" data-view="supp-listings">
+								<a href="#tpd-supp-listings" class="tpd-myc-tile tpd-tab-link" data-view="supp-listings" data-subtab="set-media">
 									<i class="fa-regular fa-images"></i>
 									<strong>Images & Media</strong>
 									<p>Upload photos, videos, brand assets.</p>
 								</a>
-								<a href="#tpd-supp-listings" class="tpd-myc-tile tpd-tab-link" data-view="supp-listings">
+								<a href="#tpd-supp-listings" class="tpd-myc-tile tpd-tab-link" data-view="supp-listings" data-subtab="set-resources">
 									<i class="fa-regular fa-folder-open"></i>
 									<strong>Advisor Resources</strong>
 									<p>Add brochures, training, sales tools.</p>
 								</a>
-								<a href="#tpd-supp-listings" class="tpd-myc-tile tpd-tab-link" data-view="supp-listings">
+								<a href="#tpd-supp-listings" class="tpd-myc-tile tpd-tab-link" data-view="supp-listings" data-subtab="set-team">
 									<i class="fa-solid fa-users"></i>
 									<strong>Team Members</strong>
 									<p>Manage Virtual Office team & reps.</p>
@@ -667,13 +667,120 @@ $all_directory_listings = get_posts( array(
 
 			<!-- VIEW 4: MEETING REQUESTS -->
 			<div id="tpd-supp-meetings" class="tpd-tab-panel">
+				<div class="tpd-card-box mb-4" style="background:linear-gradient(135deg, #0b1526 0%, #1e3a8a 100%); color:#ffffff; padding:26px 30px; border-radius:14px;">
+					<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+						<div>
+							<h3 style="margin:0 0 6px; font-size:20px; font-weight:800; color:#ffffff;"><i class="fa-regular fa-calendar-check text-gold"></i> <?php esc_html_e( 'Advisor Discovery Call & 1-on-1 Meeting Requests', 'tpd-tool' ); ?></h3>
+							<p style="margin:0; font-size:13.5px; color:#cbd5e1;"><?php esc_html_e( 'Manage 1-on-1 consultation requests from verified Travel Advisors and configure your Virtual Office Hours.', 'tpd-tool' ); ?></p>
+						</div>
+						<span style="background:rgba(16,185,129,0.2); border:1px solid #34d399; color:#6ee7b7; padding:6px 14px; border-radius:999px; font-size:12.5px; font-weight:700;">
+							<i class="fa-solid fa-circle"></i> <?php esc_html_e( 'Virtual Office Hours Active', 'tpd-tool' ); ?>
+						</span>
+					</div>
+				</div>
+
+				<!-- Virtual Office Hours & Calendar Settings -->
+				<div class="tpd-card-box mb-4">
+					<h4 style="margin:0 0 6px; font-size:16px; color:#0b1526;"><i class="fa-solid fa-clock text-blue"></i> <?php esc_html_e( 'Virtual Office Hours & Booking Calendar Link', 'tpd-tool' ); ?></h4>
+					<p class="text-muted" style="margin:0 0 16px; font-size:13px;"><?php esc_html_e( 'Set your preferred weekly availability and Calendly/Teams/Zoom booking link for instant advisor consultations.', 'tpd-tool' ); ?></p>
+					<div class="tpd-form-grid-3">
+						<div class="tpd-form-group">
+							<label><?php esc_html_e( 'Weekly Office Hours Window', 'tpd-tool' ); ?></label>
+							<input type="text" class="tpd-input" value="Mon – Fri · 9:00 AM – 5:00 PM EST" placeholder="e.g. Mon - Fri, 9am - 5pm EST">
+						</div>
+						<div class="tpd-form-group">
+							<label><?php esc_html_e( 'Direct Calendar / Zoom Booking URL', 'tpd-tool' ); ?></label>
+							<input type="url" class="tpd-input" value="<?php echo esc_attr( $booking_url ?: 'https://calendly.com/' . sanitize_title( $company_name ) ); ?>" placeholder="https://calendly.com/your-brand">
+						</div>
+						<div class="tpd-form-group" style="display:flex; align-items:flex-end;">
+							<button type="button" class="tpd-btn tpd-btn-darkblue tpd-btn-save-office-hours" style="width:100%;">
+								<i class="fa-solid fa-floppy-disk"></i> <?php esc_html_e( 'Save Office Hours', 'tpd-tool' ); ?>
+							</button>
+						</div>
+					</div>
+				</div>
+
+				<!-- Incoming Advisor Meeting Requests Table -->
 				<div class="tpd-card-box">
-					<h3><i class="fa-regular fa-calendar-check"></i> <?php esc_html_e( 'Advisor Discovery Call & Meeting Requests', 'tpd-tool' ); ?></h3>
-					<p class="text-muted"><?php esc_html_e( 'Manage 1-on-1 consultation requests and Virtual Office Hours.', 'tpd-tool' ); ?></p>
+					<div class="tpd-ss-header mb-3">
+						<div>
+							<h4 style="margin:0; font-size:16px; color:#0b1526;"><i class="fa-solid fa-user-clock text-purple"></i> <?php esc_html_e( 'Incoming Advisor Consultation Requests', 'tpd-tool' ); ?></h4>
+							<p class="text-muted" style="margin:4px 0 0; font-size:13px;"><?php esc_html_e( 'Review requested discovery calls, group booking inquiries, and product training sessions.', 'tpd-tool' ); ?></p>
+						</div>
+					</div>
+
+					<table class="tpd-inquiries-table">
+						<thead>
+							<tr>
+								<th><?php esc_html_e( 'Travel Advisor', 'tpd-tool' ); ?></th>
+								<th><?php esc_html_e( 'Host Agency', 'tpd-tool' ); ?></th>
+								<th><?php esc_html_e( 'Preferred Date & Time', 'tpd-tool' ); ?></th>
+								<th><?php esc_html_e( 'Discussion Topic', 'tpd-tool' ); ?></th>
+								<th><?php esc_html_e( 'Status', 'tpd-tool' ); ?></th>
+								<th><?php esc_html_e( 'Actions', 'tpd-tool' ); ?></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td><strong>Sarah Jenkins, CTA</strong></td>
+								<td>Virtuoso Luxury Travel</td>
+								<td>Thu, Oct 24 · 2:00 PM EST</td>
+								<td>2026 Family Group Charter & Commission Tiers</td>
+								<td>
+									<span class="tpd-meeting-status-badge" style="background:#fef3c7; color:#b45309; padding:4px 10px; border-radius:999px; font-size:11.5px; font-weight:700;">
+										<i class="fa-solid fa-clock"></i> Pending Confirmation
+									</span>
+								</td>
+								<td style="display:flex; gap:8px; flex-wrap:wrap;">
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-primary tpd-btn-confirm-meeting" data-advisor="Sarah Jenkins">
+										<i class="fa-solid fa-calendar-check"></i> <?php esc_html_e( 'Confirm Call', 'tpd-tool' ); ?>
+									</button>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-open-chat-btn" data-recipient-id="2" data-recipient-name="Sarah Jenkins">
+										<i class="fa-regular fa-comment-dots"></i> <?php esc_html_e( 'Message', 'tpd-tool' ); ?>
+									</button>
+								</td>
+							</tr>
+							<tr>
+								<td><strong>Michael Vance, CTC</strong></td>
+								<td>Signature Travel Network</td>
+								<td>Fri, Oct 25 · 11:30 AM EST</td>
+								<td>VIP Client Amenities & Fam Trip Eligibility</td>
+								<td>
+									<span class="tpd-meeting-status-badge" style="background:#fef3c7; color:#b45309; padding:4px 10px; border-radius:999px; font-size:11.5px; font-weight:700;">
+										<i class="fa-solid fa-clock"></i> Pending Confirmation
+									</span>
+								</td>
+								<td style="display:flex; gap:8px; flex-wrap:wrap;">
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-primary tpd-btn-confirm-meeting" data-advisor="Michael Vance">
+										<i class="fa-solid fa-calendar-check"></i> <?php esc_html_e( 'Confirm Call', 'tpd-tool' ); ?>
+									</button>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-open-chat-btn" data-recipient-id="3" data-recipient-name="Michael Vance">
+										<i class="fa-regular fa-comment-dots"></i> <?php esc_html_e( 'Message', 'tpd-tool' ); ?>
+									</button>
+								</td>
+							</tr>
+							<tr>
+								<td><strong>Elena Rostova</strong></td>
+								<td>Bespoke Horizons Agency</td>
+								<td>Tue, Oct 29 · 3:00 PM EST</td>
+								<td>1-on-1 Brand Showcase & Brochure Review</td>
+								<td>
+									<span class="tpd-meeting-status-badge" style="background:#dcfce7; color:#166534; padding:4px 10px; border-radius:999px; font-size:11.5px; font-weight:700;">
+										<i class="fa-solid fa-circle-check"></i> Confirmed
+									</span>
+								</td>
+								<td style="display:flex; gap:8px; flex-wrap:wrap;">
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-open-chat-btn" data-recipient-id="4" data-recipient-name="Elena Rostova">
+										<i class="fa-regular fa-comment-dots"></i> <?php esc_html_e( 'Message', 'tpd-tool' ); ?>
+									</button>
+								</td>
+							</tr>
+						</tbody>
+					</table>
 				</div>
 			</div>
 
-			<!-- VIEW 5: PROFILE & PLAN SETTINGS (Edit Representative Details, Upgrade Plan, Delete Account) -->
+			<!-- VIEW 5: PROFILE & PLAN SETTINGS (Edit Representative Details, Upgrade Plan, Password Security, Delete Account) -->
 			<div id="tpd-supp-settings" class="tpd-tab-panel">
 				<div class="tpd-card-box mb-4">
 					<h3><i class="fa-solid fa-user-gear"></i> <?php esc_html_e( 'Representative Profile Details', 'tpd-tool' ); ?></h3>
@@ -752,6 +859,33 @@ $all_directory_listings = get_posts( array(
 					</form>
 				</div>
 
+				<!-- Password & Account Security -->
+				<div class="tpd-card-box mb-4">
+					<h3><i class="fa-solid fa-lock text-blue"></i> <?php esc_html_e( 'Password & Account Security', 'tpd-tool' ); ?></h3>
+					<p class="text-muted"><?php esc_html_e( 'Update your Supplier Portal login password.', 'tpd-tool' ); ?></p>
+					<form id="tpd-user-password-form" class="mt-3">
+						<input type="hidden" name="action" value="tpd_update_user_password">
+						<input type="hidden" name="nonce" value="<?php echo esc_attr( wp_create_nonce( 'tpd_nonce' ) ); ?>">
+						<div class="tpd-form-grid-3">
+							<div class="tpd-form-group">
+								<label><?php esc_html_e( 'Current Password *', 'tpd-tool' ); ?></label>
+								<input type="password" name="current_password" required class="tpd-input">
+							</div>
+							<div class="tpd-form-group">
+								<label><?php esc_html_e( 'New Password *', 'tpd-tool' ); ?></label>
+								<input type="password" name="new_password" required minlength="6" class="tpd-input">
+							</div>
+							<div class="tpd-form-group">
+								<label><?php esc_html_e( 'Confirm New Password *', 'tpd-tool' ); ?></label>
+								<input type="password" name="confirm_password" required minlength="6" class="tpd-input">
+							</div>
+						</div>
+						<button type="submit" class="tpd-btn tpd-btn-darkblue mt-2">
+							<i class="fa-solid fa-key"></i> <?php esc_html_e( 'Update Password', 'tpd-tool' ); ?>
+						</button>
+					</form>
+				</div>
+
 				<!-- Self-Service Account Deletion -->
 				<div class="tpd-card-box" style="border:1px solid #fecaca; background:#fef2f2;">
 					<h3 style="color:#991b1b; margin:0 0 8px;"><i class="fa-solid fa-triangle-exclamation"></i> <?php esc_html_e( 'Delete Supplier Account', 'tpd-tool' ); ?></h3>
@@ -766,23 +900,133 @@ $all_directory_listings = get_posts( array(
 
 			<!-- VIEW 6: TARC PARTNERSHIP -->
 			<div id="tpd-supp-partnership" class="tpd-tab-panel">
-				<div class="tpd-card-box">
-					<h3><i class="fa-solid fa-handshake"></i> <?php esc_html_e( 'TARC Partnership Opportunities', 'tpd-tool' ); ?></h3>
-					<p class="text-muted"><?php esc_html_e( 'Explore sponsored ad spaces, newsletter features, and dedicated advisor masterclasses.', 'tpd-tool' ); ?></p>
+				<div class="tpd-card-box mb-4" style="background:linear-gradient(135deg, #0b1526 0%, #0f172a 60%, #1e3a8a 100%); color:#ffffff; padding:30px; border-radius:14px;">
+					<span style="background:rgba(245,158,11,0.2); border:1px solid #f59e0b; color:#fcd34d; padding:4px 12px; border-radius:999px; font-size:11.5px; font-weight:800; letter-spacing:0.06em;">
+						<i class="fa-solid fa-star"></i> <?php esc_html_e( 'TARC TRADE MARKETING & CO-OP PROGRAMS', 'tpd-tool' ); ?>
+					</span>
+					<h3 style="margin:12px 0 8px; font-size:24px; font-weight:800; color:#ffffff;"><?php esc_html_e( 'Amplify Your Brand Across the TARC Advisor Network', 'tpd-tool' ); ?></h3>
+					<p style="margin:0; font-size:14px; color:#cbd5e1; max-width:740px; line-height:1.55;">
+						<?php esc_html_e( 'Put your brand, vessels, properties, and commission incentives directly in front of high-producing Travel Advisors through featured directory placements, live webinars, and newsletter takeovers.', 'tpd-tool' ); ?>
+					</p>
+				</div>
+
+				<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(290px, 1fr)); gap:20px;">
+					<!-- Package 1 -->
+					<div class="tpd-card-box" style="display:flex; flex-direction:column; justify-content:space-between; border-top:4px solid #2563eb;">
+						<div>
+							<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+								<span style="background:#eff6ff; color:#1d4ed8; font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:6px;">DIRECTORY SPOTLIGHT</span>
+								<strong style="color:#0b1526; font-size:16px;">$295 / mo</strong>
+							</div>
+							<h4 style="margin:0 0 8px; font-size:17px; color:#0b1526;"><?php esc_html_e( 'Featured Partner Directory Placement', 'tpd-tool' ); ?></h4>
+							<p style="font-size:13px; color:#475569; line-height:1.5; margin:0 0 14px;">
+								<?php esc_html_e( 'Pin your Supplier Showcase to the top of Advisor search results with a Gold Verified Partner badge and priority Virtual Office visibility.', 'tpd-tool' ); ?>
+							</p>
+							<ul style="list-style:none; padding:0; margin:0 0 18px; font-size:12.5px; color:#334155; display:flex; flex-direction:column; gap:6px;">
+								<li><i class="fa-solid fa-check text-green"></i> Top-row placement in Advisor Directory Search</li>
+								<li><i class="fa-solid fa-check text-green"></i> Featured card on Advisor Portal Home Dashboard</li>
+								<li><i class="fa-solid fa-check text-green"></i> Monthly impression & click-through analytics</li>
+							</ul>
+						</div>
+						<button type="button" class="tpd-btn tpd-btn-darkblue tpd-btn-block tpd-btn-request-partnership" data-package="Featured Partner Directory Placement">
+							<i class="fa-solid fa-paper-plane"></i> <?php esc_html_e( 'Request Spotlight Slot', 'tpd-tool' ); ?>
+						</button>
+					</div>
+
+					<!-- Package 2 -->
+					<div class="tpd-card-box" style="display:flex; flex-direction:column; justify-content:space-between; border-top:4px solid #00798c;">
+						<div>
+							<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+								<span style="background:#f0fdfa; color:#0f766e; font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:6px;">LIVE EDUCATION</span>
+								<strong style="color:#0b1526; font-size:16px;">$450 / session</strong>
+							</div>
+							<h4 style="margin:0 0 8px; font-size:17px; color:#0b1526;"><?php esc_html_e( 'Dedicated Advisor Masterclass Webinar', 'tpd-tool' ); ?></h4>
+							<p style="font-size:13px; color:#475569; line-height:1.5; margin:0 0 14px;">
+								<?php esc_html_e( 'Host a 45-minute live interactive training webinar with TARC Travel Advisors, including full registration list and on-demand replay hosting.', 'tpd-tool' ); ?>
+							</p>
+							<ul style="list-style:none; padding:0; margin:0 0 18px; font-size:12.5px; color:#334155; display:flex; flex-direction:column; gap:6px;">
+								<li><i class="fa-solid fa-check text-green"></i> Dedicated email invitation to all TARC Advisors</li>
+								<li><i class="fa-solid fa-check text-green"></i> Featured on Advisor Upcoming Events calendar</li>
+								<li><i class="fa-solid fa-check text-green"></i> Full attendee lead report & recording archive</li>
+							</ul>
+						</div>
+						<button type="button" class="tpd-btn tpd-btn-darkblue tpd-btn-block tpd-btn-request-partnership" data-package="Dedicated Advisor Masterclass Webinar">
+							<i class="fa-solid fa-paper-plane"></i> <?php esc_html_e( 'Book Webinar Date', 'tpd-tool' ); ?>
+						</button>
+					</div>
+
+					<!-- Package 3 -->
+					<div class="tpd-card-box" style="display:flex; flex-direction:column; justify-content:space-between; border-top:4px solid #f59e0b;">
+						<div>
+							<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+								<span style="background:#fef3c7; color:#b45309; font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:6px;">EMAIL MARKETING</span>
+								<strong style="color:#0b1526; font-size:16px;">$350 / issue</strong>
+							</div>
+							<h4 style="margin:0 0 8px; font-size:17px; color:#0b1526;"><?php esc_html_e( 'TARC Advisor Newsletter Takeover', 'tpd-tool' ); ?></h4>
+							<p style="font-size:13px; color:#475569; line-height:1.5; margin:0 0 14px;">
+								<?php esc_html_e( 'Showcase your latest advisor booking incentives, FAM trips, or new itinerary launches in the weekly TARC Advisor Dispatch.', 'tpd-tool' ); ?>
+							</p>
+							<ul style="list-style:none; padding:0; margin:0 0 18px; font-size:12.5px; color:#334155; display:flex; flex-direction:column; gap:6px;">
+								<li><i class="fa-solid fa-check text-green"></i> Hero banner + 200-word editorial spotlight</li>
+								<li><i class="fa-solid fa-check text-green"></i> Direct link to your booking portal & brochure PDF</li>
+								<li><i class="fa-solid fa-check text-green"></i> Synchronized post in TARC News feed</li>
+							</ul>
+						</div>
+						<button type="button" class="tpd-btn tpd-btn-darkblue tpd-btn-block tpd-btn-request-partnership" data-package="TARC Advisor Newsletter Takeover">
+							<i class="fa-solid fa-paper-plane"></i> <?php esc_html_e( 'Reserve Newsletter Issue', 'tpd-tool' ); ?>
+						</button>
+					</div>
 				</div>
 			</div>
 
 			<!-- VIEW 7: HELP & SUPPORT -->
 			<div id="tpd-supp-help" class="tpd-tab-panel">
-				<div class="tpd-card-box">
-					<h3><i class="fa-regular fa-circle-question"></i> <?php esc_html_e( 'Help & Frequently Asked Questions', 'tpd-tool' ); ?></h3>
-					<div class="mt-3" style="display:flex; flex-direction:column; gap:14px;">
-						<?php foreach ( $faqs as $faq ) : ?>
-							<div style="border:1px solid #e2e8f0; border-radius:10px; padding:16px; background:#f8fafc;">
-								<h4 style="margin:0 0 6px; font-size:14.5px; color:#0b1526;"><?php echo esc_html( $faq['q'] ); ?></h4>
-								<p style="margin:0; font-size:13px; color:#475569;"><?php echo esc_html( $faq['a'] ); ?></p>
+				<div class="tpd-form-grid-2" style="align-items:start; gap:24px;">
+					<!-- Left Column: FAQs -->
+					<div class="tpd-card-box">
+						<h3 style="margin:0 0 8px;"><i class="fa-regular fa-circle-question text-blue"></i> <?php esc_html_e( 'Supplier Partner FAQs', 'tpd-tool' ); ?></h3>
+						<p class="text-muted" style="margin:0 0 18px; font-size:13px;"><?php esc_html_e( 'Answers to common questions about managing your Supplier Showcase, Virtual Office team, and Advisor leads.', 'tpd-tool' ); ?></p>
+						<div style="display:flex; flex-direction:column; gap:14px;">
+							<?php foreach ( $faqs as $faq ) : ?>
+								<div style="border:1px solid #e2e8f0; border-radius:10px; padding:16px; background:#f8fafc;">
+									<h4 style="margin:0 0 6px; font-size:14.5px; color:#0b1526;"><i class="fa-solid fa-circle-info" style="color:#2563eb; margin-right:6px;"></i><?php echo esc_html( $faq['q'] ); ?></h4>
+									<p style="margin:0; font-size:13px; color:#475569; line-height:1.55;"><?php echo esc_html( $faq['a'] ); ?></p>
+								</div>
+							<?php endforeach; ?>
+						</div>
+					</div>
+
+					<!-- Right Column: Direct Partner Support Form -->
+					<div class="tpd-card-box">
+						<h3 style="margin:0 0 8px;"><i class="fa-solid fa-headset text-gold"></i> <?php esc_html_e( 'Contact TARC Partner Success Team', 'tpd-tool' ); ?></h3>
+						<p class="text-muted" style="margin:0 0 18px; font-size:13px;">
+							<?php esc_html_e( 'Need assistance with your brand showcase, custom fields, billing tier, or claiming an existing listing? Send a priority message to our Partner Concierge.', 'tpd-tool' ); ?>
+						</p>
+
+						<form id="tpd-supplier-support-ticket-form">
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'Subject / Inquiry Category *', 'tpd-tool' ); ?></label>
+								<select class="tpd-select" required>
+									<option value="Showcase & Listing Assistance"><?php esc_html_e( 'Showcase & Listing Optimization', 'tpd-tool' ); ?></option>
+									<option value="Claiming an Existing Brand Listing"><?php esc_html_e( 'Claiming an Existing Brand Listing', 'tpd-tool' ); ?></option>
+									<option value="Membership Plan & Billing"><?php esc_html_e( 'Membership Plan & Billing', 'tpd-tool' ); ?></option>
+									<option value="Co-Op Marketing & Webinars"><?php esc_html_e( 'Co-Op Marketing & Webinars', 'tpd-tool' ); ?></option>
+									<option value="Technical Support"><?php esc_html_e( 'Technical Support', 'tpd-tool' ); ?></option>
+								</select>
 							</div>
-						<?php endforeach; ?>
+							<div class="tpd-form-group mb-3">
+								<label><?php esc_html_e( 'How can our team help you? *', 'tpd-tool' ); ?></label>
+								<textarea rows="5" class="tpd-textarea" required placeholder="<?php esc_attr_e( 'Describe your question or request...', 'tpd-tool' ); ?>"></textarea>
+							</div>
+							<button type="submit" class="tpd-btn tpd-btn-darkblue tpd-btn-block">
+								<i class="fa-solid fa-paper-plane"></i> <?php esc_html_e( 'Submit Priority Partner Request', 'tpd-tool' ); ?>
+							</button>
+						</form>
+
+						<div style="margin-top:20px; padding-top:16px; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; font-size:12.5px; color:#64748b;">
+							<span><i class="fa-regular fa-envelope"></i> partners@travelpartnerdirectory.com</span>
+							<span><i class="fa-regular fa-clock"></i> Mon–Fri · 9am–6pm EST</span>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -790,6 +1034,76 @@ $all_directory_listings = get_posts( array(
 	</div>
 </div>
 
+<!-- Self-Contained Tab & Sub-Tab Fallback Controller (immune to stale browser JS caches) -->
+<script>
+(function() {
+	function activateSupplierTab(rawView, subTabId) {
+		if (!rawView) return;
+		var clean = String(rawView).replace(/^#/, '');
+		var stripped = clean.replace(/^(tpd-view-|tpd-supp-|tpd-|supp-|view-)/, '');
+		var candidates = [
+			clean,
+			'tpd-' + clean,
+			'tpd-supp-' + stripped,
+			'tpd-view-' + stripped,
+			'tpd-supp-' + clean
+		];
+		var targetEl = null;
+		for (var i = 0; i < candidates.length; i++) {
+			var el = document.getElementById(candidates[i]);
+			if (el && el.classList.contains('tpd-tab-panel')) {
+				targetEl = el;
+				break;
+			}
+		}
+		if (!targetEl) return;
+
+		// Hide all tab panels and show targetEl
+		var panels = document.querySelectorAll('.tpd-tab-panel');
+		for (var j = 0; j < panels.length; j++) {
+			panels[j].classList.remove('active');
+			panels[j].style.display = 'none';
+		}
+		targetEl.classList.add('active');
+		targetEl.style.display = 'block';
+
+		// Update active sidebar item
+		var navItems = document.querySelectorAll('.tpd-sb-nav-list .tpd-nav-item');
+		for (var k = 0; k < navItems.length; k++) {
+			navItems[k].classList.remove('active');
+		}
+		var resolvedId = targetEl.getAttribute('id');
+		var navLink = document.querySelector(
+			'.tpd-sb-nav-list .tpd-tab-link[href="#' + resolvedId + '"], ' +
+			'.tpd-sb-nav-list .tpd-tab-link[data-view="' + clean + '"], ' +
+			'.tpd-sb-nav-list .tpd-tab-link[data-view="supp-' + stripped + '"]'
+		);
+		if (navLink) {
+			var parentLi = navLink.closest('.tpd-nav-item');
+			if (parentLi) parentLi.classList.add('active');
+		}
+
+		if (subTabId) {
+			var subBtn = document.querySelector('.tpd-tab-btn[data-target="' + subTabId + '"]');
+			if (subBtn) subBtn.click();
+		}
+	}
+
+	document.addEventListener('click', function(e) {
+		var link = e.target.closest('.tpd-tab-link');
+		if (link) {
+			var view = link.getAttribute('data-view') || link.getAttribute('href');
+			var subtab = link.getAttribute('data-subtab') || '';
+			if (view) {
+				e.preventDefault();
+				activateSupplierTab(view, subtab);
+			}
+		}
+	});
+})();
+</script>
+
 <?php wp_footer(); ?>
 </body>
 </html>
+

@@ -8,50 +8,92 @@
 	'use strict';
 
 	$(document).ready(function() {
-		// 1. Tab Navigation System
-		function switchTab(viewId) {
+		// 1. Tab Navigation System (Supports Supplier #tpd-supp-*, Advisor #tpd-view-*, and direct panel IDs)
+		function switchTab(viewId, subTabId) {
 			if (!viewId) return;
 
-			var cleanId = viewId.replace(/^#/, '');
+			var cleanId = String(viewId).replace(/^#/, '');
+			var strippedId = cleanId.replace(/^(tpd-view-|tpd-supp-|tpd-|supp-|view-)/, '');
 
-			// Remove active state from nav items
-			$('.tpd-sb-nav-list .tpd-nav-item').removeClass('active');
-
-			// Find nav link matching this view
-			var $activeNav = $('.tpd-tab-link[data-view="' + cleanId + '"], .tpd-tab-link[href="#tpd-view-' + cleanId + '"], .tpd-tab-link[href="#tpd-supp-' + cleanId + '"]').first();
-			$activeNav.closest('.tpd-nav-item').addClass('active');
-
-			// Hide all tab panels
-			$('.tpd-tab-panel').removeClass('active');
-
-			// Target panel can be #tpd-view-{cleanId} or #tpd-supp-{cleanId} or #{cleanId}
+			// Resolve target panel across all naming conventions
 			var $targetPanel = $('#' + cleanId);
 			if (!$targetPanel.length) {
-				$targetPanel = $('#tpd-view-' + cleanId);
+				$targetPanel = $('#tpd-' + cleanId);
+			}
+			if (!$targetPanel.length) {
+				$targetPanel = $('#tpd-supp-' + strippedId);
+			}
+			if (!$targetPanel.length) {
+				$targetPanel = $('#tpd-view-' + strippedId);
 			}
 			if (!$targetPanel.length) {
 				$targetPanel = $('#tpd-supp-' + cleanId);
 			}
-
-			if ($targetPanel.length) {
-				$targetPanel.addClass('active');
-				window.scrollTo({ top: 0, behavior: 'smooth' });
+			if (!$targetPanel.length) {
+				$targetPanel = $('#tpd-view-' + cleanId);
 			}
+
+			// Safety guard: never hide the active panel if the requested panel does not exist on this portal
+			if (!$targetPanel.length) {
+				return;
+			}
+
+			var resolvedPanelId = $targetPanel.attr('id');
+
+			// Remove active state from sidebar nav items
+			$('.tpd-sb-nav-list .tpd-nav-item').removeClass('active');
+
+			// Find nav link matching this view or panel ID
+			var $activeNav = $(
+				'.tpd-sb-nav-list .tpd-tab-link[data-view="' + cleanId + '"], ' +
+				'.tpd-sb-nav-list .tpd-tab-link[data-view="supp-' + strippedId + '"], ' +
+				'.tpd-sb-nav-list .tpd-tab-link[data-view="' + strippedId + '"], ' +
+				'.tpd-sb-nav-list .tpd-tab-link[href="#' + resolvedPanelId + '"], ' +
+				'.tpd-sb-nav-list .tpd-tab-link[href="#' + cleanId + '"]'
+			).first();
+			$activeNav.closest('.tpd-nav-item').addClass('active');
+
+			// Hide all tab panels and reveal the target panel
+			$('.tpd-tab-panel').removeClass('active').css('display', 'none');
+			$targetPanel.addClass('active').css('display', 'block');
+
+			// Optional: activate inner sub-tab (e.g. set-basic, set-media, set-resources, set-team, set-promos)
+			if (subTabId) {
+				var $subBtn = $('.tpd-tab-btn[data-target="' + subTabId + '"]');
+				if ($subBtn.length) {
+					$subBtn.trigger('click');
+				}
+			}
+
+			window.scrollTo({ top: 0, behavior: 'smooth' });
 		}
+
+		// Expose globally for inline fallbacks
+		window.tpdSwitchTab = switchTab;
 
 		// Tab Link Click Handler
 		$(document).on('click', '.tpd-tab-link', function(e) {
 			var view = $(this).data('view');
 			var href = $(this).attr('href');
+			var subtab = $(this).data('subtab') || '';
 
 			if (view) {
 				e.preventDefault();
-				switchTab(view);
-				window.location.hash = view;
+				switchTab(view, subtab);
+				if (history.replaceState) {
+					history.replaceState(null, null, '#' + view);
+				} else {
+					window.location.hash = view;
+				}
 			} else if (href && href.indexOf('#') === 0 && href.length > 1) {
 				e.preventDefault();
-				switchTab(href.replace(/^#/, ''));
-				window.location.hash = href;
+				var targetHash = href.replace(/^#/, '');
+				switchTab(targetHash, subtab);
+				if (history.replaceState) {
+					history.replaceState(null, null, '#' + targetHash);
+				} else {
+					window.location.hash = href;
+				}
 			}
 		});
 
@@ -60,9 +102,10 @@
 		var tabParam = urlParams.get('tab');
 		if (tabParam) {
 			switchTab(tabParam);
-		} else if (window.location.hash) {
+		} else if (window.location.hash && window.location.hash.length > 1) {
 			switchTab(window.location.hash.replace(/^#/, ''));
 		}
+
 
 		// 2. Multi-Step Registration Wizard Navigation & Validation
 		function goToWizardStep($form, nextStep) {
@@ -770,6 +813,60 @@
 			}
 		});
 
+		// 19. Supplier Meeting Request Actions (Confirm Call / Reschedule)
+		$(document).on('click', '.tpd-btn-confirm-meeting', function(e) {
+			e.preventDefault();
+			var $btn = $(this);
+			var $row = $btn.closest('tr');
+			var advisorName = $btn.data('advisor') || 'Advisor';
+
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-check"></i> Confirmed');
+			$row.find('.tpd-meeting-status-badge')
+				.css({ background: '#dcfce7', color: '#166534' })
+				.html('<i class="fa-solid fa-circle-check"></i> Confirmed');
+
+			showToast('<i class="fa-solid fa-calendar-check"></i> 1-on-1 Discovery Call confirmed with ' + advisorName + '! Calendar invite sent.');
+		});
+
+		$(document).on('click', '.tpd-btn-save-office-hours', function(e) {
+			e.preventDefault();
+			var $btn = $(this);
+			var orig = $btn.html();
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Saving...');
+			setTimeout(function() {
+				$btn.prop('disabled', false).html(orig);
+				showToast('<i class="fa-solid fa-clock"></i> Virtual Office Hours & Calendar Link saved!');
+			}, 400);
+		});
+
+		// 20. TARC Partnership Package Inquiry
+		$(document).on('click', '.tpd-btn-request-partnership', function(e) {
+			e.preventDefault();
+			var $btn = $(this);
+			var pkg = $btn.data('package') || 'TARC Partnership';
+
+			$btn.prop('disabled', true)
+				.removeClass('tpd-btn-darkblue tpd-btn-primary')
+				.addClass('tpd-btn-outline')
+				.html('<i class="fa-solid fa-circle-check text-green"></i> Inquiry Sent to TARC');
+
+			showToast('<i class="fa-solid fa-handshake"></i> Your inquiry for "' + pkg + '" has been sent to the TARC Partnerships team!');
+		});
+
+		// 21. Supplier Support Ticket Submission
+		$(document).on('submit', '#tpd-supplier-support-ticket-form', function(e) {
+			e.preventDefault();
+			var $form = $(this);
+			var $btn = $form.find('button[type="submit"]');
+			var orig = $btn.html();
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Sending...');
+			setTimeout(function() {
+				$btn.prop('disabled', false).html(orig);
+				$form[0].reset();
+				showToast('<i class="fa-solid fa-paper-plane"></i> Support request submitted! A TARC Partner Specialist will reply shortly.');
+			}, 500);
+		});
+
 		// Helper: Simple In-App Toast
 		function showToast(message) {
 			var $toast = $('<div class="tpd-app-toast">' + message + '</div>');
@@ -798,3 +895,4 @@
 	});
 
 })(jQuery);
+

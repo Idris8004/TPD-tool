@@ -28,10 +28,11 @@ class TPD_Tool_Core {
 	}
 
 	public function enqueue_assets() {
-		$css_ver  = file_exists( TPD_TOOL_DIR . 'assets/css/tpd-tool.css' ) ? filemtime( TPD_TOOL_DIR . 'assets/css/tpd-tool.css' ) : TPD_TOOL_VERSION;
-		$chat_ver = file_exists( TPD_TOOL_DIR . 'assets/css/tpd-chat.css' ) ? filemtime( TPD_TOOL_DIR . 'assets/css/tpd-chat.css' ) : TPD_TOOL_VERSION;
-		$dash_ver = file_exists( TPD_TOOL_DIR . 'assets/js/tpd-dashboard.js' ) ? filemtime( TPD_TOOL_DIR . 'assets/js/tpd-dashboard.js' ) : TPD_TOOL_VERSION;
-		$adm_ver  = file_exists( TPD_TOOL_DIR . 'assets/js/tpd-admin.js' ) ? filemtime( TPD_TOOL_DIR . 'assets/js/tpd-admin.js' ) : TPD_TOOL_VERSION;
+		$css_ver     = file_exists( TPD_TOOL_DIR . 'assets/css/tpd-tool.css' ) ? filemtime( TPD_TOOL_DIR . 'assets/css/tpd-tool.css' ) : TPD_TOOL_VERSION;
+		$chat_ver    = file_exists( TPD_TOOL_DIR . 'assets/css/tpd-chat.css' ) ? filemtime( TPD_TOOL_DIR . 'assets/css/tpd-chat.css' ) : TPD_TOOL_VERSION;
+		$chat_js_ver = file_exists( TPD_TOOL_DIR . 'assets/js/tpd-chat.js' ) ? filemtime( TPD_TOOL_DIR . 'assets/js/tpd-chat.js' ) : TPD_TOOL_VERSION;
+		$dash_ver    = file_exists( TPD_TOOL_DIR . 'assets/js/tpd-dashboard.js' ) ? filemtime( TPD_TOOL_DIR . 'assets/js/tpd-dashboard.js' ) : TPD_TOOL_VERSION;
+		$adm_ver     = file_exists( TPD_TOOL_DIR . 'assets/js/tpd-admin.js' ) ? filemtime( TPD_TOOL_DIR . 'assets/js/tpd-admin.js' ) : TPD_TOOL_VERSION;
 
 		// Font Awesome 6
 		wp_enqueue_style( 'font-awesome-6', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css', array(), '6.5.1' );
@@ -45,7 +46,7 @@ class TPD_Tool_Core {
 
 		// Scripts
 		wp_enqueue_script( 'tpd-dashboard-js', TPD_TOOL_URL . 'assets/js/tpd-dashboard.js', array( 'jquery' ), $dash_ver, true );
-		wp_enqueue_script( 'tpd-chat-js', TPD_TOOL_URL . 'assets/js/tpd-chat.js', array( 'jquery' ), $chat_ver, true );
+		wp_enqueue_script( 'tpd-chat-js', TPD_TOOL_URL . 'assets/js/tpd-chat.js', array( 'jquery' ), $chat_js_ver, true );
 		wp_enqueue_script( 'tpd-admin-js', TPD_TOOL_URL . 'assets/js/tpd-admin.js', array( 'jquery' ), $adm_ver, true );
 
 		$current_uid = get_current_user_id();

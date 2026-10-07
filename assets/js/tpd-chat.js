@@ -91,11 +91,11 @@
 			}
 		});
 
-		// Trigger Chat with Specific Rep (e.g. from Virtual Office or Rep Card)
+		// Trigger Chat with Specific Rep or Advisor (from Virtual Office, Recent Conversations, or Meeting Requests)
 		$(document).on('click', '.tpd-open-chat-btn, .tpd-btn-chat-rep', function(e) {
 			e.preventDefault();
-			var repId = $(this).data('rep-id') || $(this).data('user-id');
-			var repName = $(this).data('rep-name') || 'Representative';
+			var repId = $(this).data('rep-id') || $(this).data('recipient-id') || $(this).data('user-id');
+			var repName = $(this).data('rep-name') || $(this).data('recipient-name') || 'Partner Contact';
 
 			if (repId) {
 				$('#tpd-chat-recipient-id').val(repId);
@@ -104,11 +104,17 @@
 				$('#tpd-chat-active-name').text(repName);
 			}
 
-			// Switch to conversations view
-			if ($('.tpd-tab-link[data-view="conversations"]').length) {
-				$('.tpd-tab-link[data-view="conversations"]').trigger('click');
+			// Switch to conversations / supp-chat view
+			if (typeof window.tpdSwitchTab === 'function') {
+				if ($('#tpd-supp-chat').length) {
+					window.tpdSwitchTab('supp-chat');
+				} else if ($('#tpd-view-conversations').length) {
+					window.tpdSwitchTab('conversations');
+				}
+			} else if ($('.tpd-tab-link[data-view="conversations"]').length) {
+				$('.tpd-tab-link[data-view="conversations"]').first().trigger('click');
 			} else if ($('.tpd-tab-link[data-view="supp-chat"]').length) {
-				$('.tpd-tab-link[data-view="supp-chat"]').trigger('click');
+				$('.tpd-tab-link[data-view="supp-chat"]').first().trigger('click');
 			}
 
 			$('#tpd-chat-message-input').focus();
