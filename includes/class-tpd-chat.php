@@ -19,6 +19,15 @@ class TPD_Tool_Chat {
 	}
 
 	/**
+	 * Deterministic conversation ID between two user IDs
+	 */
+	public static function get_conversation_id( $user_a, $user_b ) {
+		$pair = array( absint( $user_a ), absint( $user_b ) );
+		sort( $pair );
+		return 'conv_' . implode( '_', $pair );
+	}
+
+	/**
 	 * Send Chat Message & Dispatch Instant Email Notification
 	 */
 	public static function ajax_send_message() {
@@ -34,12 +43,12 @@ class TPD_Tool_Chat {
 		$current_user_id = get_current_user_id();
 
 		if ( $current_user_id ) {
-			$sender      = wp_get_current_user();
-			$sender_name = $sender->display_name;
-			$sender_email= $sender->user_email;
+			$sender       = wp_get_current_user();
+			$sender_name  = $sender->display_name ?: $sender->user_login;
+			$sender_email = $sender->user_email;
 		} else {
-			$sender_name = isset( $_POST['guest_name'] ) ? sanitize_text_field( wp_unslash( $_POST['guest_name'] ) ) : 'Guest Traveler';
-			$sender_email= isset( $_POST['guest_email'] ) ? sanitize_email( wp_unslash( $_POST['guest_email'] ) ) : '';
+			$sender_name  = isset( $_POST['guest_name'] ) ? sanitize_text_field( wp_unslash( $_POST['guest_name'] ) ) : 'Guest Traveler';
+			$sender_email = isset( $_POST['guest_email'] ) ? sanitize_email( wp_unslash( $_POST['guest_email'] ) ) : '';
 		}
 
 		$recipient = get_userdata( $recipient_id );
@@ -62,12 +71,12 @@ class TPD_Tool_Chat {
 
 		// Generate conversation key (deterministic between 2 users or with guest)
 		if ( $current_user_id ) {
-			$pair = array( $current_user_id, $recipient_id );
-			sort( $pair );
-			$conversation_id = 'conv_' . implode( '_', $pair );
+			$conversation_id = self::get_conversation_id( $current_user_id, $recipient_id );
 		} else {
 			$conversation_id = 'conv_guest_' . md5( $sender_email . $recipient_id );
 		}
+
+		$now_ts = current_time( 'timestamp' );
 
 		update_post_meta( $post_id, '_tpd_sender_id', $current_user_id );
 		update_post_meta( $post_id, '_tpd_sender_name', $sender_name );
@@ -75,18 +84,270 @@ class TPD_Tool_Chat {
 		update_post_meta( $post_id, '_tpd_recipient_id', $recipient_id );
 		update_post_meta( $post_id, '_tpd_conversation_id', $conversation_id );
 		update_post_meta( $post_id, '_tpd_is_read', 0 );
-		update_post_meta( $post_id, '_tpd_timestamp', current_time( 'timestamp' ) );
+		update_post_meta( $post_id, '_tpd_timestamp', $now_ts );
 
 		// Dispatch Email Alert to the recipient
 		self::send_chat_email_alert( $recipient, $sender_name, $sender_email, $message_text );
 
 		wp_send_json_success( array(
-			'message'         => __( 'Message sent successfully!', 'tpd-tool' ),
+			'message'         => __( 'Message sent!', 'tpd-tool' ),
+			'message_id'      => $post_id,
 			'conversation_id' => $conversation_id,
+			'sender_id'       => $current_user_id,
 			'sender_name'     => $sender_name,
 			'text'            => esc_html( $message_text ),
-			'time'            => 'Just now',
+			'time'            => date_i18n( 'g:i A', $now_ts ),
 		) );
+	}
+
+	/**
+	 * Fetch real message history between current user and selected partner_id
+	 */
+	public static function ajax_get_thread() {
+		check_ajax_referer( 'tpd_chat_nonce', 'nonce' );
+
+		$current_user_id = get_current_user_id();
+		$partner_id      = isset( $_POST['partner_id'] ) ? absint( $_POST['partner_id'] ) : 0;
+
+		if ( ! $current_user_id || ! $partner_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid conversation parameters.', 'tpd-tool' ) ) );
+		}
+
+		$partner_user = get_userdata( $partner_id );
+		$partner_name = $partner_user ? ( $partner_user->display_name ?: $partner_user->user_login ) : 'Partner Contact';
+		$partner_role = self::get_user_organization_label( $partner_id );
+		$partner_avatar = get_user_meta( $partner_id, 'tpd_avatar_url', true );
+		if ( empty( $partner_avatar ) ) {
+			$partner_avatar = 'https://ui-avatars.com/api/?name=' . rawurlencode( $partner_name ) . '&background=00798c&color=fff&size=120';
+		}
+
+		$messages = self::get_thread_messages( $current_user_id, $partner_id );
+
+		// Mark incoming messages in this thread as read
+		$conv_id = self::get_conversation_id( $current_user_id, $partner_id );
+		self::mark_conversation_read( $conv_id, $current_user_id );
+
+		wp_send_json_success( array(
+			'partner_id'     => $partner_id,
+			'partner_name'   => $partner_name,
+			'partner_org'    => $partner_role,
+			'partner_avatar' => $partner_avatar,
+			'messages'       => $messages,
+		) );
+	}
+
+	/**
+	 * Mark conversation read via AJAX
+	 */
+	public static function ajax_mark_read() {
+		check_ajax_referer( 'tpd_chat_nonce', 'nonce' );
+		$current_user_id = get_current_user_id();
+		$partner_id      = isset( $_POST['partner_id'] ) ? absint( $_POST['partner_id'] ) : 0;
+		if ( $current_user_id && $partner_id ) {
+			$conv_id = self::get_conversation_id( $current_user_id, $partner_id );
+			self::mark_conversation_read( $conv_id, $current_user_id );
+		}
+		wp_send_json_success();
+	}
+
+	/**
+	 * Mark all unread messages sent to $user_id in $conversation_id as read
+	 */
+	public static function mark_conversation_read( $conversation_id, $user_id ) {
+		$unread = get_posts( array(
+			'post_type'      => 'tpd_message',
+			'post_status'    => 'publish',
+			'posts_per_page' => 100,
+			'fields'         => 'ids',
+			'meta_query'     => array(
+				array(
+					'key'     => '_tpd_conversation_id',
+					'value'   => $conversation_id,
+					'compare' => '=',
+				),
+				array(
+					'key'     => '_tpd_recipient_id',
+					'value'   => $user_id,
+					'compare' => '=',
+				),
+				array(
+					'key'     => '_tpd_is_read',
+					'value'   => 0,
+					'compare' => '=',
+				),
+			),
+		) );
+
+		foreach ( $unread as $msg_id ) {
+			update_post_meta( $msg_id, '_tpd_is_read', 1 );
+		}
+	}
+
+	/**
+	 * Get ordered message array between two users
+	 */
+	public static function get_thread_messages( $current_user_id, $partner_id, $limit = 80 ) {
+		if ( ! $current_user_id || ! $partner_id ) {
+			return array();
+		}
+
+		$conv_id = self::get_conversation_id( $current_user_id, $partner_id );
+
+		$posts = get_posts( array(
+			'post_type'      => 'tpd_message',
+			'post_status'    => 'publish',
+			'posts_per_page' => $limit,
+			'orderby'        => 'date',
+			'order'          => 'ASC',
+			'meta_query'     => array(
+				array(
+					'key'     => '_tpd_conversation_id',
+					'value'   => $conv_id,
+					'compare' => '=',
+				),
+			),
+		) );
+
+		$result = array();
+		foreach ( $posts as $p ) {
+			$sender_id   = (int) get_post_meta( $p->ID, '_tpd_sender_id', true );
+			$sender_name = get_post_meta( $p->ID, '_tpd_sender_name', true ) ?: 'User';
+			$ts          = (int) get_post_meta( $p->ID, '_tpd_timestamp', true );
+			$time_label  = $ts ? date_i18n( 'M j, g:i A', $ts ) : get_the_date( 'M j, g:i A', $p );
+
+			$result[] = array(
+				'id'          => $p->ID,
+				'sender_id'   => $sender_id,
+				'sender_name' => $sender_name,
+				'is_outbound' => ( $sender_id === (int) $current_user_id ),
+				'text'        => wp_strip_all_tags( $p->post_content ),
+				'time'        => $time_label,
+			);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Helper: Get user's company or agency label
+	 */
+	public static function get_user_organization_label( $user_id ) {
+		$company = get_user_meta( $user_id, 'tpd_company_name', true );
+		if ( ! empty( $company ) ) {
+			return $company;
+		}
+		$agency = get_user_meta( $user_id, 'tpd_agency_name', true );
+		if ( ! empty( $agency ) ) {
+			return $agency;
+		}
+		$u = get_userdata( $user_id );
+		if ( $u && in_array( 'supplier', (array) $u->roles, true ) ) {
+			return 'Verified Supplier Partner';
+		}
+		if ( $u && in_array( 'travel_advisor', (array) $u->roles, true ) ) {
+			return 'Verified Travel Advisor';
+		}
+		return 'TARC Member';
+	}
+
+	/**
+	 * Get real contacts list for the Chat sidebar (Suppliers for Advisors, Advisors for Suppliers, plus any active threads)
+	 */
+	public static function get_chat_contacts_for_user( $user_id ) {
+		$contacts = array();
+		$seen_ids = array( (int) $user_id );
+
+		// 1. First, pull partners from existing message threads involving $user_id
+		if ( $user_id ) {
+			$messages = get_posts( array(
+				'post_type'      => 'tpd_message',
+				'post_status'    => 'publish',
+				'posts_per_page' => 100,
+				'orderby'        => 'date',
+				'order'          => 'DESC',
+				'meta_query'     => array(
+					'relation' => 'OR',
+					array(
+						'key'     => '_tpd_recipient_id',
+						'value'   => $user_id,
+						'compare' => '=',
+					),
+					array(
+						'key'     => '_tpd_sender_id',
+						'value'   => $user_id,
+						'compare' => '=',
+					),
+				),
+			) );
+
+			foreach ( $messages as $m ) {
+				$s_id     = (int) get_post_meta( $m->ID, '_tpd_sender_id', true );
+				$r_id     = (int) get_post_meta( $m->ID, '_tpd_recipient_id', true );
+				$other_id = ( $s_id === (int) $user_id ) ? $r_id : $s_id;
+
+				if ( ! $other_id || in_array( $other_id, $seen_ids, true ) ) {
+					continue;
+				}
+				$other_user = get_userdata( $other_id );
+				if ( ! $other_user ) {
+					continue;
+				}
+
+				$seen_ids[] = $other_id;
+				$name       = $other_user->display_name ?: $other_user->user_login;
+				$avatar     = get_user_meta( $other_id, 'tpd_avatar_url', true );
+				if ( empty( $avatar ) ) {
+					$avatar = 'https://ui-avatars.com/api/?name=' . rawurlencode( $name ) . '&background=00798c&color=fff&size=120';
+				}
+				$ts      = (int) get_post_meta( $m->ID, '_tpd_timestamp', true );
+				$is_read = (int) get_post_meta( $m->ID, '_tpd_is_read', true );
+
+				$contacts[] = array(
+					'rep_id'  => $other_id,
+					'name'    => $name,
+					'agency'  => self::get_user_organization_label( $other_id ),
+					'avatar'  => $avatar,
+					'snippet' => wp_trim_words( wp_strip_all_tags( $m->post_content ), 10, '...' ),
+					'time'    => $ts ? human_time_diff( $ts, current_time( 'timestamp' ) ) . ' ago' : 'Recent',
+					'unread'  => ( $r_id === (int) $user_id && 0 === $is_read ),
+				);
+			}
+		}
+
+		// 2. Also include registered cross-portal users so the user can message any registered Advisor or Supplier immediately
+		$is_supplier = class_exists( 'TPD_Tool_Roles' ) && TPD_Tool_Roles::is_supplier( $user_id ) && ! TPD_Tool_Roles::is_advisor( $user_id );
+		$target_roles = $is_supplier ? array( 'travel_advisor', 'supplier', 'administrator' ) : array( 'supplier', 'travel_advisor', 'administrator' );
+
+		$users = get_users( array(
+			'role__in' => $target_roles,
+			'number'   => 25,
+			'orderby'  => 'registered',
+			'order'    => 'DESC',
+		) );
+
+		foreach ( $users as $u ) {
+			if ( in_array( (int) $u->ID, $seen_ids, true ) ) {
+				continue;
+			}
+			$seen_ids[] = (int) $u->ID;
+			$name       = $u->display_name ?: $u->user_login;
+			$avatar     = get_user_meta( $u->ID, 'tpd_avatar_url', true );
+			if ( empty( $avatar ) ) {
+				$avatar = 'https://ui-avatars.com/api/?name=' . rawurlencode( $name ) . '&background=1d4ed8&color=fff&size=120';
+			}
+
+			$contacts[] = array(
+				'rep_id'  => (int) $u->ID,
+				'name'    => $name,
+				'agency'  => self::get_user_organization_label( $u->ID ),
+				'avatar'  => $avatar,
+				'snippet' => 'Click to start a direct conversation',
+				'time'    => 'Online',
+				'unread'  => false,
+			);
+		}
+
+		return $contacts;
 	}
 
 	/**
@@ -99,7 +360,7 @@ class TPD_Tool_Chat {
 		}
 
 		$is_advisor = in_array( 'travel_advisor', (array) $recipient->roles, true );
-		$reply_url  = $is_advisor ? home_url( '/advisor-dashboard/?tab=conversations' ) : home_url( '/supplier-dashboard/?tab=messages' );
+		$reply_url  = $is_advisor ? home_url( '/advisor-dashboard/?tab=conversations' ) : home_url( '/supplier-dashboard/?tab=supp-chat' );
 
 		$subject = sprintf( '[TPD Chat] New message from %s on Travel Partner Directory', $sender_name );
 
@@ -189,57 +450,17 @@ class TPD_Tool_Chat {
 	}
 
 	/**
-	 * Get Recent Conversations for a user (Matching Inspiration 2 layout)
+	 * Get Recent Conversations for a user (pulls real DB threads first, then active portal members)
 	 */
 	public static function get_recent_conversations( $user_id, $limit = 5 ) {
-		return array(
-			array(
-				'name'     => 'Jennifer Lawson',
-				'agency'   => 'Dream Vacations',
-				'avatar'   => 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-				'snippet'  => 'Hi Sarah! I have a client looking at a Danube luxury cruise for June 2026...',
-				'time'     => 'Just now',
-				'unread'   => true,
-				'rep_id'   => 2,
-			),
-			array(
-				'name'     => 'Michael Torres',
-				'agency'   => 'Adventure Awaits Travel',
-				'avatar'   => 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-				'snippet'  => 'Can you send me the updated 2026 European river schedule brochure?',
-				'time'     => '12m ago',
-				'unread'   => true,
-				'rep_id'   => 3,
-			),
-			array(
-				'name'     => 'Lisa Grant',
-				'agency'   => 'Grant Travel Co.',
-				'avatar'   => 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
-				'snippet'  => 'Do you have group rates for 2026 for a 16-person family reunion?',
-				'time'     => '45m ago',
-				'unread'   => false,
-				'rep_id'   => 4,
-			),
-			array(
-				'name'     => 'Amanda Brooks',
-				'agency'   => 'Global Getaways',
-				'avatar'   => 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
-				'snippet'  => 'Thank you for the information! This is perfect for my clients.',
-				'time'     => '2h ago',
-				'unread'   => false,
-				'rep_id'   => 2,
-			),
-			array(
-				'name'     => 'David Kim',
-				'agency'   => 'Kim Travel Group',
-				'avatar'   => 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-				'snippet'  => "I'd like to schedule a call to discuss a client's special requirements.",
-				'time'     => '3h ago',
-				'unread'   => false,
-				'rep_id'   => 3,
-			),
-		);
+		$contacts = self::get_chat_contacts_for_user( $user_id );
+		if ( ! empty( $contacts ) ) {
+			return array_slice( $contacts, 0, $limit );
+		}
+
+		return array();
 	}
 }
 
 TPD_Tool_Chat::init();
+
