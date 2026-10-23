@@ -105,7 +105,7 @@ $news_posts = get_posts( array(
 				<li class="tpd-nav-item">
 					<a href="#tpd-view-profile" class="tpd-tab-link" data-view="profile">
 						<i class="fa-regular fa-id-card"></i>
-						<span><?php esc_html_e( 'Account Info', 'tpd-tool' ); ?></span>
+						<span><?php esc_html_e( 'My Profile', 'tpd-tool' ); ?></span>
 					</a>
 				</li>
 				<li class="tpd-nav-item">
@@ -117,7 +117,7 @@ $news_posts = get_posts( array(
 				<li class="tpd-nav-item">
 					<a href="#tpd-view-saved" class="tpd-tab-link" data-view="saved">
 						<i class="fa-regular fa-bookmark"></i>
-						<span><?php esc_html_e( 'Favorite Suppliers', 'tpd-tool' ); ?></span>
+						<span><?php esc_html_e( 'Saved Suppliers', 'tpd-tool' ); ?></span>
 					</a>
 				</li>
 				<li class="tpd-nav-item">
@@ -196,9 +196,27 @@ $news_posts = get_posts( array(
 	<div class="tpd-portal-body">
 		<!-- Top Navigation Header -->
 		<header class="tpd-portal-topbar">
-			<div class="tpd-topbar-search">
-				<i class="fa-solid fa-magnifying-glass"></i>
-				<input type="text" placeholder="<?php esc_attr_e( 'Search suppliers, destinations, or travel types...', 'tpd-tool' ); ?>" class="tpd-top-search-input" id="tpd-topbar-search-input">
+			<!-- TARC News Ticker (Replaces old search bar) -->
+			<div class="tpd-topbar-news-ticker" style="display:flex; align-items:center; gap:10px; background:#f1f5f9; padding:6px 14px; border-radius:999px; max-width:440px; overflow:hidden;">
+				<span class="tpd-news-ticker-badge" style="background:#0b1526; color:#f59e0b; font-size:10px; font-weight:800; padding:3px 8px; border-radius:999px; letter-spacing:0.06em; flex-shrink:0;">
+					<i class="fa-solid fa-bullhorn"></i> <?php esc_html_e( 'TARC NEWS', 'tpd-tool' ); ?>
+				</span>
+				<a href="#tpd-view-news" class="tpd-news-ticker-link tpd-tab-link" data-view="news" style="font-size:12.5px; font-weight:600; color:#1e293b; text-decoration:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+					<?php echo ! empty( $news_posts ) ? esc_html( wp_trim_words( $news_posts[0]->post_title, 9 ) ) : esc_html__( 'New Luxury River & Ocean Partner Portals Now Live on TPD', 'tpd-tool' ); ?> &rarr;
+				</a>
+			</div>
+
+			<!-- Top Menu Quick Navigation Buttons -->
+			<div class="tpd-topbar-nav-shortcuts" style="display:flex; align-items:center; gap:8px;">
+				<a href="#tpd-view-resources" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-tab-link" data-view="resources" style="text-decoration:none; font-weight:700;">
+					<i class="fa-solid fa-book-open text-blue"></i> <?php esc_html_e( 'Resource Center', 'tpd-tool' ); ?>
+				</a>
+				<a href="#tpd-view-suppliers" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-tab-link" data-view="suppliers" style="text-decoration:none; font-weight:700;">
+					<i class="fa-solid fa-building-circle-check text-blue"></i> <?php esc_html_e( 'Pro Directory', 'tpd-tool' ); ?>
+				</a>
+				<a href="#tpd-view-news" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-tab-link" data-view="news" style="text-decoration:none; font-weight:700;">
+					<i class="fa-solid fa-newspaper text-gold"></i> <?php esc_html_e( 'Partner Blogs', 'tpd-tool' ); ?>
+				</a>
 			</div>
 
 			<div class="tpd-topbar-actions">
@@ -265,39 +283,8 @@ $news_posts = get_posts( array(
 					</div>
 				</div>
 
-				<!-- Dynamic Admin-Configurable Square Ad Space Row -->
-				<div class="tpd-ad-banner-strip mb-4" style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:20px;">
-					<div class="tpd-ad-square-box" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:14px; display:flex; gap:14px; align-items:center; position:relative; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
-						<span style="position:absolute; top:8px; right:10px; font-size:9.5px; font-weight:800; background:#fef3c7; color:#b45309; padding:2px 6px; border-radius:4px; text-transform:uppercase;">
-							<?php echo esc_html( ! empty( $ads_cfg['ad_1_tag'] ) ? $ads_cfg['ad_1_tag'] : 'SPONSORED' ); ?>
-						</span>
-						<img src="<?php echo esc_url( ! empty( $ads_cfg['ad_1_image'] ) ? $ads_cfg['ad_1_image'] : 'https://images.unsplash.com/photo-1548574505-5e239809ee19?w=160&auto=format&fit=crop&q=80' ); ?>" alt="Ad 1" style="width:72px; height:72px; border-radius:8px; object-fit:cover;">
-						<div style="flex:1;">
-							<h5 style="margin:0 0 4px; font-size:13.5px; font-weight:700; color:#0f172a;"><?php echo esc_html( ! empty( $ads_cfg['ad_1_title'] ) ? $ads_cfg['ad_1_title'] : 'Earn 18% Commission on 2026 Danube Charters' ); ?></h5>
-							<p style="margin:0 0 6px; font-size:12px; color:#64748b;"><?php echo esc_html( ! empty( $ads_cfg['ad_1_subtitle'] ) ? $ads_cfg['ad_1_subtitle'] : 'Limited Time Advisor Incentive' ); ?></p>
-							<a href="<?php echo esc_url( ! empty( $ads_cfg['ad_1_link_url'] ) ? $ads_cfg['ad_1_link_url'] : '#tpd-view-suppliers' ); ?>" class="tpd-tab-link" data-view="suppliers" style="font-size:11.5px; font-weight:700; color:#2563eb; text-decoration:none;">
-								<?php echo esc_html( ! empty( $ads_cfg['ad_1_link_text'] ) ? $ads_cfg['ad_1_link_text'] : 'Explore Itineraries' ); ?> &rarr;
-							</a>
-						</div>
-					</div>
-
-					<div class="tpd-ad-square-box" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:14px; display:flex; gap:14px; align-items:center; position:relative; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
-						<span style="position:absolute; top:8px; right:10px; font-size:9.5px; font-weight:800; background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; text-transform:uppercase;">
-							<?php echo esc_html( ! empty( $ads_cfg['ad_2_tag'] ) ? $ads_cfg['ad_2_tag'] : 'FEATURED' ); ?>
-						</span>
-						<img src="<?php echo esc_url( ! empty( $ads_cfg['ad_2_image'] ) ? $ads_cfg['ad_2_image'] : 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=160&auto=format&fit=crop&q=80' ); ?>" alt="Ad 2" style="width:72px; height:72px; border-radius:8px; object-fit:cover;">
-						<div style="flex:1;">
-							<h5 style="margin:0 0 4px; font-size:13.5px; font-weight:700; color:#0f172a;"><?php echo esc_html( ! empty( $ads_cfg['ad_2_title'] ) ? $ads_cfg['ad_2_title'] : 'Preferred Partner Luxury Resort Program' ); ?></h5>
-							<p style="margin:0 0 6px; font-size:12px; color:#64748b;"><?php echo esc_html( ! empty( $ads_cfg['ad_2_subtitle'] ) ? $ads_cfg['ad_2_subtitle'] : 'Daily breakfast, $100 resort credits & VIP perks' ); ?></p>
-							<a href="<?php echo esc_url( ! empty( $ads_cfg['ad_2_link_url'] ) ? $ads_cfg['ad_2_link_url'] : '#tpd-view-suppliers' ); ?>" class="tpd-tab-link" data-view="suppliers" style="font-size:11.5px; font-weight:700; color:#2563eb; text-decoration:none;">
-								<?php echo esc_html( ! empty( $ads_cfg['ad_2_link_text'] ) ? $ads_cfg['ad_2_link_text'] : 'View Partner Desk' ); ?> &rarr;
-							</a>
-						</div>
-					</div>
-				</div>
-
 				<!-- 3 Analytics Metric Cards -->
-				<div class="tpd-metrics-row-3">
+				<div class="tpd-metrics-row-3" style="margin-top:20px;">
 					<div class="tpd-metric-widget">
 						<div class="tpd-mw-icon tpd-mw-blue"><i class="fa-solid fa-eye"></i></div>
 						<div class="tpd-mw-body">
@@ -332,7 +319,7 @@ $news_posts = get_posts( array(
 				<!-- Two Column Body -->
 				<div class="tpd-dashboard-columns">
 					<div class="tpd-dash-col-main">
-						<!-- Search Filter Box -->
+						<!-- "Find Your Next Supplier" Search with 3 Filter Dropdowns -->
 						<div class="tpd-card-box tpd-supplier-search-box">
 							<div class="tpd-ss-header">
 								<h3><?php esc_html_e( 'Find Your Next Supplier', 'tpd-tool' ); ?></h3>
@@ -340,18 +327,106 @@ $news_posts = get_posts( array(
 							</div>
 							<p class="tpd-ss-desc"><?php esc_html_e( 'Search our supplier directory and connect directly with partner representatives.', 'tpd-tool' ); ?></p>
 
-							<div class="tpd-ss-search-bar">
-								<div class="tpd-ss-input-wrap">
-									<i class="fa-solid fa-magnifying-glass"></i>
-									<input type="text" placeholder="<?php esc_attr_e( 'Search suppliers, destinations, travel types, or keywords...', 'tpd-tool' ); ?>" id="tpd-live-supplier-search">
+							<div class="tpd-ss-search-form" style="display:flex; flex-direction:column; gap:12px; margin-top:14px;">
+								<div class="tpd-ss-search-bar">
+									<div class="tpd-ss-input-wrap">
+										<i class="fa-solid fa-magnifying-glass"></i>
+										<input type="text" placeholder="<?php esc_attr_e( 'Search suppliers, keywords, destinations, or brands...', 'tpd-tool' ); ?>" id="tpd-live-supplier-search">
+									</div>
+									<button type="button" class="tpd-btn tpd-btn-darkblue" id="tpd-btn-search-suppliers">
+										<i class="fa-solid fa-magnifying-glass"></i> <?php esc_html_e( 'Search Suppliers', 'tpd-tool' ); ?>
+									</button>
 								</div>
-								<button type="button" class="tpd-btn tpd-btn-darkblue" id="tpd-btn-search-suppliers">
-									<?php esc_html_e( 'Search', 'tpd-tool' ); ?>
-								</button>
+
+								<!-- 3 Quick Filter Dropdowns -->
+								<div class="tpd-overview-filters-grid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px;">
+									<select id="tpd-filter-overview-dest" class="tpd-input" style="font-size:12.5px; padding:8px 12px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px;">
+										<option value=""><?php esc_html_e( 'All Destinations', 'tpd-tool' ); ?></option>
+										<option value="Caribbean"><?php esc_html_e( 'Caribbean', 'tpd-tool' ); ?></option>
+										<option value="Europe"><?php esc_html_e( 'Europe', 'tpd-tool' ); ?></option>
+										<option value="North America"><?php esc_html_e( 'North America', 'tpd-tool' ); ?></option>
+										<option value="Central & South America"><?php esc_html_e( 'Central & South America', 'tpd-tool' ); ?></option>
+										<option value="Asia & Pacific"><?php esc_html_e( 'Asia & Pacific', 'tpd-tool' ); ?></option>
+										<option value="Africa & Middle East"><?php esc_html_e( 'Africa & Middle East', 'tpd-tool' ); ?></option>
+										<option value="Polar"><?php esc_html_e( 'Polar / Arctic & Antarctica', 'tpd-tool' ); ?></option>
+									</select>
+
+									<select id="tpd-filter-overview-style" class="tpd-input" style="font-size:12.5px; padding:8px 12px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px;">
+										<option value=""><?php esc_html_e( 'All Travel Styles', 'tpd-tool' ); ?></option>
+										<option value="Luxury"><?php esc_html_e( 'Luxury Travel', 'tpd-tool' ); ?></option>
+										<option value="All-Inclusive"><?php esc_html_e( 'All-Inclusive', 'tpd-tool' ); ?></option>
+										<option value="Ocean Cruise"><?php esc_html_e( 'Ocean Cruise', 'tpd-tool' ); ?></option>
+										<option value="River Cruise"><?php esc_html_e( 'River Cruise', 'tpd-tool' ); ?></option>
+										<option value="Adventure"><?php esc_html_e( 'Adventure / Safari', 'tpd-tool' ); ?></option>
+										<option value="Guided"><?php esc_html_e( 'Guided / Escorted Tours', 'tpd-tool' ); ?></option>
+										<option value="Wellness"><?php esc_html_e( 'Wellness & Spa', 'tpd-tool' ); ?></option>
+										<option value="Family"><?php esc_html_e( 'Family / Multigenerational', 'tpd-tool' ); ?></option>
+									</select>
+
+									<select id="tpd-filter-overview-type" class="tpd-input" style="font-size:12.5px; padding:8px 12px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px;">
+										<option value=""><?php esc_html_e( 'All Supplier Types', 'tpd-tool' ); ?></option>
+										<option value="Cruise"><?php esc_html_e( 'Cruise Line', 'tpd-tool' ); ?></option>
+										<option value="Tour"><?php esc_html_e( 'Tour Operator / Wholesaler', 'tpd-tool' ); ?></option>
+										<option value="Resort"><?php esc_html_e( 'All-Inclusive Resort / Hotel', 'tpd-tool' ); ?></option>
+										<option value="DMC"><?php esc_html_e( 'Destination Management Company (DMC)', 'tpd-tool' ); ?></option>
+										<option value="Rail"><?php esc_html_e( 'Rail Journey', 'tpd-tool' ); ?></option>
+										<option value="Villa"><?php esc_html_e( 'Villa / Private Rental', 'tpd-tool' ); ?></option>
+									</select>
+								</div>
 							</div>
 						</div>
 
-						<!-- Dynamic Featured Suppliers Grid (Pulled from supplier_listing CPT) -->
+						<!-- Dynamic Supplier Spotlight Section (1 photo, title, category, paragraph text) -->
+						<?php
+						$spotlight_posts = get_posts( array(
+							'post_type'      => 'supplier_listing',
+							'posts_per_page' => 1,
+							'post_status'    => 'publish',
+							'meta_query'     => array(
+								'relation' => 'OR',
+								array( 'key' => 'tpd_spotlight', 'value' => 'yes' ),
+								array( 'key' => 'tpd_featured_supplier', 'value' => 'yes' ),
+							),
+						) );
+						$spotlight = ! empty( $spotlight_posts ) ? $spotlight_posts[0] : ( ! empty( $supplier_posts ) ? $supplier_posts[0] : null );
+						if ( $spotlight ) :
+							$spot_img      = get_post_meta( $spotlight->ID, 'tpd_banner_url', true ) ?: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1000&auto=format&fit=crop&q=80';
+							$spot_category = get_post_meta( $spotlight->ID, 'tpd_supplier_category', true ) ?: get_post_meta( $spotlight->ID, 'tpd_tagline', true ) ?: 'Preferred Cruise Line Partner';
+							$spot_desc     = get_post_meta( $spotlight->ID, 'tpd_description', true ) ?: wp_strip_all_tags( $spotlight->post_content );
+							if ( empty( $spot_desc ) ) {
+								$spot_desc = 'Discover exceptional trade programs, dedicated sales representative support, and industry-leading advisor commission incentives with ' . $spotlight->post_title . '.';
+							}
+							$spot_owner    = (int) get_post_meta( $spotlight->ID, 'tpd_assigned_user', true ) ?: 1;
+						?>
+							<div class="tpd-supplier-spotlight-card mb-4" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; overflow:hidden; box-shadow:0 4px 14px rgba(0,0,0,0.04); margin-bottom:24px;">
+								<div class="tpd-spotlight-inner" style="display:grid; grid-template-columns: 320px 1fr; gap:0;">
+									<div class="tpd-spotlight-media" style="background-image: url('<?php echo esc_url( $spot_img ); ?>'); background-size:cover; background-position:center; min-height:220px; position:relative;">
+										<span style="position:absolute; top:14px; left:14px; background:#00798c; color:#ffffff; font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.8px; padding:4px 10px; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.2);">
+											<i class="fa-solid fa-star"></i> <?php esc_html_e( 'Supplier Spotlight', 'tpd-tool' ); ?>
+										</span>
+									</div>
+									<div class="tpd-spotlight-content" style="padding:22px 26px; display:flex; flex-direction:column; justify-content:center;">
+										<div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+											<span style="font-size:12px; font-weight:700; color:#0d9488; text-transform:uppercase; letter-spacing:0.5px;"><?php echo esc_html( $spot_category ); ?></span>
+										</div>
+										<h3 style="margin:0 0 10px; font-size:20px; font-weight:800; color:#013243;"><?php echo esc_html( $spotlight->post_title ); ?></h3>
+										<p style="margin:0 0 16px; font-size:13.5px; line-height:1.55; color:#475569;">
+											<?php echo esc_html( wp_trim_words( $spot_desc, 38 ) ); ?>
+										</p>
+										<div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+											<a href="<?php echo esc_url( get_permalink( $spotlight->ID ) ); ?>" target="_blank" class="tpd-btn tpd-btn-sm" style="background:#00798c; color:#fff; text-decoration:none; padding:8px 16px; border-radius:6px; font-weight:700; font-size:13px;">
+												<?php esc_html_e( 'Explore Spotlight', 'tpd-tool' ); ?> &rarr;
+											</a>
+											<button type="button" class="tpd-btn tpd-btn-sm tpd-open-chat-btn" data-recipient-id="<?php echo esc_attr( $spot_owner ); ?>" data-recipient-name="<?php echo esc_attr( $spotlight->post_title ); ?>" style="background:#f1f5f9; color:#013243; border:1px solid #cbd5e1; padding:8px 16px; border-radius:6px; font-weight:700; font-size:13px; cursor:pointer;">
+												<i class="fa-regular fa-comment-dots"></i> <?php esc_html_e( 'Connect with Rep', 'tpd-tool' ); ?>
+											</button>
+										</div>
+									</div>
+								</div>
+							</div>
+						<?php endif; ?>
+
+						<!-- Dynamic Featured Suppliers Grid (Selected via Super Admin Panel, Reps Online badge removed) -->
 						<div class="tpd-featured-suppliers-section">
 							<div class="tpd-fss-header">
 								<h3><?php esc_html_e( 'Featured Suppliers', 'tpd-tool' ); ?></h3>
@@ -360,18 +435,23 @@ $news_posts = get_posts( array(
 
 							<div class="tpd-featured-suppliers-grid">
 								<?php
-								$display_suppliers = array_slice( $supplier_posts, 0, 4 );
-								foreach ( $display_suppliers as $sp ) :
+								$featured_suppliers = get_posts( array(
+									'post_type'      => 'supplier_listing',
+									'posts_per_page' => 4,
+									'post_status'    => 'publish',
+									'meta_key'       => 'tpd_featured_supplier',
+									'meta_value'     => 'yes',
+								) );
+								if ( empty( $featured_suppliers ) ) {
+									$featured_suppliers = array_slice( $supplier_posts, 0, 4 );
+								}
+								foreach ( $featured_suppliers as $sp ) :
 									$sp_banner = get_post_meta( $sp->ID, 'tpd_banner_url', true ) ?: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&auto=format&fit=crop&q=80';
 									$sp_cat    = get_post_meta( $sp->ID, 'tpd_tagline', true ) ?: get_post_meta( $sp->ID, 'tpd_supplier_category', true ) ?: 'Preferred Supplier Partner';
 									$sp_owner  = (int) get_post_meta( $sp->ID, 'tpd_assigned_user', true ) ?: 1;
-									$sp_team   = (array) get_post_meta( $sp->ID, '_tpd_team_members', true );
-									$rep_count = ! empty( $sp_team ) ? count( $sp_team ) : 1;
 								?>
 									<div class="tpd-supp-showcase-card tpd-supplier-profile-card">
-										<div class="tpd-ssc-thumb" style="background-image: url('<?php echo esc_url( $sp_banner ); ?>');">
-											<span class="tpd-reps-online-badge"><i class="fa-solid fa-circle"></i> <?php echo esc_html( $rep_count ); ?> Rep<?php echo $rep_count > 1 ? 's' : ''; ?> Online</span>
-										</div>
+										<div class="tpd-ssc-thumb" style="background-image: url('<?php echo esc_url( $sp_banner ); ?>');"></div>
 										<div class="tpd-ssc-body">
 											<div class="tpd-ssc-logo-row">
 												<span class="tpd-brand-title"><i class="fa-solid fa-building-circle-check text-blue"></i> <?php echo esc_html( $sp->post_title ); ?></span>
@@ -416,43 +496,132 @@ $news_posts = get_posts( array(
 						</div>
 					</div>
 
-					<!-- RIGHT SIDEBAR COLUMN -->
+					<!-- SIDEBAR COLUMN -->
 					<aside class="tpd-dash-col-side">
-						<!-- Quick Actions -->
+						<!-- 1. Quick Supplier Search (replaces Quick Actions) -->
 						<div class="tpd-card-box tpd-quick-actions-box">
 							<div class="tpd-box-header-clean">
-								<h4><?php esc_html_e( 'Quick Actions', 'tpd-tool' ); ?></h4>
+								<h4><i class="fa-solid fa-compass" style="color:#00798c;"></i> <?php esc_html_e( 'Quick Supplier Search', 'tpd-tool' ); ?></h4>
 							</div>
 
 							<div class="tpd-quick-actions-grid-6">
-								<a href="#tpd-view-suppliers" class="tpd-qa-tile tpd-tab-link" data-view="suppliers">
-									<i class="fa-solid fa-magnifying-glass"></i>
-									<span><?php esc_html_e( 'Search Suppliers', 'tpd-tool' ); ?></span>
+								<a href="#tpd-view-suppliers" class="tpd-qa-tile tpd-quick-cat-btn" data-category="Ocean Cruises">
+									<i class="fa-solid fa-ship"></i>
+									<span><?php esc_html_e( 'Ocean Cruises', 'tpd-tool' ); ?></span>
 								</a>
-								<a href="#tpd-view-conversations" class="tpd-qa-tile tpd-tab-link" data-view="conversations">
-									<i class="fa-regular fa-comment-dots"></i>
-									<span><?php esc_html_e( 'Message a Supplier', 'tpd-tool' ); ?></span>
+								<a href="#tpd-view-suppliers" class="tpd-qa-tile tpd-quick-cat-btn" data-category="River Cruises">
+									<i class="fa-solid fa-water"></i>
+									<span><?php esc_html_e( 'River Cruises', 'tpd-tool' ); ?></span>
 								</a>
-								<a href="#tpd-view-profile" class="tpd-qa-tile tpd-tab-link" data-view="profile">
-									<i class="fa-regular fa-id-card"></i>
-									<span><?php esc_html_e( 'Edit My Profile', 'tpd-tool' ); ?></span>
+								<a href="#tpd-view-suppliers" class="tpd-qa-tile tpd-quick-cat-btn" data-category="Tour Operators">
+									<i class="fa-solid fa-earth-americas"></i>
+									<span><?php esc_html_e( 'Tour Operators', 'tpd-tool' ); ?></span>
 								</a>
-								<a href="#tpd-view-meetings" class="tpd-tab-link tpd-qa-tile" data-view="meetings">
-									<i class="fa-regular fa-calendar-plus"></i>
-									<span><?php esc_html_e( 'Schedule a Meeting', 'tpd-tool' ); ?></span>
+								<a href="#tpd-view-suppliers" class="tpd-qa-tile tpd-quick-cat-btn" data-category="All-Inclusives">
+									<i class="fa-solid fa-umbrella-beach"></i>
+									<span><?php esc_html_e( 'All-Inclusives', 'tpd-tool' ); ?></span>
 								</a>
-								<a href="#tpd-view-saved" class="tpd-tab-link tpd-qa-tile" data-view="saved">
-									<i class="fa-regular fa-heart"></i>
-									<span><?php esc_html_e( 'Saved Suppliers', 'tpd-tool' ); ?></span>
+								<a href="#tpd-view-suppliers" class="tpd-qa-tile tpd-quick-cat-btn" data-category="Escorted Tours">
+									<i class="fa-solid fa-bus"></i>
+									<span><?php esc_html_e( 'Escorted Tours', 'tpd-tool' ); ?></span>
 								</a>
-								<a href="#tpd-view-settings" class="tpd-tab-link tpd-qa-tile" data-view="settings">
-									<i class="fa-solid fa-crown"></i>
-									<span><?php esc_html_e( 'Upgrade Plan', 'tpd-tool' ); ?></span>
+								<a href="#tpd-view-suppliers" class="tpd-qa-tile tpd-quick-cat-btn" data-category="Expedition/Safaris">
+									<i class="fa-solid fa-binoculars"></i>
+									<span><?php esc_html_e( 'Expedition/Safaris', 'tpd-tool' ); ?></span>
 								</a>
 							</div>
 						</div>
 
-						<!-- Saved Suppliers Mini List -->
+						<!-- 2. Listing Status Widget (under Quick Supplier Search, auto-hides when 100% complete) -->
+						<?php
+						$adv_u = get_userdata( $current_user_id );
+						$ls_items = array(
+							array(
+								'label' => __( 'First & Last Name', 'tpd-tool' ),
+								'done'  => ! empty( $adv_u->first_name ) && ! empty( $adv_u->last_name ),
+								'link'  => '#tpd-acct-sec-personal',
+							),
+							array(
+								'label' => __( 'Direct Phone Number', 'tpd-tool' ),
+								'done'  => ! empty( get_user_meta( $current_user_id, 'tpd_phone', true ) ),
+								'link'  => '#tpd-acct-sec-personal',
+							),
+							array(
+								'label' => __( 'Profile Handle & URL', 'tpd-tool' ),
+								'done'  => ! empty( get_user_meta( $current_user_id, 'tpd_profile_handle', true ) ),
+								'link'  => '#tpd-acct-sec-personal',
+							),
+							array(
+								'label' => __( 'Advisor Location / Address', 'tpd-tool' ),
+								'done'  => ! empty( get_user_meta( $current_user_id, 'tpd_advisor_location', true ) ),
+								'link'  => '#tpd-acct-sec-personal',
+							),
+							array(
+								'label' => __( 'Agency Name & Structure', 'tpd-tool' ),
+								'done'  => ! empty( get_user_meta( $current_user_id, 'tpd_agency_name', true ) ),
+								'link'  => '#tpd-acct-sec-personal',
+							),
+							array(
+								'label' => __( 'Industry Accreditation (CLIA/IATA/ARC/TRUE)', 'tpd-tool' ),
+								'done'  => ! empty( get_user_meta( $current_user_id, 'tpd_accreditation_num', true ) ) || ! empty( get_user_meta( $current_user_id, 'tpd_clia_num', true ) ) || ! empty( get_user_meta( $current_user_id, 'tpd_iata_num', true ) ) || ! empty( get_user_meta( $current_user_id, 'tpd_true_num', true ) ),
+								'link'  => '#tpd-acct-sec-cert',
+							),
+							array(
+								'label' => __( 'About Me / Biography', 'tpd-tool' ),
+								'done'  => ! empty( get_user_meta( $current_user_id, 'description', true ) ) || ! empty( get_user_meta( $current_user_id, 'tpd_about_me', true ) ),
+								'link'  => '#tpd-acct-sec-about',
+							),
+							array(
+								'label' => __( 'Travel Specialties (Destinations/Styles)', 'tpd-tool' ),
+								'done'  => ! empty( get_user_meta( $current_user_id, 'tpd_travel_types', true ) ) || ! empty( get_user_meta( $current_user_id, 'tpd_destinations', true ) ),
+								'link'  => '#tpd-acct-sec-spec',
+							),
+							array(
+								'label' => __( 'Profile Photo / Headshot', 'tpd-tool' ),
+								'done'  => ! empty( get_user_meta( $current_user_id, 'tpd_avatar_url', true ) ) || ! empty( get_user_meta( $current_user_id, 'tpd_headshot_url', true ) ),
+								'link'  => '#tpd-acct-sec-personal',
+							),
+							array(
+								'label' => __( 'Custom Banner Image', 'tpd-tool' ),
+								'done'  => ! empty( get_user_meta( $current_user_id, 'tpd_banner_url', true ) ),
+								'link'  => '#tpd-acct-sec-social',
+							),
+						);
+						$total_ls_count = count( $ls_items );
+						$done_ls_count  = count( array_filter( $ls_items, function( $i ) { return $i['done']; } ) );
+						$ls_percent     = intval( round( ( $done_ls_count / $total_ls_count ) * 100 ) );
+						?>
+						<?php if ( $ls_percent < 100 ) : ?>
+							<div class="tpd-card-box tpd-listing-status-card" id="tpd-listing-status-widget" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:18px; margin-bottom:20px;">
+								<div class="tpd-box-header-clean" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+									<h4 style="margin:0; font-size:14px; font-weight:800; color:#013243;"><?php esc_html_e( 'Listing Status', 'tpd-tool' ); ?></h4>
+									<span style="font-size:12px; font-weight:800; color:#00798c; background:#e0f2fe; padding:2px 8px; border-radius:12px;">
+										<?php echo esc_html( $ls_percent ); ?>% <?php esc_html_e( 'Complete', 'tpd-tool' ); ?>
+									</span>
+								</div>
+								<div style="width:100%; height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden; margin-bottom:12px;">
+									<div style="width:<?php echo esc_attr( $ls_percent ); ?>%; height:100%; background:linear-gradient(90deg, #00798c, #0d9488); border-radius:4px;"></div>
+								</div>
+								<p style="font-size:12px; color:#64748b; margin:0 0 10px;">
+									<?php esc_html_e( 'Complete your profile to unlock verified advisor status and maximize traveler trip inquiries.', 'tpd-tool' ); ?>
+								</p>
+								<ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px;">
+									<?php foreach ( $ls_items as $itm ) : ?>
+										<li style="display:flex; align-items:center; gap:8px; font-size:12px; color:<?php echo $itm['done'] ? '#10b981' : '#64748b'; ?>;">
+											<i class="fa-solid <?php echo $itm['done'] ? 'fa-circle-check text-green' : 'fa-circle-notch text-muted'; ?>" style="font-size:13px;"></i>
+											<span style="<?php echo $itm['done'] ? 'text-decoration:line-through; opacity:0.75;' : 'font-weight:600; color:#334155;'; ?>">
+												<?php echo esc_html( $itm['label'] ); ?>
+											</span>
+											<?php if ( ! $itm['done'] ) : ?>
+												<a href="#tpd-view-profile" class="tpd-tab-link" data-view="profile" style="margin-left:auto; font-size:11px; font-weight:700; color:#00798c; text-decoration:none;"><?php esc_html_e( 'Fill &rarr;', 'tpd-tool' ); ?></a>
+											<?php endif; ?>
+										</li>
+									<?php endforeach; ?>
+								</ul>
+							</div>
+						<?php endif; ?>
+
+						<!-- 3. Saved Suppliers (under Listing Status) -->
 						<div class="tpd-card-box tpd-saved-suppliers-card">
 							<div class="tpd-box-header-clean">
 								<h4><?php esc_html_e( 'Saved Suppliers', 'tpd-tool' ); ?></h4>
@@ -475,10 +644,10 @@ $news_posts = get_posts( array(
 							</div>
 						</div>
 
-						<!-- Upcoming Events & Webinars -->
+						<!-- 4. Upcoming Events (under Saved Suppliers) -->
 						<div class="tpd-card-box tpd-events-widget-card">
 							<div class="tpd-box-header-clean">
-								<h4><?php esc_html_e( 'Upcoming Events & Webinars', 'tpd-tool' ); ?></h4>
+								<h4><?php esc_html_e( 'Upcoming Events', 'tpd-tool' ); ?></h4>
 								<a href="#tpd-view-events" class="tpd-clean-link tpd-tab-link" data-view="events"><?php esc_html_e( 'View All', 'tpd-tool' ); ?> &rarr;</a>
 							</div>
 
@@ -501,7 +670,131 @@ $news_posts = get_posts( array(
 								<?php endforeach; ?>
 							</div>
 						</div>
+
+						<!-- 5. 4x Square Ads (Sidebar Column) -->
+						<?php
+						$sidebar_ads = array(
+							array(
+								'tag'      => ! empty( $ads_cfg['left_ad_1_tag'] ) ? $ads_cfg['left_ad_1_tag'] : 'SPONSORED',
+								'title'    => ! empty( $ads_cfg['left_ad_1_title'] ) ? $ads_cfg['left_ad_1_title'] : 'Earn 18% Commission on 2026 Danube Charters',
+								'subtitle' => ! empty( $ads_cfg['left_ad_1_subtitle'] ) ? $ads_cfg['left_ad_1_subtitle'] : 'Exclusive trade incentive for certified advisors',
+								'image'    => ! empty( $ads_cfg['left_ad_1_image'] ) ? $ads_cfg['left_ad_1_image'] : 'https://images.unsplash.com/photo-1548574505-5e239809ee19?w=300&auto=format&fit=crop&q=80',
+								'text'     => ! empty( $ads_cfg['left_ad_1_link_text'] ) ? $ads_cfg['left_ad_1_link_text'] : 'View Cruise Details',
+								'url'      => ! empty( $ads_cfg['left_ad_1_link_url'] ) ? $ads_cfg['left_ad_1_link_url'] : '#tpd-view-suppliers',
+							),
+							array(
+								'tag'      => ! empty( $ads_cfg['left_ad_2_tag'] ) ? $ads_cfg['left_ad_2_tag'] : 'FEATURED',
+								'title'    => ! empty( $ads_cfg['left_ad_2_title'] ) ? $ads_cfg['left_ad_2_title'] : 'Preferred Luxury All-Inclusive Perks',
+								'subtitle' => ! empty( $ads_cfg['left_ad_2_subtitle'] ) ? $ads_cfg['left_ad_2_subtitle'] : '$150 resort credits & VIP airport transfers',
+								'image'    => ! empty( $ads_cfg['left_ad_2_image'] ) ? $ads_cfg['left_ad_2_image'] : 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=300&auto=format&fit=crop&q=80',
+								'text'     => ! empty( $ads_cfg['left_ad_2_link_text'] ) ? $ads_cfg['left_ad_2_link_text'] : 'Access Partner Portal',
+								'url'      => ! empty( $ads_cfg['left_ad_2_link_url'] ) ? $ads_cfg['left_ad_2_link_url'] : '#tpd-view-suppliers',
+							),
+							array(
+								'tag'      => ! empty( $ads_cfg['left_ad_3_tag'] ) ? $ads_cfg['left_ad_3_tag'] : 'PARTNER SPOTLIGHT',
+								'title'    => ! empty( $ads_cfg['left_ad_3_title'] ) ? $ads_cfg['left_ad_3_title'] : '2026 Polar Expedition Fam Trips',
+								'subtitle' => ! empty( $ads_cfg['left_ad_3_subtitle'] ) ? $ads_cfg['left_ad_3_subtitle'] : 'Applications open for top-producing advisors',
+								'image'    => ! empty( $ads_cfg['left_ad_3_image'] ) ? $ads_cfg['left_ad_3_image'] : 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?w=300&auto=format&fit=crop&q=80',
+								'text'     => ! empty( $ads_cfg['left_ad_3_link_text'] ) ? $ads_cfg['left_ad_3_link_text'] : 'Apply for Fam Trip',
+								'url'      => ! empty( $ads_cfg['left_ad_3_link_url'] ) ? $ads_cfg['left_ad_3_link_url'] : '#tpd-view-suppliers',
+							),
+							array(
+								'tag'      => ! empty( $ads_cfg['left_ad_4_tag'] ) ? $ads_cfg['left_ad_4_tag'] : 'EXCLUSIVE',
+								'title'    => ! empty( $ads_cfg['left_ad_4_title'] ) ? $ads_cfg['left_ad_4_title'] : 'Private European Villa Collections',
+								'subtitle' => ! empty( $ads_cfg['left_ad_4_subtitle'] ) ? $ads_cfg['left_ad_4_subtitle'] : 'Guaranteed 15% net commission & concierge',
+								'image'    => ! empty( $ads_cfg['left_ad_4_image'] ) ? $ads_cfg['left_ad_4_image'] : 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=300&auto=format&fit=crop&q=80',
+								'text'     => ! empty( $ads_cfg['left_ad_4_link_text'] ) ? $ads_cfg['left_ad_4_link_text'] : 'Explore Inventory',
+								'url'      => ! empty( $ads_cfg['left_ad_4_link_url'] ) ? $ads_cfg['left_ad_4_link_url'] : '#tpd-view-suppliers',
+							),
+						);
+						?>
+						<div class="tpd-card-box tpd-sidebar-ads-card" style="padding:16px; margin-bottom:20px;">
+							<div class="tpd-box-header-clean" style="margin-bottom:12px;">
+								<h4 style="font-size:13.5px; font-weight:800; color:#013243;"><?php esc_html_e( 'Partner Highlights', 'tpd-tool' ); ?></h4>
+							</div>
+							<div class="tpd-sidebar-ads-grid" style="display:flex; flex-direction:column; gap:14px;">
+								<?php foreach ( $sidebar_ads as $s_ad ) : ?>
+									<div class="tpd-ad-square-card" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px; position:relative;">
+										<span style="position:absolute; top:8px; right:8px; font-size:9px; font-weight:800; background:#fef3c7; color:#b45309; padding:2px 6px; border-radius:4px; text-transform:uppercase;">
+											<?php echo esc_html( $s_ad['tag'] ); ?>
+										</span>
+										<div style="display:flex; gap:12px; align-items:center;">
+											<img src="<?php echo esc_url( $s_ad['image'] ); ?>" alt="Ad" style="width:64px; height:64px; border-radius:8px; object-fit:cover; flex-shrink:0;">
+											<div style="flex:1; min-width:0;">
+												<h5 style="margin:0 0 3px; font-size:12.5px; font-weight:700; color:#0f172a; line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><?php echo esc_html( $s_ad['title'] ); ?></h5>
+												<p style="margin:0 0 5px; font-size:11px; color:#64748b; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;"><?php echo esc_html( $s_ad['subtitle'] ); ?></p>
+												<a href="<?php echo esc_url( $s_ad['url'] ); ?>" class="tpd-tab-link" data-view="suppliers" style="font-size:11px; font-weight:700; color:#00798c; text-decoration:none;">
+													<?php echo esc_html( $s_ad['text'] ); ?> &rarr;
+												</a>
+											</div>
+										</div>
+									</div>
+								<?php endforeach; ?>
+							</div>
+						</div>
 					</aside>
+				</div>
+
+				<!-- 4x Square Ads Across Bottom of Overview Workspace -->
+				<?php
+				$bottom_ads = array(
+					array(
+						'tag'      => ! empty( $ads_cfg['bottom_ad_1_tag'] ) ? $ads_cfg['bottom_ad_1_tag'] : 'CRUISE PARTNER',
+						'title'    => ! empty( $ads_cfg['bottom_ad_1_title'] ) ? $ads_cfg['bottom_ad_1_title'] : 'Luxury Yacht Charters 2026',
+						'subtitle' => ! empty( $ads_cfg['bottom_ad_1_subtitle'] ) ? $ads_cfg['bottom_ad_1_subtitle'] : 'Bonus commission on Mediterranean bookings',
+						'image'    => ! empty( $ads_cfg['bottom_ad_1_image'] ) ? $ads_cfg['bottom_ad_1_image'] : 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=300&auto=format&fit=crop&q=80',
+						'text'     => ! empty( $ads_cfg['bottom_ad_1_link_text'] ) ? $ads_cfg['bottom_ad_1_link_text'] : 'View Fleet',
+						'url'      => ! empty( $ads_cfg['bottom_ad_1_link_url'] ) ? $ads_cfg['bottom_ad_1_link_url'] : '#tpd-view-suppliers',
+					),
+					array(
+						'tag'      => ! empty( $ads_cfg['bottom_ad_2_tag'] ) ? $ads_cfg['bottom_ad_2_tag'] : 'TOUR OPERATOR',
+						'title'    => ! empty( $ads_cfg['bottom_ad_2_title'] ) ? $ads_cfg['bottom_ad_2_title'] : 'Bespoke African Safaris',
+						'subtitle' => ! empty( $ads_cfg['bottom_ad_2_subtitle'] ) ? $ads_cfg['bottom_ad_2_subtitle'] : 'Full group protection & dedicated DMC team',
+						'image'    => ! empty( $ads_cfg['bottom_ad_2_image'] ) ? $ads_cfg['bottom_ad_2_image'] : 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=300&auto=format&fit=crop&q=80',
+						'text'     => ! empty( $ads_cfg['bottom_ad_2_link_text'] ) ? $ads_cfg['bottom_ad_2_link_text'] : 'Download Itineraries',
+						'url'      => ! empty( $ads_cfg['bottom_ad_2_link_url'] ) ? $ads_cfg['bottom_ad_2_link_url'] : '#tpd-view-suppliers',
+					),
+					array(
+						'tag'      => ! empty( $ads_cfg['bottom_ad_3_tag'] ) ? $ads_cfg['bottom_ad_3_tag'] : 'TRAIN & RAIL',
+						'title'    => ! empty( $ads_cfg['bottom_ad_3_title'] ) ? $ads_cfg['bottom_ad_3_title'] : 'Scenic Alpine Rail Journeys',
+						'subtitle' => ! empty( $ads_cfg['bottom_ad_3_subtitle'] ) ? $ads_cfg['bottom_ad_3_subtitle'] : 'Instant booking confirmation for advisors',
+						'image'    => ! empty( $ads_cfg['bottom_ad_3_image'] ) ? $ads_cfg['bottom_ad_3_image'] : 'https://images.unsplash.com/photo-1515238152791-8216bfdf89a7?w=300&auto=format&fit=crop&q=80',
+						'text'     => ! empty( $ads_cfg['bottom_ad_3_link_text'] ) ? $ads_cfg['bottom_ad_3_link_text'] : 'View Rail Routes',
+						'url'      => ! empty( $ads_cfg['bottom_ad_3_link_url'] ) ? $ads_cfg['bottom_ad_3_link_url'] : '#tpd-view-suppliers',
+					),
+					array(
+						'tag'      => ! empty( $ads_cfg['bottom_ad_4_tag'] ) ? $ads_cfg['bottom_ad_4_tag'] : 'RESORT COLLECTION',
+						'title'    => ! empty( $ads_cfg['bottom_ad_4_title'] ) ? $ads_cfg['bottom_ad_4_title'] : 'Boutique Island Hideaways',
+						'subtitle' => ! empty( $ads_cfg['bottom_ad_4_subtitle'] ) ? $ads_cfg['bottom_ad_4_subtitle'] : 'Upgraded amenities & late checkout for clients',
+						'image'    => ! empty( $ads_cfg['bottom_ad_4_image'] ) ? $ads_cfg['bottom_ad_4_image'] : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&auto=format&fit=crop&q=80',
+						'text'     => ! empty( $ads_cfg['bottom_ad_4_link_text'] ) ? $ads_cfg['bottom_ad_4_link_text'] : 'Explore Properties',
+						'url'      => ! empty( $ads_cfg['bottom_ad_4_link_url'] ) ? $ads_cfg['bottom_ad_4_link_url'] : '#tpd-view-suppliers',
+					),
+				);
+				?>
+				<div class="tpd-overview-bottom-ads-strip" style="margin-top:28px;">
+					<div class="tpd-fss-header" style="margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;">
+						<h3 style="font-size:16px; font-weight:800; color:#013243; margin:0;"><i class="fa-solid fa-rectangle-ad text-blue"></i> <?php esc_html_e( 'Featured Trade Incentives & Partner Offers', 'tpd-tool' ); ?></h3>
+						<span style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;"><?php esc_html_e( 'Verified Partners', 'tpd-tool' ); ?></span>
+					</div>
+					<div class="tpd-bottom-ads-grid" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:16px;">
+						<?php foreach ( $bottom_ads as $b_ad ) : ?>
+							<div class="tpd-bottom-ad-card" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 2px 8px rgba(0,0,0,0.03); transition:all 0.2s ease;">
+								<div style="height:120px; background-image:url('<?php echo esc_url( $b_ad['image'] ); ?>'); background-size:cover; background-position:center; position:relative;">
+									<span style="position:absolute; top:8px; left:8px; font-size:9px; font-weight:800; background:#013243; color:#ffffff; padding:2px 7px; border-radius:4px; text-transform:uppercase;">
+										<?php echo esc_html( $b_ad['tag'] ); ?>
+									</span>
+								</div>
+								<div style="padding:14px; display:flex; flex-direction:column; flex:1;">
+									<h5 style="margin:0 0 6px; font-size:13px; font-weight:700; color:#0f172a; line-height:1.35;"><?php echo esc_html( $b_ad['title'] ); ?></h5>
+									<p style="margin:0 0 10px; font-size:11.5px; color:#64748b; line-height:1.4; flex:1;"><?php echo esc_html( $b_ad['subtitle'] ); ?></p>
+									<a href="<?php echo esc_url( $b_ad['url'] ); ?>" class="tpd-tab-link" data-view="suppliers" style="font-size:11.5px; font-weight:700; color:#00798c; text-decoration:none; margin-top:auto;">
+										<?php echo esc_html( $b_ad['text'] ); ?> &rarr;
+									</a>
+								</div>
+							</div>
+						<?php endforeach; ?>
+					</div>
 				</div>
 			</div>
 
@@ -542,7 +835,7 @@ $news_posts = get_posts( array(
 				);
 				?>
 				<div class="tpd-card-box" style="padding:28px 34px;">
-					<h2 style="margin:0 0 18px; font-size:21px; font-weight:800; color:#00798c;"><?php esc_html_e( 'Account Info', 'tpd-tool' ); ?></h2>
+					<h2 style="margin:0 0 18px; font-size:21px; font-weight:800; color:#00798c;"><?php esc_html_e( 'My Profile', 'tpd-tool' ); ?></h2>
 
 					<!-- Horizontal Sub-Navigation Tabs (Jump / Filter Sections) -->
 					<div class="tpd-acct-subtabs" style="display:flex; gap:18px; border-bottom:1.5px solid #e2e8f0; padding-bottom:10px; margin-bottom:22px; overflow-x:auto; white-space:nowrap;">
@@ -925,7 +1218,7 @@ $news_posts = get_posts( array(
 
 						<div class="mt-4" style="text-align:right; border-top:1px solid #e2e8f0; padding-top:18px;">
 							<button type="submit" class="tpd-btn" id="tpd-save-advisor-profile-btn" style="background:#00798c; color:#ffffff; border:none; padding:12px 32px; border-radius:6px; font-weight:700; cursor:pointer;">
-								<i class="fa-solid fa-floppy-disk"></i> <?php esc_html_e( 'Submit & Save Account Info', 'tpd-tool' ); ?>
+								<i class="fa-solid fa-floppy-disk"></i> <?php esc_html_e( 'Submit & Save Profile', 'tpd-tool' ); ?>
 							</button>
 						</div>
 					</form>
@@ -935,32 +1228,83 @@ $news_posts = get_posts( array(
 			<!-- VIEW 3: SEARCH SUPPLIERS DIRECTORY -->
 			<div id="tpd-view-suppliers" class="tpd-tab-panel">
 				<div class="tpd-card-box">
-					<div class="tpd-ss-header mb-3">
-						<h3><i class="fa-solid fa-magnifying-glass"></i> <?php esc_html_e( 'Supplier Partner Directory', 'tpd-tool' ); ?></h3>
-						<span class="text-muted"><?php printf( esc_html__( '%d Active Partner Brands', 'tpd-tool' ), count( $supplier_posts ) ); ?></span>
+					<div class="tpd-ss-header mb-3" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+						<div>
+							<h3 style="margin:0;"><i class="fa-solid fa-magnifying-glass text-blue"></i> <?php esc_html_e( 'Supplier Partner Directory', 'tpd-tool' ); ?></h3>
+							<span class="text-muted" style="font-size:12.5px;"><?php printf( esc_html__( '%d Active Partner Brands · Sorted by Partnership Tier', 'tpd-tool' ), count( $supplier_posts ) ); ?></span>
+						</div>
 					</div>
-					<div class="tpd-featured-suppliers-grid">
-						<?php foreach ( $supplier_posts as $sp ) :
+
+					<!-- Search & Category Filters Bar -->
+					<div class="tpd-directory-filter-bar mb-4" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+						<div class="tpd-ss-input-wrap" style="flex:1; min-width:240px; background:#fff; border:1px solid #cbd5e1; border-radius:8px;">
+							<i class="fa-solid fa-magnifying-glass"></i>
+							<input type="text" placeholder="<?php esc_attr_e( 'Filter by partner brand, destination, or keywords...', 'tpd-tool' ); ?>" id="tpd-directory-keyword-input">
+						</div>
+						<select id="tpd-directory-cat-select" class="tpd-input" style="width:200px; padding:8px 12px; background:#fff; border:1px solid #cbd5e1; border-radius:8px; font-size:13px;">
+							<option value=""><?php esc_html_e( 'All Categories', 'tpd-tool' ); ?></option>
+							<option value="Ocean Cruises"><?php esc_html_e( 'Ocean Cruises', 'tpd-tool' ); ?></option>
+							<option value="River Cruises"><?php esc_html_e( 'River Cruises', 'tpd-tool' ); ?></option>
+							<option value="Tour Operators"><?php esc_html_e( 'Tour Operators', 'tpd-tool' ); ?></option>
+							<option value="All-Inclusives"><?php esc_html_e( 'All-Inclusives', 'tpd-tool' ); ?></option>
+							<option value="Escorted Tours"><?php esc_html_e( 'Escorted Tours', 'tpd-tool' ); ?></option>
+							<option value="Expedition/Safaris"><?php esc_html_e( 'Expedition/Safaris', 'tpd-tool' ); ?></option>
+							<option value="Cruise"><?php esc_html_e( 'Cruise Line', 'tpd-tool' ); ?></option>
+							<option value="Resort"><?php esc_html_e( 'Resort / Hotel', 'tpd-tool' ); ?></option>
+							<option value="DMC"><?php esc_html_e( 'DMC', 'tpd-tool' ); ?></option>
+							<option value="Rail"><?php esc_html_e( 'Rail Journeys', 'tpd-tool' ); ?></option>
+							<option value="Villa"><?php esc_html_e( 'Villa Collections', 'tpd-tool' ); ?></option>
+						</select>
+						<button type="button" id="tpd-reset-dir-filters" class="tpd-btn tpd-btn-sm tpd-btn-outline" style="border-radius:6px; font-size:12px; padding:8px 14px;">
+							<i class="fa-solid fa-rotate-left"></i> <?php esc_html_e( 'Reset Filters', 'tpd-tool' ); ?>
+						</button>
+					</div>
+
+					<!-- Directory Grid (Sorted: Premium first, Standard second, Basic third; Chat removed for profile uniformity) -->
+					<?php
+					$sorted_suppliers = $supplier_posts;
+					usort( $sorted_suppliers, function( $a, $b ) {
+						$tier_weights = array( 'premium' => 3, 'standard' => 2, 'basic' => 1 );
+						$a_owner   = (int) get_post_meta( $a->ID, 'tpd_assigned_user', true );
+						$b_owner   = (int) get_post_meta( $b->ID, 'tpd_assigned_user', true );
+						$a_tier    = TPD_Tool_Tiers::get_user_tier( $a_owner );
+						$b_tier    = TPD_Tool_Tiers::get_user_tier( $b_owner );
+						$a_w       = isset( $tier_weights[ $a_tier ] ) ? $tier_weights[ $a_tier ] : 1;
+						$b_w       = isset( $tier_weights[ $b_tier ] ) ? $tier_weights[ $b_tier ] : 1;
+						if ( $a_w === $b_w ) {
+							return strcmp( $a->post_title, $b->post_title );
+						}
+						return ( $a_w > $b_w ) ? -1 : 1;
+					} );
+					?>
+					<div class="tpd-featured-suppliers-grid" id="tpd-directory-results-grid">
+						<?php foreach ( $sorted_suppliers as $sp ) :
 							$sp_banner = get_post_meta( $sp->ID, 'tpd_banner_url', true ) ?: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&auto=format&fit=crop&q=80';
-							$sp_cat    = get_post_meta( $sp->ID, 'tpd_tagline', true ) ?: 'Verified Supplier Partner';
+							$sp_cat    = get_post_meta( $sp->ID, 'tpd_tagline', true ) ?: get_post_meta( $sp->ID, 'tpd_supplier_category', true ) ?: 'Verified Supplier Partner';
 							$sp_owner  = (int) get_post_meta( $sp->ID, 'tpd_assigned_user', true ) ?: 1;
+							$sp_tier   = TPD_Tool_Tiers::get_user_tier( $sp_owner );
 							$is_saved  = in_array( $sp->ID, $saved_supplier_ids, true );
 						?>
-							<div class="tpd-supp-showcase-card tpd-supplier-profile-card">
-								<div class="tpd-ssc-thumb" style="background-image: url('<?php echo esc_url( $sp_banner ); ?>'); display:flex; justify-content:space-between; align-items:flex-start;">
-									<span class="tpd-reps-online-badge"><i class="fa-solid fa-circle"></i> Online</span>
-									<button type="button" class="tpd-btn tpd-btn-xs tpd-toggle-favorite-btn <?php echo $is_saved ? 'active saved text-gold' : ''; ?>" data-supplier-id="<?php echo esc_attr( $sp->ID ); ?>" style="background:rgba(255,255,255,0.9); border:none; border-radius:6px; padding:4px 8px; cursor:pointer;">
+							<div class="tpd-supp-showcase-card tpd-supplier-profile-card" data-title="<?php echo esc_attr( strtolower( $sp->post_title ) ); ?>" data-cat="<?php echo esc_attr( strtolower( $sp_cat ) ); ?>" style="border-radius:10px; overflow:hidden;">
+								<div class="tpd-ssc-thumb" style="height:125px; background-image: url('<?php echo esc_url( $sp_banner ); ?>'); display:flex; justify-content:space-between; align-items:flex-start; padding:10px;">
+									<?php if ( 'premium' === $sp_tier ) : ?>
+										<span style="background:#013243; color:#fff; font-size:9.5px; font-weight:800; padding:2px 7px; border-radius:4px; text-transform:uppercase;"><i class="fa-solid fa-crown text-gold"></i> PREFERRED</span>
+									<?php elseif ( 'standard' === $sp_tier ) : ?>
+										<span style="background:#00798c; color:#fff; font-size:9.5px; font-weight:800; padding:2px 7px; border-radius:4px; text-transform:uppercase;">PARTNER</span>
+									<?php else : ?>
+										<span></span>
+									<?php endif; ?>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-toggle-favorite-btn <?php echo $is_saved ? 'active saved text-gold' : ''; ?>" data-supplier-id="<?php echo esc_attr( $sp->ID ); ?>" style="background:rgba(255,255,255,0.95); border:none; border-radius:6px; padding:4px 8px; cursor:pointer;" title="<?php esc_attr_e( 'Save Supplier', 'tpd-tool' ); ?>">
 										<i class="<?php echo $is_saved ? 'fa-solid' : 'fa-regular'; ?> fa-bookmark"></i>
 									</button>
 								</div>
-								<div class="tpd-ssc-body">
-									<span class="tpd-brand-title"><?php echo esc_html( $sp->post_title ); ?></span>
-									<span class="tpd-ssc-category"><?php echo esc_html( $sp_cat ); ?></span>
-									<div class="tpd-ssc-actions" style="margin-top:auto;">
-										<a href="<?php echo esc_url( get_permalink( $sp->ID ) ); ?>" target="_blank" class="tpd-btn tpd-btn-sm tpd-btn-outline" style="text-decoration:none; text-align:center;"><?php esc_html_e( 'Showcase', 'tpd-tool' ); ?></a>
-										<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-darkblue tpd-open-chat-btn" data-recipient-id="<?php echo esc_attr( $sp_owner ); ?>" data-recipient-name="<?php echo esc_attr( $sp->post_title ); ?>">
-											<i class="fa-solid fa-comment"></i> <?php esc_html_e( 'Chat', 'tpd-tool' ); ?>
-										</button>
+								<div class="tpd-ssc-body" style="padding:14px;">
+									<span class="tpd-brand-title" style="font-size:14px; font-weight:800;"><?php echo esc_html( $sp->post_title ); ?></span>
+									<span class="tpd-ssc-category" style="font-size:12px; color:#64748b; margin-top:2px;"><?php echo esc_html( wp_trim_words( $sp_cat, 4 ) ); ?></span>
+									<div class="tpd-ssc-actions" style="margin-top:14px;">
+										<a href="<?php echo esc_url( get_permalink( $sp->ID ) ); ?>" target="_blank" class="tpd-btn tpd-btn-sm tpd-btn-outline" style="text-decoration:none; text-align:center; width:100%; border-radius:6px; font-size:12px; font-weight:700;">
+											<?php esc_html_e( 'View Supplier Profile', 'tpd-tool' ); ?> &rarr;
+										</a>
 									</div>
 								</div>
 							</div>
@@ -973,7 +1317,7 @@ $news_posts = get_posts( array(
 			<div id="tpd-view-saved" class="tpd-tab-panel">
 				<div class="tpd-card-box">
 					<div class="tpd-ss-header">
-						<h3><i class="fa-regular fa-bookmark"></i> <?php esc_html_e( 'Your Saved Suppliers', 'tpd-tool' ); ?></h3>
+						<h3><i class="fa-regular fa-bookmark text-blue"></i> <?php esc_html_e( 'Your Saved Suppliers', 'tpd-tool' ); ?></h3>
 					</div>
 					<div class="tpd-featured-suppliers-grid mt-4">
 						<?php echo do_shortcode( '[tpd_saved_suppliers]' ); ?>
@@ -981,39 +1325,156 @@ $news_posts = get_posts( array(
 				</div>
 			</div>
 
-			<!-- VIEW 5: CLIENT INQUIRIES -->
+			<!-- VIEW 5: CLIENT INQUIRIES & TRIP LEADS -->
 			<div id="tpd-view-inquiries" class="tpd-tab-panel">
-				<div class="tpd-card-box">
-					<div class="tpd-ss-header">
-						<h3><i class="fa-solid fa-inbox"></i> <?php esc_html_e( 'Client Trip Inquiries & Leads', 'tpd-tool' ); ?></h3>
+				<!-- Inquiries Shortcode Embed Helper -->
+				<div style="background:#f0fdfa; border:1px solid #99f6e4; border-radius:12px; padding:16px 20px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+					<div style="display:flex; align-items:center; gap:12px;">
+						<i class="fa-solid fa-paper-plane" style="font-size:22px; color:#00798c;"></i>
+						<div>
+							<strong style="color:#013243; font-size:14px; display:block;"><?php esc_html_e( 'Collect Inquiries on Your Public Website or Elementor Pages', 'tpd-tool' ); ?></strong>
+							<span style="color:#475569; font-size:12.5px;"><?php esc_html_e( 'Use your personal shortcode to drop an Inquire button or full trip request form anywhere.', 'tpd-tool' ); ?></span>
+						</div>
 					</div>
+					<div style="display:flex; gap:8px; align-items:center;">
+						<code style="background:#ffffff; border:1px solid #cbd5e1; padding:6px 10px; border-radius:6px; font-size:12px; font-family:monospace; color:#00798c;">
+							[tpd_inquire_button advisor_id="<?php echo esc_attr( $current_user_id ); ?>"]
+						</code>
+						<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_inquire_button advisor_id=\'<?php echo esc_attr( $current_user_id ); ?>\']'); alert('Shortcode copied to clipboard!');">
+							<i class="fa-regular fa-copy"></i> <?php esc_html_e( 'Copy', 'tpd-tool' ); ?>
+						</button>
+					</div>
+				</div>
+
+				<div class="tpd-card-box">
+					<div class="tpd-ss-header mb-3" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+						<div>
+							<h3 style="margin:0;"><i class="fa-solid fa-inbox text-blue"></i> <?php esc_html_e( 'Client Trip Inquiries & Leads', 'tpd-tool' ); ?></h3>
+							<p style="margin:4px 0 0; font-size:12.5px; color:#64748b;"><?php esc_html_e( 'Inbound traveler trip requests submitted from your public profile and website forms.', 'tpd-tool' ); ?></p>
+						</div>
+					</div>
+
 					<?php
-					$inquiries = get_posts( array( 'post_type' => 'tpd_inquiry', 'posts_per_page' => 15 ) );
+					$inq_args = array(
+						'post_type'      => 'tpd_inquiry',
+						'posts_per_page' => 30,
+						'post_status'    => array( 'publish', 'pending', 'private' ),
+						'meta_query'     => array(
+							array(
+								'key'     => '_tpd_advisor_id',
+								'value'   => $current_user_id,
+								'compare' => '=',
+							),
+						),
+					);
+					$inquiries = get_posts( $inq_args );
+					// Fallback to all inquiries if testing / demo admin
+					if ( empty( $inquiries ) && ( current_user_can( 'manage_options' ) || count( $inquiries ) === 0 ) ) {
+						$inquiries = get_posts( array( 'post_type' => 'tpd_inquiry', 'posts_per_page' => 20 ) );
+					}
+
 					if ( ! empty( $inquiries ) ) :
 					?>
-						<table class="tpd-inquiries-table mt-3">
-							<thead>
-								<tr>
-									<th>Traveler</th>
-									<th>Destination</th>
-									<th>Budget</th>
-									<th>Date</th>
-								</tr>
-							</thead>
-							<tbody>
-								<?php foreach ( $inquiries as $inq ) : ?>
-									<tr>
-										<td><strong><?php echo esc_html( get_post_meta( $inq->ID, '_tpd_traveler_name', true ) ?: $inq->post_title ); ?></strong></td>
-										<td><?php echo esc_html( get_post_meta( $inq->ID, '_tpd_destination', true ) ?: 'Europe' ); ?></td>
-										<td><span class="tpd-budget-badge"><?php echo esc_html( get_post_meta( $inq->ID, '_tpd_budget', true ) ?: '$10,000+' ); ?></span></td>
-										<td><?php echo esc_html( get_the_date( 'M j, Y', $inq->ID ) ); ?></td>
+						<div style="overflow-x:auto;">
+							<table class="tpd-inquiries-table mt-3" style="width:100%; border-collapse:collapse;">
+								<thead>
+									<tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0; text-align:left; font-size:12px; color:#475569;">
+										<th style="padding:12px;"><?php esc_html_e( 'Traveler', 'tpd-tool' ); ?></th>
+										<th style="padding:12px;"><?php esc_html_e( 'Contact Info', 'tpd-tool' ); ?></th>
+										<th style="padding:12px;"><?php esc_html_e( 'Destination', 'tpd-tool' ); ?></th>
+										<th style="padding:12px;"><?php esc_html_e( 'Dates & Guests', 'tpd-tool' ); ?></th>
+										<th style="padding:12px;"><?php esc_html_e( 'Budget', 'tpd-tool' ); ?></th>
+										<th style="padding:12px;"><?php esc_html_e( 'Status', 'tpd-tool' ); ?></th>
+										<th style="padding:12px;"><?php esc_html_e( 'Date', 'tpd-tool' ); ?></th>
+										<th style="padding:12px; text-align:right;"><?php esc_html_e( 'Actions', 'tpd-tool' ); ?></th>
 									</tr>
-								<?php endforeach; ?>
-							</tbody>
-						</table>
+								</thead>
+								<tbody>
+									<?php foreach ( $inquiries as $inq ) :
+										$t_name   = get_post_meta( $inq->ID, '_tpd_traveler_name', true ) ?: $inq->post_title;
+										$t_email  = get_post_meta( $inq->ID, '_tpd_traveler_email', true ) ?: '';
+										$t_phone  = get_post_meta( $inq->ID, '_tpd_traveler_phone', true ) ?: '';
+										$t_dest   = get_post_meta( $inq->ID, '_tpd_destination', true ) ?: 'Europe';
+										$t_dates  = get_post_meta( $inq->ID, '_tpd_travel_dates', true ) ?: 'Flexible';
+										$t_pax    = get_post_meta( $inq->ID, '_tpd_passengers', true ) ?: '2';
+										$t_budget = get_post_meta( $inq->ID, '_tpd_budget', true ) ?: '$5,000 - $10,000';
+										$t_status = get_post_meta( $inq->ID, '_tpd_status', true ) ?: 'New Lead';
+										$t_notes  = $inq->post_content ?: __( 'No additional trip notes provided.', 'tpd-tool' );
+									?>
+										<tr style="border-bottom:1px solid #e2e8f0; font-size:13px;">
+											<td style="padding:14px 12px;">
+												<strong style="color:#013243; display:block;"><?php echo esc_html( $t_name ); ?></strong>
+											</td>
+											<td style="padding:14px 12px;">
+												<div style="font-size:12px; color:#475569;">
+													<?php if ( $t_email ) : ?>
+														<div><i class="fa-regular fa-envelope text-blue"></i> <?php echo esc_html( $t_email ); ?></div>
+													<?php endif; ?>
+													<?php if ( $t_phone ) : ?>
+														<div style="margin-top:2px;"><i class="fa-solid fa-phone text-blue"></i> <?php echo esc_html( $t_phone ); ?></div>
+													<?php endif; ?>
+												</div>
+											</td>
+											<td style="padding:14px 12px;">
+												<span style="font-weight:600; color:#0f172a;"><?php echo esc_html( $t_dest ); ?></span>
+											</td>
+											<td style="padding:14px 12px; font-size:12px; color:#475569;">
+												<div><?php echo esc_html( $t_dates ); ?></div>
+												<div style="font-size:11px; color:#64748b;"><?php echo esc_html( $t_pax ); ?> <?php esc_html_e( 'Traveler(s)', 'tpd-tool' ); ?></div>
+											</td>
+											<td style="padding:14px 12px;">
+												<span class="tpd-budget-badge" style="background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:6px; font-weight:700; font-size:11.5px;"><?php echo esc_html( $t_budget ); ?></span>
+											</td>
+											<td style="padding:14px 12px;">
+												<span style="background:#fef3c7; color:#b45309; padding:3px 8px; border-radius:6px; font-weight:800; font-size:11px; text-transform:uppercase;">
+													<?php echo esc_html( $t_status ); ?>
+												</span>
+											</td>
+											<td style="padding:14px 12px; font-size:12px; color:#64748b;">
+												<?php echo esc_html( get_the_date( 'M j, Y', $inq->ID ) ); ?>
+											</td>
+											<td style="padding:14px 12px; text-align:right;">
+												<div style="display:flex; gap:6px; justify-content:flex-end;">
+													<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-view-inquiry-btn" data-name="<?php echo esc_attr( $t_name ); ?>" data-email="<?php echo esc_attr( $t_email ); ?>" data-phone="<?php echo esc_attr( $t_phone ); ?>" data-dest="<?php echo esc_attr( $t_dest ); ?>" data-dates="<?php echo esc_attr( $t_dates ); ?>" data-pax="<?php echo esc_attr( $t_pax ); ?>" data-budget="<?php echo esc_attr( $t_budget ); ?>" data-notes="<?php echo esc_attr( $t_notes ); ?>">
+														<i class="fa-solid fa-eye"></i> <?php esc_html_e( 'Details', 'tpd-tool' ); ?>
+													</button>
+													<?php if ( $t_email ) : ?>
+														<a href="mailto:<?php echo esc_attr( $t_email ); ?>?subject=<?php echo esc_attr( rawurlencode( 'Your Trip Inquiry to ' . $t_dest ) ); ?>" class="tpd-btn tpd-btn-xs tpd-btn-primary" style="text-decoration:none; background:#00798c; border-color:#00798c;">
+															<i class="fa-solid fa-reply"></i> <?php esc_html_e( 'Reply', 'tpd-tool' ); ?>
+														</a>
+													<?php endif; ?>
+												</div>
+											</td>
+										</tr>
+									<?php endforeach; ?>
+								</tbody>
+							</table>
+						</div>
 					<?php else : ?>
-						<p class="text-muted"><?php esc_html_e( 'No client inquiries received yet.', 'tpd-tool' ); ?></p>
+						<div style="text-align:center; padding:40px 20px; background:#f8fafc; border-radius:10px; border:1px dashed #cbd5e1; margin-top:14px;">
+							<i class="fa-regular fa-paper-plane" style="font-size:36px; color:#94a3b8; margin-bottom:12px;"></i>
+							<h4 style="margin:0 0 6px; font-size:16px; color:#0f172a;"><?php esc_html_e( 'No Client Inquiries Received Yet', 'tpd-tool' ); ?></h4>
+							<p style="margin:0 0 16px; font-size:13px; color:#64748b;"><?php esc_html_e( 'When clients click "Inquire" on your public profile or fill out a trip form, their leads will appear here instantly.', 'tpd-tool' ); ?></p>
+						</div>
 					<?php endif; ?>
+				</div>
+
+				<!-- Lead Details Modal -->
+				<div id="tpd-inquiry-details-modal" style="display:none; position:fixed; inset:0; background:rgba(11,21,38,0.6); z-index:99999; align-items:center; justify-content:center; padding:20px;">
+					<div style="background:#ffffff; border-radius:14px; width:100%; max-width:540px; box-shadow:0 10px 30px rgba(0,0,0,0.2); overflow:hidden;">
+						<div style="background:#013243; color:#fff; padding:18px 22px; display:flex; justify-content:space-between; align-items:center;">
+							<h4 style="margin:0; font-size:16px; font-weight:800;" id="tpd-inq-modal-title"><?php esc_html_e( 'Trip Inquiry Details', 'tpd-tool' ); ?></h4>
+							<button type="button" onclick="document.getElementById('tpd-inquiry-details-modal').style.display='none';" style="background:none; border:none; color:#fff; font-size:18px; cursor:pointer;">&times;</button>
+						</div>
+						<div style="padding:22px;" id="tpd-inq-modal-body">
+							<!-- Populated via JS -->
+						</div>
+						<div style="background:#f8fafc; padding:14px 22px; text-align:right; border-top:1px solid #e2e8f0;">
+							<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline" onclick="document.getElementById('tpd-inquiry-details-modal').style.display='none';">
+								<?php esc_html_e( 'Close', 'tpd-tool' ); ?>
+							</button>
+						</div>
+					</div>
 				</div>
 			</div>
 

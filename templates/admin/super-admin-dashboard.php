@@ -1215,59 +1215,124 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 			<!-- =========================================================================
 			     PANE 10: AD SPACE & DASHBOARD BANNERS
 			     ========================================================================= -->
-			<div id="sa-ads" class="tpd-sa-pane">
 				<div class="tpd-sa-card">
 					<h3 class="tpd-sa-card-title"><i class="fa-solid fa-rectangle-ad text-blue"></i> <?php esc_html_e( 'Configure Welcome Hero Banner & Sponsored Ad Spaces', 'tpd-tool' ); ?></h3>
+					<p style="font-size:13px; color:#64748b; margin-top:-6px; margin-bottom:18px;">
+						<?php esc_html_e( 'Control the Advisor Dashboard welcome quote/banner, the 4 Left Sidebar Square Ads, and the 4 Bottom Strip Square Ads with custom images, tags, and click links.', 'tpd-tool' ); ?>
+					</p>
+
 					<form id="tpd-sa-ad-banners-form">
-						<div class="tpd-form-grid-3">
-							<div class="tpd-form-group">
-								<label><?php esc_html_e( 'Welcome Banner Subtitle', 'tpd-tool' ); ?></label>
-								<input type="text" name="welcome_title" value="<?php echo esc_attr( $ads_cfg['welcome_title'] ); ?>" class="tpd-input">
-							</div>
-							<div class="tpd-form-group">
-								<label><?php esc_html_e( 'Welcome Banner Quote', 'tpd-tool' ); ?></label>
-								<input type="text" name="welcome_quote" value="<?php echo esc_attr( $ads_cfg['welcome_quote'] ); ?>" class="tpd-input">
-							</div>
-							<div class="tpd-form-group">
-								<label><?php esc_html_e( 'Welcome Banner Image URL', 'tpd-tool' ); ?></label>
-								<input type="url" name="welcome_bg" value="<?php echo esc_attr( $ads_cfg['welcome_bg'] ); ?>" class="tpd-input">
-							</div>
-						</div>
-
-						<h4 style="margin:18px 0 10px;"><?php esc_html_e( 'Sponsored Square Ad Slot #1', 'tpd-tool' ); ?></h4>
-						<div class="tpd-form-grid-3">
-							<div class="tpd-form-group">
-								<label>Badge Tag</label>
-								<input type="text" name="ad_1_tag" value="<?php echo esc_attr( $ads_cfg['ad_1_tag'] ); ?>" class="tpd-input">
-							</div>
-							<div class="tpd-form-group">
-								<label>Headline</label>
-								<input type="text" name="ad_1_title" value="<?php echo esc_attr( $ads_cfg['ad_1_title'] ); ?>" class="tpd-input">
-							</div>
-							<div class="tpd-form-group">
-								<label>Subtitle</label>
-								<input type="text" name="ad_1_subtitle" value="<?php echo esc_attr( $ads_cfg['ad_1_subtitle'] ); ?>" class="tpd-input">
+						<!-- Hero Welcome Banner -->
+						<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:18px; margin-bottom:24px;">
+							<h4 style="margin:0 0 12px; font-size:15px; color:#1e3a8a;"><i class="fa-solid fa-panorama"></i> <?php esc_html_e( 'Dashboard Top Welcome Banner', 'tpd-tool' ); ?></h4>
+							<div class="tpd-form-grid-3">
+								<div class="tpd-form-group">
+									<label><?php esc_html_e( 'Welcome Banner Subtitle', 'tpd-tool' ); ?></label>
+									<input type="text" name="welcome_title" value="<?php echo esc_attr( $ads_cfg['welcome_title'] ?? '' ); ?>" class="tpd-input">
+								</div>
+								<div class="tpd-form-group">
+									<label><?php esc_html_e( 'Welcome Banner Quote', 'tpd-tool' ); ?></label>
+									<input type="text" name="welcome_quote" value="<?php echo esc_attr( $ads_cfg['welcome_quote'] ?? '' ); ?>" class="tpd-input">
+								</div>
+								<div class="tpd-form-group">
+									<label><?php esc_html_e( 'Welcome Banner Background Image URL', 'tpd-tool' ); ?></label>
+									<input type="url" name="welcome_bg" value="<?php echo esc_attr( $ads_cfg['welcome_bg'] ?? '' ); ?>" class="tpd-input">
+								</div>
 							</div>
 						</div>
 
-						<h4 style="margin:18px 0 10px;"><?php esc_html_e( 'Sponsored Square Ad Slot #2', 'tpd-tool' ); ?></h4>
-						<div class="tpd-form-grid-3">
-							<div class="tpd-form-group">
-								<label>Badge Tag</label>
-								<input type="text" name="ad_2_tag" value="<?php echo esc_attr( $ads_cfg['ad_2_tag'] ); ?>" class="tpd-input">
-							</div>
-							<div class="tpd-form-group">
-								<label>Headline</label>
-								<input type="text" name="ad_2_title" value="<?php echo esc_attr( $ads_cfg['ad_2_title'] ); ?>" class="tpd-input">
-							</div>
-							<div class="tpd-form-group">
-								<label>Subtitle</label>
-								<input type="text" name="ad_2_subtitle" value="<?php echo esc_attr( $ads_cfg['ad_2_subtitle'] ); ?>" class="tpd-input">
-							</div>
+						<!-- 4 Left Sidebar Square Ads -->
+						<h4 style="margin:24px 0 12px; font-size:16px; color:#0b1526; display:flex; align-items:center; gap:8px;">
+							<span style="background:#1d4ed8; color:#fff; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:11px;">4</span>
+							<?php esc_html_e( 'Left Column Square Ads (Advisor Dashboard Sidebar)', 'tpd-tool' ); ?>
+						</h4>
+
+						<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-bottom:28px;">
+							<?php for ( $i = 1; $i <= 4; $i++ ) :
+								$tag   = $ads_cfg["left_ad_{$i}_tag"] ?? ( 1 === $i ? 'SPONSORED' : ( 2 === $i ? 'FEATURED' : ( 3 === $i ? 'PARTNER SPOTLIGHT' : 'EXCLUSIVE' ) ) );
+								$title = $ads_cfg["left_ad_{$i}_title"] ?? "Left Sidebar Ad #{$i}";
+								$sub   = $ads_cfg["left_ad_{$i}_subtitle"] ?? 'Special incentive for advisors';
+								$img   = $ads_cfg["left_ad_{$i}_image"] ?? 'https://images.unsplash.com/photo-1548574505-5e239809ee19?w=300&auto=format&fit=crop&q=80';
+								$link  = $ads_cfg["left_ad_{$i}_link_url"] ?? '#tpd-view-suppliers';
+								$txt   = $ads_cfg["left_ad_{$i}_link_text"] ?? 'Learn More';
+							?>
+								<div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:16px; box-shadow:0 1px 4px rgba(0,0,0,0.03);">
+									<strong style="display:block; margin-bottom:10px; font-size:13.5px; color:#1e40af;">Left Ad Slot #<?php echo esc_html( $i ); ?></strong>
+									<div class="tpd-form-group mb-2">
+										<label style="font-size:11px;">Badge Tag</label>
+										<input type="text" name="left_ad_<?php echo esc_attr( $i ); ?>_tag" value="<?php echo esc_attr( $tag ); ?>" class="tpd-input tpd-input-sm">
+									</div>
+									<div class="tpd-form-group mb-2">
+										<label style="font-size:11px;">Headline</label>
+										<input type="text" name="left_ad_<?php echo esc_attr( $i ); ?>_title" value="<?php echo esc_attr( $title ); ?>" class="tpd-input tpd-input-sm">
+									</div>
+									<div class="tpd-form-group mb-2">
+										<label style="font-size:11px;">Subtitle</label>
+										<input type="text" name="left_ad_<?php echo esc_attr( $i ); ?>_subtitle" value="<?php echo esc_attr( $sub ); ?>" class="tpd-input tpd-input-sm">
+									</div>
+									<div class="tpd-form-group mb-2">
+										<label style="font-size:11px;">Image URL</label>
+										<input type="url" name="left_ad_<?php echo esc_attr( $i ); ?>_image" value="<?php echo esc_attr( $img ); ?>" class="tpd-input tpd-input-sm">
+									</div>
+									<div class="tpd-form-group mb-2">
+										<label style="font-size:11px;">Destination URL</label>
+										<input type="text" name="left_ad_<?php echo esc_attr( $i ); ?>_link_url" value="<?php echo esc_attr( $link ); ?>" class="tpd-input tpd-input-sm">
+									</div>
+									<div class="tpd-form-group">
+										<label style="font-size:11px;">Button / Link Text</label>
+										<input type="text" name="left_ad_<?php echo esc_attr( $i ); ?>_link_text" value="<?php echo esc_attr( $txt ); ?>" class="tpd-input tpd-input-sm">
+									</div>
+								</div>
+							<?php endfor; ?>
 						</div>
 
-						<button type="submit" class="tpd-btn tpd-btn-darkblue" style="background:#164e87;">
-							<i class="fa-solid fa-floppy-disk"></i> <?php esc_html_e( 'Save Ad Space Configuration', 'tpd-tool' ); ?>
+						<!-- 4 Bottom Strip Square Ads -->
+						<h4 style="margin:24px 0 12px; font-size:16px; color:#0b1526; display:flex; align-items:center; gap:8px;">
+							<span style="background:#0f766e; color:#fff; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:11px;">4</span>
+							<?php esc_html_e( 'Bottom Strip Square Ads (Advisor Dashboard Bottom Row)', 'tpd-tool' ); ?>
+						</h4>
+
+						<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-bottom:28px;">
+							<?php for ( $j = 1; $j <= 4; $j++ ) :
+								$tag   = $ads_cfg["bottom_ad_{$j}_tag"] ?? ( 1 === $j ? 'CRUISE PARTNER' : ( 2 === $j ? 'TOUR OPERATOR' : ( 3 === $j ? 'TRAIN & RAIL' : 'RESORT COLLECTION' ) ) );
+								$title = $ads_cfg["bottom_ad_{$j}_title"] ?? "Bottom Grid Ad #{$j}";
+								$sub   = $ads_cfg["bottom_ad_{$j}_subtitle"] ?? 'Preferred trade rates and perks';
+								$img   = $ads_cfg["bottom_ad_{$j}_image"] ?? 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=300&auto=format&fit=crop&q=80';
+								$link  = $ads_cfg["bottom_ad_{$j}_link_url"] ?? '#tpd-view-suppliers';
+								$txt   = $ads_cfg["bottom_ad_{$j}_link_text"] ?? 'Explore Partner';
+							?>
+								<div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:16px; box-shadow:0 1px 4px rgba(0,0,0,0.03);">
+									<strong style="display:block; margin-bottom:10px; font-size:13.5px; color:#0f766e;">Bottom Ad Slot #<?php echo esc_html( $j ); ?></strong>
+									<div class="tpd-form-group mb-2">
+										<label style="font-size:11px;">Badge Tag</label>
+										<input type="text" name="bottom_ad_<?php echo esc_attr( $j ); ?>_tag" value="<?php echo esc_attr( $tag ); ?>" class="tpd-input tpd-input-sm">
+									</div>
+									<div class="tpd-form-group mb-2">
+										<label style="font-size:11px;">Headline</label>
+										<input type="text" name="bottom_ad_<?php echo esc_attr( $j ); ?>_title" value="<?php echo esc_attr( $title ); ?>" class="tpd-input tpd-input-sm">
+									</div>
+									<div class="tpd-form-group mb-2">
+										<label style="font-size:11px;">Subtitle</label>
+										<input type="text" name="bottom_ad_<?php echo esc_attr( $j ); ?>_subtitle" value="<?php echo esc_attr( $sub ); ?>" class="tpd-input tpd-input-sm">
+									</div>
+									<div class="tpd-form-group mb-2">
+										<label style="font-size:11px;">Image URL</label>
+										<input type="url" name="bottom_ad_<?php echo esc_attr( $j ); ?>_image" value="<?php echo esc_attr( $img ); ?>" class="tpd-input tpd-input-sm">
+									</div>
+									<div class="tpd-form-group mb-2">
+										<label style="font-size:11px;">Destination URL</label>
+										<input type="text" name="bottom_ad_<?php echo esc_attr( $j ); ?>_link_url" value="<?php echo esc_attr( $link ); ?>" class="tpd-input tpd-input-sm">
+									</div>
+									<div class="tpd-form-group">
+										<label style="font-size:11px;">Button / Link Text</label>
+										<input type="text" name="bottom_ad_<?php echo esc_attr( $j ); ?>_link_text" value="<?php echo esc_attr( $txt ); ?>" class="tpd-input tpd-input-sm">
+									</div>
+								</div>
+							<?php endfor; ?>
+						</div>
+
+						<button type="submit" class="tpd-btn tpd-btn-darkblue" style="background:#164e87; padding:12px 28px; font-size:14px; font-weight:700;">
+							<i class="fa-solid fa-floppy-disk"></i> <?php esc_html_e( 'Save All 8 Ad Slots & Welcome Banner', 'tpd-tool' ); ?>
 						</button>
 					</form>
 				</div>

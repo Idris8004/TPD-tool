@@ -220,25 +220,71 @@ class TPD_Tool_Settings {
 			update_option( self::OPT_FORM_CONFIG, $form_cfg );
 		}
 
-		// 4. Default Ad Banners & Welcome Hero Config
+		// 4. Default Ad Banners & Welcome Hero Config (4x Left Sidebar Ads + 4x Bottom Strip Ads)
 		$ads = get_option( self::OPT_AD_BANNERS );
-		if ( empty( $ads ) || ! is_array( $ads ) ) {
+		if ( empty( $ads ) || ! is_array( $ads ) || ! isset( $ads['left_ad_1_title'] ) ) {
 			$ads = array(
-				'welcome_title'    => 'Find the right suppliers. Get the answers you need. Help your clients travel better.',
-				'welcome_quote'    => 'Same clients. Bigger possibilities.',
-				'welcome_bg'       => 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1600&auto=format&fit=crop&q=80',
-				'ad_1_tag'         => 'SPONSORED',
-				'ad_1_title'       => 'Earn 18% Commission on 2026 Danube River Charters',
-				'ad_1_subtitle'    => 'Luxury River Cruises · Limited Time Advisor Incentive',
-				'ad_1_image'       => 'https://images.unsplash.com/photo-1548574505-5e239809ee19?w=160&auto=format&fit=crop&q=80',
-				'ad_1_link_text'   => 'Explore Itineraries',
-				'ad_1_link_url'    => '#tpd-view-suppliers',
-				'ad_2_tag'         => 'FEATURED',
-				'ad_2_title'       => 'Preferred Partner Luxury Resort Program',
-				'ad_2_subtitle'    => 'Daily breakfast, $100 resort credits & VIP perks for your clients',
-				'ad_2_image'       => 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=160&auto=format&fit=crop&q=80',
-				'ad_2_link_text'   => 'View Partner Desk',
-				'ad_2_link_url'    => '#tpd-view-suppliers',
+				'welcome_title'      => 'Find the right suppliers. Get the answers you need. Help your clients travel better.',
+				'welcome_quote'      => 'Same clients. Bigger possibilities.',
+				'welcome_bg'         => 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1600&auto=format&fit=crop&q=80',
+
+				// 4x Left Sidebar Square Ads
+				'left_ad_1_tag'      => 'SPONSORED',
+				'left_ad_1_title'    => 'Earn 18% Commission on 2026 Danube Charters',
+				'left_ad_1_subtitle' => 'Exclusive trade incentive for certified advisors',
+				'left_ad_1_image'    => 'https://images.unsplash.com/photo-1548574505-5e239809ee19?w=300&auto=format&fit=crop&q=80',
+				'left_ad_1_link_text'=> 'View Cruise Details',
+				'left_ad_1_link_url' => '#tpd-view-suppliers',
+
+				'left_ad_2_tag'      => 'FEATURED',
+				'left_ad_2_title'    => 'Preferred Luxury All-Inclusive Perks',
+				'left_ad_2_subtitle' => '$150 resort credits & VIP airport transfers',
+				'left_ad_2_image'    => 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=300&auto=format&fit=crop&q=80',
+				'left_ad_2_link_text'=> 'Access Partner Portal',
+				'left_ad_2_link_url' => '#tpd-view-suppliers',
+
+				'left_ad_3_tag'      => 'PARTNER SPOTLIGHT',
+				'left_ad_3_title'    => '2026 Polar Expedition Fam Trips',
+				'left_ad_3_subtitle' => 'Applications open for top-producing advisors',
+				'left_ad_3_image'    => 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?w=300&auto=format&fit=crop&q=80',
+				'left_ad_3_link_text'=> 'Apply for Fam Trip',
+				'left_ad_3_link_url' => '#tpd-view-suppliers',
+
+				'left_ad_4_tag'      => 'EXCLUSIVE',
+				'left_ad_4_title'    => 'Private European Villa Collections',
+				'left_ad_4_subtitle' => 'Guaranteed 15% net commission & concierge',
+				'left_ad_4_image'    => 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=300&auto=format&fit=crop&q=80',
+				'left_ad_4_link_text'=> 'Explore Inventory',
+				'left_ad_4_link_url' => '#tpd-view-suppliers',
+
+				// 4x Bottom Strip Square Ads
+				'bottom_ad_1_tag'      => 'CRUISE PARTNER',
+				'bottom_ad_1_title'    => 'Luxury Yacht Charters 2026',
+				'bottom_ad_1_subtitle' => 'Bonus commission on Mediterranean bookings',
+				'bottom_ad_1_image'    => 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=300&auto=format&fit=crop&q=80',
+				'bottom_ad_1_link_text'=> 'View Fleet',
+				'bottom_ad_1_link_url' => '#tpd-view-suppliers',
+
+				'bottom_ad_2_tag'      => 'TOUR OPERATOR',
+				'bottom_ad_2_title'    => 'Bespoke African Safaris',
+				'bottom_ad_2_subtitle' => 'Full group protection & dedicated DMC team',
+				'bottom_ad_2_image'    => 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=300&auto=format&fit=crop&q=80',
+				'bottom_ad_2_link_text'=> 'Download Itineraries',
+				'bottom_ad_2_link_url' => '#tpd-view-suppliers',
+
+				'bottom_ad_3_tag'      => 'TRAIN & RAIL',
+				'bottom_ad_3_title'    => 'Scenic Alpine Rail Journeys',
+				'bottom_ad_3_subtitle' => 'Instant booking confirmation for advisors',
+				'bottom_ad_3_image'    => 'https://images.unsplash.com/photo-1515238152791-8216bfdf89a7?w=300&auto=format&fit=crop&q=80',
+				'bottom_ad_3_link_text'=> 'View Rail Routes',
+				'bottom_ad_3_link_url' => '#tpd-view-suppliers',
+
+				'bottom_ad_4_tag'      => 'RESORT COLLECTION',
+				'bottom_ad_4_title'    => 'Boutique Island Hideaways',
+				'bottom_ad_4_subtitle' => 'Upgraded amenities & late checkout for clients',
+				'bottom_ad_4_image'    => 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&auto=format&fit=crop&q=80',
+				'bottom_ad_4_link_text'=> 'Explore Properties',
+				'bottom_ad_4_link_url' => '#tpd-view-suppliers',
 			);
 			update_option( self::OPT_AD_BANNERS, $ads );
 		}
@@ -941,7 +987,7 @@ class TPD_Tool_Settings {
 	}
 
 	/**
-	 * AJAX: Save Ad Banners & Hero Config
+	 * AJAX: Save Ad Banners & Hero Config (Supports 4 Left Sidebar Ads & 4 Bottom Grid Ads)
 	 */
 	public static function ajax_admin_save_ad_banners() {
 		check_ajax_referer( 'tpd_admin_nonce', 'nonce' );
@@ -955,13 +1001,31 @@ class TPD_Tool_Settings {
 			'ad_1_tag', 'ad_1_title', 'ad_1_subtitle', 'ad_1_image', 'ad_1_link_text', 'ad_1_link_url',
 			'ad_2_tag', 'ad_2_title', 'ad_2_subtitle', 'ad_2_image', 'ad_2_link_text', 'ad_2_link_url',
 		);
+
+		// Include 4x Left and 4x Bottom ad fields
+		for ( $i = 1; $i <= 4; $i++ ) {
+			$keys[] = "left_ad_{$i}_tag";
+			$keys[] = "left_ad_{$i}_title";
+			$keys[] = "left_ad_{$i}_subtitle";
+			$keys[] = "left_ad_{$i}_image";
+			$keys[] = "left_ad_{$i}_link_text";
+			$keys[] = "left_ad_{$i}_link_url";
+
+			$keys[] = "bottom_ad_{$i}_tag";
+			$keys[] = "bottom_ad_{$i}_title";
+			$keys[] = "bottom_ad_{$i}_subtitle";
+			$keys[] = "bottom_ad_{$i}_image";
+			$keys[] = "bottom_ad_{$i}_link_text";
+			$keys[] = "bottom_ad_{$i}_link_url";
+		}
+
 		foreach ( $keys as $k ) {
 			if ( isset( $_POST[ $k ] ) ) {
 				$ads[ $k ] = sanitize_text_field( wp_unslash( $_POST[ $k ] ) );
 			}
 		}
 		update_option( self::OPT_AD_BANNERS, $ads );
-		wp_send_json_success( array( 'message' => 'Dashboard welcome banner & sponsored ad spaces updated!' ) );
+		wp_send_json_success( array( 'message' => 'Dashboard welcome banner & 8 sponsored ad spaces updated!' ) );
 	}
 
 	/**

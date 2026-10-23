@@ -1907,3 +1907,41 @@ body.tpd-app-body {
 	.tpd-form-grid-3,
 	.tpd-tier-selection-grid { grid-template-columns: 1fr; }
 }
+
+/* ==========================================================================
+   Advisor Overview & Ad Grid Styles
+   ========================================================================== */
+.tpd-supplier-spotlight-card {
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.tpd-supplier-spotlight-card:hover {
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+.tpd-ad-square-card {
+	transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.tpd-ad-square-card:hover {
+	border-color: #00798c;
+	transform: translateY(-2px);
+}
+.tpd-bottom-ad-card:hover {
+	transform: translateY(-3px);
+	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+	border-color: #cbd5e1;
+}
+@media (max-width: 992px) {
+	.tpd-overview-filters-grid {
+		grid-template-columns: 1fr !important;
+	}
+	.tpd-spotlight-inner {
+		grid-template-columns: 1fr !important;
+	}
+	.tpd-bottom-ads-grid {
+		grid-template-columns: repeat(2, 1fr) !important;
+	}
+}
+@media (max-width: 600px) {
+	.tpd-bottom-ads-grid {
+		grid-template-columns: 1fr !important;
+	}
+}

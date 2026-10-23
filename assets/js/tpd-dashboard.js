@@ -235,26 +235,202 @@
 			}
 		});
 
-		// 3. Real-Time Supplier Directory Search
-		$('#tpd-live-supplier-search').on('keyup', function() {
-			var query = $(this).val().toLowerCase().trim();
-			$('.tpd-supplier-profile-card, .tpd-supplier-list-card').each(function() {
-				var text = $(this).text().toLowerCase();
-				if (text.indexOf(query) !== -1 || query === '') {
-					$(this).show();
+		// 3. Supplier Directory Filtering & Quick Search System
+		function filterSupplierDirectory() {
+			var keyword = ($('#tpd-directory-keyword-input').val() || '').toLowerCase().trim();
+			var category = ($('#tpd-directory-cat-select').val() || '').toLowerCase().trim();
+
+			$('#tpd-directory-results-grid .tpd-supplier-profile-card').each(function() {
+				var $card = $(this);
+				var title = ($card.data('title') || '').toLowerCase();
+				var cat = ($card.data('cat') || '').toLowerCase();
+				var fullText = $card.text().toLowerCase();
+
+				var matchesKeyword = (!keyword || title.indexOf(keyword) !== -1 || fullText.indexOf(keyword) !== -1);
+				var matchesCategory = (!category || cat.indexOf(category) !== -1 || fullText.indexOf(category) !== -1);
+
+				if (matchesKeyword && matchesCategory) {
+					$card.show();
 				} else {
-					$(this).hide();
+					$card.hide();
 				}
 			});
+		}
+
+		// Filter events in the Supplier Directory tab
+		$(document).on('input keyup', '#tpd-directory-keyword-input', function() {
+			filterSupplierDirectory();
 		});
 
+		$(document).on('change', '#tpd-directory-cat-select', function() {
+			filterSupplierDirectory();
+		});
+
+		$(document).on('click', '#tpd-reset-dir-filters', function(e) {
+			e.preventDefault();
+			$('#tpd-directory-keyword-input').val('');
+			$('#tpd-directory-cat-select').val('');
+			filterSupplierDirectory();
+		});
+
+		// Overview "Find Your Next Supplier" Search Button (Carries filters to Supplier Directory tab)
 		$('#tpd-btn-search-suppliers').on('click', function(e) {
 			e.preventDefault();
-			var query = $('#tpd-live-supplier-search').val().toLowerCase().trim();
-			if (query) {
-				switchTab('suppliers');
-				$('#tpd-live-supplier-search').trigger('keyup');
+			var query = ($('#tpd-live-supplier-search').val() || '').trim();
+			var dest = ($('#tpd-filter-overview-dest').val() || '').trim();
+			var style = ($('#tpd-filter-overview-style').val() || '').trim();
+			var type = ($('#tpd-filter-overview-type').val() || '').trim();
+
+			switchTab('suppliers');
+
+			// Populate directory filters
+			var combinedSearch = query;
+			if (dest) {
+				combinedSearch = combinedSearch ? (combinedSearch + ' ' + dest) : dest;
 			}
+			$('#tpd-directory-keyword-input').val(combinedSearch);
+
+			var categoryFilter = type || style || '';
+			if (categoryFilter) {
+				// Match existing option if possible
+				var $opt = $('#tpd-directory-cat-select option').filter(function() {
+					return $(this).val().toLowerCase().indexOf(categoryFilter.toLowerCase()) !== -1;
+				});
+				if ($opt.length) {
+					$('#tpd-directory-cat-select').val($opt.first().val());
+				}
+			}
+
+			filterSupplierDirectory();
+		});
+
+		$('#tpd-live-supplier-search').on('keypress', function(e) {
+			if (e.which === 13) {
+				e.preventDefault();
+				$('#tpd-btn-search-suppliers').trigger('click');
+			}
+		});
+
+		// Quick Supplier Search Category Tiles
+		$(document).on('click', '.tpd-quick-cat-btn', function(e) {
+			e.preventDefault();
+			var category = $(this).data('category') || $(this).text().trim();
+
+			switchTab('suppliers');
+
+			// Set category in directory select
+			var $opt = $('#tpd-directory-cat-select option').filter(function() {
+				return $(this).val().toLowerCase().indexOf(category.toLowerCase()) !== -1 || category.toLowerCase().indexOf($(this).val().toLowerCase()) !== -1;
+			});
+			if ($opt.length) {
+				$('#tpd-directory-cat-select').val($opt.first().val());
+			} else {
+				$('#tpd-directory-keyword-input').val(category);
+			}
+
+			filterSupplierDirectory();
+		});
+
+		// Lead / Client Inquiry Details Modal
+		$(document).on('click', '.tpd-view-inquiry-btn', function(e) {
+			e.preventDefault();
+			var name = $(this).data('name') || 'Traveler';
+			var email = $(this).data('email') || 'N/A';
+			var phone = $(this).data('phone') || 'N/A';
+			var dest = $(this).data('dest') || 'N/A';
+			var dates = $(this).data('dates') || 'Flexible';
+			var pax = $(this).data('pax') || '2';
+			var budget = $(this).data('budget') || 'N/A';
+			var notes = $(this).data('notes') || 'No additional notes provided.';
+
+			var html = '<div style="display:flex; flex-direction:column; gap:14px;">' +
+				'<div style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0;">' +
+					'<h4 style="margin:0 0 4px; color:#013243; font-size:16px;">' + name + '</h4>' +
+					'<div style="font-size:12.5px; color:#475569;">' +
+						'<div><i class="fa-regular fa-envelope text-blue"></i> ' + email + '</div>' +
+						(phone !== 'N/A' ? '<div style="margin-top:2px;"><i class="fa-solid fa-phone text-blue"></i> ' + phone + '</div>' : '') +
+					'</div>' +
+				'</div>' +
+				'<div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:13px;">' +
+					'<div><strong style="color:#013243; display:block;">Destination:</strong> <span>' + dest + '</span></div>' +
+					'<div><strong style="color:#013243; display:block;">Travel Dates:</strong> <span>' + dates + '</span></div>' +
+					'<div><strong style="color:#013243; display:block;">Passengers:</strong> <span>' + pax + ' Guest(s)</span></div>' +
+					'<div><strong style="color:#013243; display:block;">Estimated Budget:</strong> <span style="color:#00798c; font-weight:700;">' + budget + '</span></div>' +
+				'</div>' +
+				'<div>' +
+					'<strong style="color:#013243; display:block; margin-bottom:4px; font-size:13px;">Trip Details & Special Requests:</strong>' +
+					'<p style="margin:0; font-size:13px; line-height:1.5; color:#334155; background:#f1f5f9; padding:12px; border-radius:8px; white-space:pre-wrap;">' + notes + '</p>' +
+				'</div>' +
+				(email !== 'N/A' ? '<div style="margin-top:4px;"><a href="mailto:' + email + '?subject=' + encodeURIComponent('Your Trip Inquiry to ' + dest) + '" class="tpd-btn tpd-btn-sm tpd-btn-primary" style="display:inline-block; text-decoration:none;"><i class="fa-solid fa-reply"></i> Reply via Email</a></div>' : '') +
+			'</div>';
+
+			$('#tpd-inq-modal-body').html(html);
+			$('#tpd-inquiry-details-modal').css('display', 'flex');
+		});
+
+		// Client Inquiry Public Form AJAX Submission
+		$(document).on('submit', '.tpd-client-inquiry-form', function(e) {
+			e.preventDefault();
+			var $form = $(this);
+			var $status = $form.find('.tpd-inquiry-status');
+			var $btn = $form.find('button[type="submit"]');
+			var origBtnHtml = $btn.html();
+
+			$status.hide().removeClass('tpd-status-error tpd-status-success');
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Submitting...');
+
+			var formData = $form.serialize();
+			if (formData.indexOf('action=') === -1) {
+				formData += '&action=tpd_submit_client_inquiry';
+			}
+
+			var ajaxUrl = (typeof tpd_data !== 'undefined' && tpd_data.ajax_url) ? tpd_data.ajax_url : '/wp-admin/admin-ajax.php';
+
+			$.ajax({
+				url: ajaxUrl,
+				type: 'POST',
+				data: formData,
+				success: function(res) {
+					$btn.prop('disabled', false).html(origBtnHtml);
+					if (res.success) {
+						$status.css({
+							display: 'block',
+							background: '#f0fdf4',
+							color: '#166534',
+							border: '1px solid #bbf7d0',
+							padding: '10px 14px',
+							borderRadius: '8px',
+							fontSize: '13px',
+							marginBottom: '12px'
+						}).html('<i class="fa-solid fa-circle-check"></i> ' + (res.data.message || 'Inquiry submitted successfully!'));
+						$form[0].reset();
+					} else {
+						$status.css({
+							display: 'block',
+							background: '#fef2f2',
+							color: '#991b1b',
+							border: '1px solid #fecaca',
+							padding: '10px 14px',
+							borderRadius: '8px',
+							fontSize: '13px',
+							marginBottom: '12px'
+						}).html('<i class="fa-solid fa-circle-exclamation"></i> ' + (res.data.message || 'Failed to submit inquiry.'));
+					}
+				},
+				error: function() {
+					$btn.prop('disabled', false).html(origBtnHtml);
+					$status.css({
+						display: 'block',
+						background: '#fef2f2',
+						color: '#991b1b',
+						border: '1px solid #fecaca',
+						padding: '10px 14px',
+						borderRadius: '8px',
+						fontSize: '13px',
+						marginBottom: '12px'
+					}).html('<i class="fa-solid fa-circle-exclamation"></i> Server connection error. Please try again.');
+				}
+			});
 		});
 
 		// 4. Event & Webinar One-Click Registration
