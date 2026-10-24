@@ -23,12 +23,40 @@ class TPD_Tool_Profile_Editor {
 	}
 
 	/**
-	 * AJAX Upload for Profile Headshots, Logos, Banners, and PDF Brochures
+	 * Retrieve Gallery Images for an Advisor or Supplier (Profile & Directory Sync)
+	 *
+	 * @param int $user_id
+	 * @param int $post_id
+	 * @return array Array of image URLs
+	 */
+	public static function get_user_gallery( $user_id, $post_id = 0 ) {
+		$gallery = array();
+		if ( $post_id > 0 ) {
+			$raw = get_post_meta( $post_id, 'tpd_gallery_images', true );
+			if ( ! empty( $raw ) ) {
+				$gallery = is_array( $raw ) ? $raw : json_decode( $raw, true );
+			}
+		}
+		if ( empty( $gallery ) && $user_id > 0 ) {
+			$raw = get_user_meta( $user_id, 'tpd_gallery_images', true );
+			if ( ! empty( $raw ) ) {
+				$gallery = is_array( $raw ) ? $raw : json_decode( $raw, true );
+			}
+		}
+		return is_array( $gallery ) ? array_values( array_filter( array_map( 'esc_url_raw', $gallery ) ) ) : array();
+	}
+
+	/**
+	 * AJAX Upload for Profile Headshots, Logos, Banners, Gallery Images, and PDF Brochures
 	 */
 	public static function ajax_upload_media() {
-		check_ajax_referer( 'tpd_nonce', 'nonce' );
+		$nonce = isset( $_REQUEST['nonce'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['nonce'] ) ) : ( isset( $_REQUEST['_ajax_nonce'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['_ajax_nonce'] ) ) : '' );
+		if ( ! wp_verify_nonce( $nonce, 'tpd_nonce' ) && ! wp_verify_nonce( $nonce, 'tpd_admin_nonce' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security verification failed (invalid nonce). Please refresh the page.', 'tpd-tool' ) ) );
+		}
 
-		if ( ! is_user_logged_in() || ! TPD_Tool_Roles::is_account_active() ) {
+		$current_user_id = get_current_user_id();
+		if ( ! $current_user_id || ! TPD_Tool_Roles::is_account_active( $current_user_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Authentication required.', 'tpd-tool' ) ) );
 		}
 
@@ -36,18 +64,46 @@ class TPD_Tool_Profile_Editor {
 			wp_send_json_error( array( 'message' => __( 'No file was uploaded.', 'tpd-tool' ) ) );
 		}
 
-		// Validate file extension and MIME type against strict allowlist
+		if ( isset( $_FILES['file']['error'] ) && $_FILES['file']['error'] !== UPLOAD_ERR_OK ) {
+			$err_msg = __( 'File upload error occurred. Please try again.', 'tpd-tool' );
+			switch ( $_FILES['file']['error'] ) {
+				case UPLOAD_ERR_INI_SIZE:
+				case UPLOAD_ERR_FORM_SIZE:
+					$err_msg = __( 'The uploaded file exceeds the maximum allowed upload size.', 'tpd-tool' );
+					break;
+				case UPLOAD_ERR_PARTIAL:
+					$err_msg = __( 'The file was only partially uploaded. Please try again.', 'tpd-tool' );
+					break;
+				case UPLOAD_ERR_NO_FILE:
+					$err_msg = __( 'No file was received. Please select a file.', 'tpd-tool' );
+					break;
+			}
+			wp_send_json_error( array( 'message' => $err_msg ) );
+		}
+
+		// Ensure current user has upload capability
+		$current_user = wp_get_current_user();
+		if ( $current_user && $current_user->exists() && ! $current_user->has_cap( 'upload_files' ) ) {
+			$current_user->add_cap( 'upload_files' );
+		}
+
+		// Validate file extension against allowed formats
+		$raw_name     = sanitize_file_name( wp_unslash( $_FILES['file']['name'] ) );
+		$ext          = strtolower( pathinfo( $raw_name, PATHINFO_EXTENSION ) );
+		$allowed_exts = array( 'jpg', 'jpeg', 'jpe', 'png', 'gif', 'webp', 'svg', 'pdf' );
+
+		if ( ! in_array( $ext, $allowed_exts, true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security Error: Only JPG, PNG, GIF, WEBP, SVG images and PDF documents are allowed.', 'tpd-tool' ) ) );
+		}
+
 		$allowed_mimes = array(
 			'jpg|jpeg|jpe' => 'image/jpeg',
 			'png'          => 'image/png',
 			'gif'          => 'image/gif',
 			'webp'         => 'image/webp',
+			'svg'          => 'image/svg+xml',
 			'pdf'          => 'application/pdf',
 		);
-		$filetype = wp_check_filetype( sanitize_file_name( wp_unslash( $_FILES['file']['name'] ) ), $allowed_mimes );
-		if ( empty( $filetype['ext'] ) || empty( $filetype['type'] ) ) {
-			wp_send_json_error( array( 'message' => __( 'Security Error: Only JPG, PNG, GIF, WEBP images and PDF documents are allowed.', 'tpd-tool' ) ) );
-		}
 
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 		require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -57,17 +113,42 @@ class TPD_Tool_Profile_Editor {
 			'test_form' => false,
 			'mimes'     => $allowed_mimes,
 		);
+
 		$attachment_id = media_handle_upload( 'file', 0, array(), $upload_overrides );
+		$url           = '';
 
 		if ( is_wp_error( $attachment_id ) ) {
-			wp_send_json_error( array( 'message' => $attachment_id->get_error_message() ) );
+			// Fallback: direct wp_handle_upload in case media_handle_upload failed
+			$file = wp_handle_upload( $_FILES['file'], $upload_overrides );
+			if ( isset( $file['error'] ) ) {
+				wp_send_json_error( array( 'message' => $file['error'] ) );
+			}
+			$url = ! empty( $file['url'] ) ? $file['url'] : '';
+			$attachment = array(
+				'post_mime_type' => ! empty( $file['type'] ) ? $file['type'] : 'image/jpeg',
+				'guid'           => $url,
+				'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $raw_name ) ),
+				'post_content'   => '',
+				'post_status'    => 'inherit',
+				'post_author'    => $current_user_id,
+			);
+			$attach_id = wp_insert_attachment( $attachment, $file['file'] );
+			if ( ! is_wp_error( $attach_id ) && $attach_id > 0 ) {
+				$attach_data = wp_generate_attachment_metadata( $attach_id, $file['file'] );
+				wp_update_attachment_metadata( $attach_id, $attach_data );
+				$attachment_id = $attach_id;
+			}
+		} else {
+			$url = wp_get_attachment_url( $attachment_id );
 		}
 
-		$url = wp_get_attachment_url( $attachment_id );
+		if ( empty( $url ) ) {
+			wp_send_json_error( array( 'message' => __( 'Could not process media file URL.', 'tpd-tool' ) ) );
+		}
 
 		wp_send_json_success( array(
-			'attachment_id' => $attachment_id,
-			'url'           => $url,
+			'attachment_id' => (int) $attachment_id,
+			'url'           => esc_url_raw( $url ),
 			'message'       => __( 'File uploaded successfully!', 'tpd-tool' ),
 		) );
 	}
@@ -139,8 +220,8 @@ class TPD_Tool_Profile_Editor {
 
 		// Update user meta
 		if ( $headshot_url ) update_user_meta( $user_id, 'tpd_headshot_url', $headshot_url );
-		if ( $logo_url ) update_user_meta( $user_id, 'tpd_logo_url', $logo_url );
-		if ( $banner_url ) update_user_meta( $user_id, 'tpd_banner_url', $banner_url );
+		if ( isset( $_POST['logo_url'] ) ) update_user_meta( $user_id, 'tpd_logo_url', $logo_url );
+		if ( isset( $_POST['banner_url'] ) ) update_user_meta( $user_id, 'tpd_banner_url', $banner_url );
 		update_user_meta( $user_id, 'tpd_profile_handle', $profile_handle );
 		update_user_meta( $user_id, 'tpd_phone', $phone );
 		update_user_meta( $user_id, 'tpd_agency_name', $agency_name );
@@ -237,9 +318,35 @@ class TPD_Tool_Profile_Editor {
 			update_post_meta( $post_id, 'tpd_social_instagram', $social_instagram );
 			update_post_meta( $post_id, 'tpd_social_tiktok', $social_tiktok );
 			update_post_meta( $post_id, 'tpd_social_linkedin', $social_linkedin );
-			if ( $headshot_url ) update_post_meta( $post_id, 'tpd_headshot_url', $headshot_url );
-			if ( $logo_url ) update_post_meta( $post_id, 'tpd_logo_url', $logo_url );
-			if ( $banner_url ) update_post_meta( $post_id, 'tpd_banner_url', $banner_url );
+			if ( $headshot_url ) {
+				update_post_meta( $post_id, 'tpd_headshot_url', $headshot_url );
+				update_user_meta( $user_id, 'tpd_headshot_url', $headshot_url );
+				update_user_meta( $user_id, 'tpd_avatar_url', $headshot_url );
+			}
+			if ( isset( $_POST['logo_url'] ) ) {
+				update_post_meta( $post_id, 'tpd_logo_url', $logo_url );
+				update_user_meta( $user_id, 'tpd_logo_url', $logo_url );
+			}
+			if ( isset( $_POST['banner_url'] ) ) {
+				update_post_meta( $post_id, 'tpd_banner_url', $banner_url );
+				update_user_meta( $user_id, 'tpd_banner_url', $banner_url );
+			}
+
+			// Save Travel Advisor Gallery Images
+			$gallery_imgs = array();
+			if ( isset( $_POST['gallery_images_json'] ) ) {
+				$dec = json_decode( wp_unslash( $_POST['gallery_images_json'] ), true );
+				if ( is_array( $dec ) ) {
+					$gallery_imgs = array_map( 'esc_url_raw', $dec );
+				}
+			} elseif ( isset( $_POST['gallery_images'] ) && is_array( $_POST['gallery_images'] ) ) {
+				$gallery_imgs = array_map( 'esc_url_raw', wp_unslash( $_POST['gallery_images'] ) );
+			}
+			$gallery_imgs = array_values( array_filter( $gallery_imgs ) );
+			if ( isset( $_POST['gallery_images_json'] ) || isset( $_POST['gallery_images'] ) ) {
+				update_user_meta( $user_id, 'tpd_gallery_images', $gallery_imgs );
+				update_post_meta( $post_id, 'tpd_gallery_images', $gallery_imgs );
+			}
 
 			if ( isset( $_POST['destinations'] ) ) {
 				$dests = array_map( 'sanitize_text_field', (array) $_POST['destinations'] );
@@ -260,6 +367,7 @@ class TPD_Tool_Profile_Editor {
 			'message'      => __( 'Account Info & Directory Profile updated and synced!', 'tpd-tool' ),
 			'display_name' => $display_name,
 			'headshot_url' => $headshot_url,
+			'logo_url'     => $logo_url,
 		) );
 	}
 
@@ -326,11 +434,33 @@ class TPD_Tool_Profile_Editor {
 		update_post_meta( $listing_id, 'tpd_agent_rewards', $rewards );
 		update_post_meta( $listing_id, 'tpd_member_ustoa', $ustoa );
 		update_post_meta( $listing_id, 'tpd_member_asta', $asta );
-		if ( $logo_url ) update_post_meta( $listing_id, 'tpd_logo_url', $logo_url );
-		if ( $banner_url ) update_post_meta( $listing_id, 'tpd_banner_url', $banner_url );
+		if ( isset( $_POST['logo_url'] ) ) {
+			update_post_meta( $listing_id, 'tpd_logo_url', $logo_url );
+			update_user_meta( $user_id, 'tpd_logo_url', $logo_url );
+		}
+		if ( isset( $_POST['banner_url'] ) ) {
+			update_post_meta( $listing_id, 'tpd_banner_url', $banner_url );
+			update_user_meta( $user_id, 'tpd_banner_url', $banner_url );
+		}
 		update_post_meta( $listing_id, 'tpd_main_video_url', $video_url );
 		update_post_meta( $listing_id, 'tpd_promo_title', $promo_title );
 		update_post_meta( $listing_id, 'tpd_promo_desc', $promo_desc );
+
+		// Save Supplier Showcase Photo Gallery
+		$gallery_imgs = array();
+		if ( isset( $_POST['gallery_images_json'] ) ) {
+			$dec = json_decode( wp_unslash( $_POST['gallery_images_json'] ), true );
+			if ( is_array( $dec ) ) {
+				$gallery_imgs = array_map( 'esc_url_raw', $dec );
+			}
+		} elseif ( isset( $_POST['gallery_images'] ) && is_array( $_POST['gallery_images'] ) ) {
+			$gallery_imgs = array_map( 'esc_url_raw', wp_unslash( $_POST['gallery_images'] ) );
+		}
+		$gallery_imgs = array_values( array_filter( $gallery_imgs ) );
+		if ( isset( $_POST['gallery_images_json'] ) || isset( $_POST['gallery_images'] ) ) {
+			update_post_meta( $listing_id, 'tpd_gallery_images', $gallery_imgs );
+			update_user_meta( $user_id, 'tpd_gallery_images', $gallery_imgs );
+		}
 
 		// Sync company name back to user meta
 		if ( $company_name ) {
@@ -346,6 +476,8 @@ class TPD_Tool_Profile_Editor {
 			'message'      => __( 'Supplier Listing, Showcase & Custom Fields updated!', 'tpd-tool' ),
 			'listing_id'   => $listing_id,
 			'company_name' => $company_name,
+			'logo_url'     => $logo_url,
+			'banner_url'   => $banner_url,
 		) );
 	}
 
@@ -386,6 +518,7 @@ class TPD_Tool_Profile_Editor {
 		update_user_meta( $user_id, 'tpd_country_of_residence', $country );
 		if ( $avatar_url ) {
 			update_user_meta( $user_id, 'tpd_headshot_url', $avatar_url );
+			update_user_meta( $user_id, 'tpd_avatar_url', $avatar_url );
 		}
 
 		// Sync with linked supplier_listing CPT
@@ -400,6 +533,9 @@ class TPD_Tool_Profile_Editor {
 			$lid = $listings[0];
 			update_post_meta( $lid, 'tpd_position_title', $position_title );
 			update_post_meta( $lid, 'tpd_country_of_residence', $country );
+			if ( $avatar_url ) {
+				update_post_meta( $lid, 'tpd_rep_headshot_url', $avatar_url );
+			}
 			if ( $company_name ) {
 				update_post_meta( $lid, 'tpd_company_name', $company_name );
 				wp_update_post( array( 'ID' => $lid, 'post_title' => $company_name ) );

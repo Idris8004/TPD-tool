@@ -36,19 +36,19 @@ if ( ! empty( $query_supp ) ) {
 $company_name   = ( $supplier_post_id ? get_the_title( $supplier_post_id ) : '' ) ?: get_user_meta( $current_user_id, 'tpd_company_name', true ) ?: __( 'Partner Brand', 'tpd-tool' );
 $position_title = get_user_meta( $current_user_id, 'tpd_position_title', true ) ?: ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_position_title', true ) : '' ) ?: __( 'Trade Representative', 'tpd-tool' );
 $rep_phone      = get_user_meta( $current_user_id, 'tpd_phone', true ) ?: ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_primary_rep_phone', true ) : '' );
-$country        = get_user_meta( $current_user_id, 'tpd_country_of_residence', true ) ?: ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_country_of_residence', true ) : '' );
-$headshot_url   = get_user_meta( $current_user_id, 'tpd_headshot_url', true );
+$headshot_url   = get_user_meta( $current_user_id, 'tpd_headshot_url', true ) ?: ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_rep_headshot_url', true ) : '' );
 $avatar_src     = $headshot_url ?: 'https://ui-avatars.com/api/?name=' . rawurlencode( $full_name ) . '&background=0284c7&color=fff&size=128';
 
 // Listing Showcase fields
-$tagline      = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_tagline', true ) : '';
-$booking_url  = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_booking_portal_url', true ) : '';
-$headquarters = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_headquarters', true ) : '' ) ?: $country;
-$rewards      = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_agent_rewards', true ) : '' ) ?: 'Yes';
-$ustoa        = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_member_ustoa', true ) : '' ) ?: 'Yes';
-$asta         = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_member_asta', true ) : '' ) ?: 'Yes';
-$logo_url     = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_logo_url', true ) : '';
-$banner_url   = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_banner_url', true ) : '' ) ?: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&auto=format&fit=crop&q=80';
+$tagline        = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_tagline', true ) : '';
+$booking_url    = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_booking_portal_url', true ) : '';
+$headquarters   = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_headquarters', true ) : '' ) ?: $country;
+$rewards        = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_agent_rewards', true ) : '' ) ?: 'Yes';
+$ustoa          = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_member_ustoa', true ) : '' ) ?: 'Yes';
+$asta           = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_member_asta', true ) : '' ) ?: 'Yes';
+$logo_url       = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_logo_url', true ) : '' ) ?: get_user_meta( $current_user_id, 'tpd_logo_url', true );
+$banner_url     = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_banner_url', true ) : '' ) ?: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&auto=format&fit=crop&q=80';
+$gallery_images = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Profile_Editor::get_user_gallery( $current_user_id, $supplier_post_id ) : array();
 $video_url    = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_main_video_url', true ) : '';
 $promo_title  = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_promo_title', true ) : '';
 $promo_desc   = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_promo_desc', true ) : '';
@@ -609,10 +609,43 @@ $all_directory_listings = get_posts( array(
 
 							<!-- Sub-Tab 2: Images & Media -->
 							<div id="set-media" class="tpd-editor-panel" style="display:none;">
-								<div class="tpd-form-grid-2">
-									<div class="tpd-form-group">
-										<label><?php esc_html_e( 'Custom Showcase Banner Photo', 'tpd-tool' ); ?></label>
-										<div style="width:100%; height:110px; border-radius:10px; overflow:hidden; border:1px solid #cbd5e1; margin-bottom:8px;">
+								<!-- Brand Logo & Header Banner Section -->
+								<div class="tpd-form-grid-2" style="margin-bottom:24px;">
+									<!-- Card 1: Company Brand Logo -->
+									<div class="tpd-card-box" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:18px;">
+										<label style="font-weight:700; font-size:13.5px; display:block; margin-bottom:4px;"><?php esc_html_e( 'Company Brand Logo *', 'tpd-tool' ); ?></label>
+										<p style="margin:0 0 12px; font-size:12px; color:#64748b;"><?php esc_html_e( 'Transparent PNG, SVG, or high-res JPG. Shown on directory cards, search results & showcase header.', 'tpd-tool' ); ?></p>
+
+										<div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+											<div class="tpd-logo-preview-box" style="width:160px; height:80px; border:1.5px dashed #cbd5e1; border-radius:8px; background:#fff; display:flex; align-items:center; justify-content:center; overflow:hidden; padding:6px;">
+												<img id="tpd-supp-logo-preview" src="<?php echo esc_url( $logo_url ); ?>" style="max-width:100%; max-height:100%; object-fit:contain; <?php echo empty( $logo_url ) ? 'display:none;' : ''; ?>" alt="Brand Logo">
+												<div id="tpd-supp-logo-placeholder" style="text-align:center; color:#94a3b8; <?php echo ! empty( $logo_url ) ? 'display:none;' : ''; ?>">
+													<i class="fa-regular fa-image" style="font-size:20px; margin-bottom:2px; display:block;"></i>
+													<span style="font-size:10.5px; font-weight:600;"><?php esc_html_e( 'No logo uploaded', 'tpd-tool' ); ?></span>
+												</div>
+											</div>
+											<div>
+												<input type="hidden" name="logo_url" id="tpd_supp_logo_url" value="<?php echo esc_attr( $logo_url ); ?>">
+												<input type="file" id="tpd-file-supp-logo" accept="image/*" style="display:none;">
+												<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+													<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-primary" onclick="document.getElementById('tpd-file-supp-logo').click();">
+														<i class="fa-solid fa-cloud-arrow-up"></i> <?php esc_html_e( 'Upload Brand Logo', 'tpd-tool' ); ?>
+													</button>
+													<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" id="tpd-supp-remove-logo-btn" style="<?php echo empty( $logo_url ) ? 'display:none;' : ''; ?>">
+														<i class="fa-solid fa-trash-can text-red"></i> <?php esc_html_e( 'Remove', 'tpd-tool' ); ?>
+													</button>
+												</div>
+												<span style="display:block; font-size:11px; color:#64748b; margin-top:4px;"><?php esc_html_e( 'Recommended: 400x200px or vector SVG.', 'tpd-tool' ); ?></span>
+											</div>
+										</div>
+									</div>
+
+									<!-- Card 2: Custom Showcase Banner Photo -->
+									<div class="tpd-card-box" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:18px;">
+										<label style="font-weight:700; font-size:13.5px; display:block; margin-bottom:4px;"><?php esc_html_e( 'Custom Showcase Banner Photo', 'tpd-tool' ); ?></label>
+										<p style="margin:0 0 12px; font-size:12px; color:#64748b;"><?php esc_html_e( 'Scenic photo of your ship, resort, property, or landscape for the showcase header.', 'tpd-tool' ); ?></p>
+
+										<div style="width:100%; height:80px; border-radius:8px; overflow:hidden; border:1px solid #cbd5e1; margin-bottom:8px; background:#fff;">
 											<img id="tpd-supp-banner-preview" src="<?php echo esc_url( $banner_url ); ?>" style="width:100%; height:100%; object-fit:cover;">
 										</div>
 										<input type="hidden" name="banner_url" id="tpd_supp_banner_url" value="<?php echo esc_attr( $banner_url ); ?>">
@@ -621,10 +654,50 @@ $all_directory_listings = get_posts( array(
 											<i class="fa-solid fa-panorama"></i> <?php esc_html_e( 'Upload Banner Image', 'tpd-tool' ); ?>
 										</button>
 									</div>
+								</div>
 
-									<div class="tpd-form-group">
-										<label><?php esc_html_e( 'Main Showcase Video (YouTube or Vimeo URL)', 'tpd-tool' ); ?></label>
-										<input type="url" name="video_url" value="<?php echo esc_attr( $video_url ); ?>" placeholder="https://www.youtube.com/watch?v=..." class="tpd-input">
+								<!-- Showcase Video URL -->
+								<div class="tpd-form-group mb-4">
+									<label style="font-weight:700; font-size:13.5px; display:block; margin-bottom:4px;"><?php esc_html_e( 'Main Showcase Video (YouTube or Vimeo URL)', 'tpd-tool' ); ?></label>
+									<input type="url" name="video_url" value="<?php echo esc_attr( $video_url ); ?>" placeholder="https://www.youtube.com/watch?v=..." class="tpd-input">
+								</div>
+
+								<!-- Supplier Showcase Photo Gallery -->
+								<div class="tpd-card-box" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+									<div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+										<div>
+											<h4 style="margin:0 0 4px; font-size:15px; font-weight:800; color:#0f172a;"><?php esc_html_e( 'Showcase Photo Gallery', 'tpd-tool' ); ?></h4>
+											<p style="margin:0; font-size:12.5px; color:#64748b;"><?php esc_html_e( 'Upload high-resolution property, cabin, dining, excursion, and amenity photos to present to travel advisors.', 'tpd-tool' ); ?></p>
+										</div>
+										<div>
+											<input type="file" id="tpd-file-supp-gallery" accept="image/*" multiple style="display:none;">
+											<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-primary" onclick="document.getElementById('tpd-file-supp-gallery').click();" style="display:inline-flex; align-items:center; gap:6px;">
+												<i class="fa-solid fa-cloud-arrow-up"></i> <?php esc_html_e( '+ Add Photos to Showcase Gallery', 'tpd-tool' ); ?>
+											</button>
+										</div>
+									</div>
+
+									<div id="tpd-supp-gallery-empty" style="text-align:center; padding:28px 16px; background:#f8fafc; border:2px dashed #cbd5e1; border-radius:10px; margin-bottom:16px; <?php echo ! empty( $gallery_images ) ? 'display:none;' : ''; ?>">
+										<i class="fa-regular fa-images" style="font-size:32px; color:#94a3b8; margin-bottom:8px; display:block;"></i>
+										<h5 style="margin:0 0 4px; font-size:13.5px; font-weight:700; color:#334155;"><?php esc_html_e( 'No Photos in Showcase Gallery Yet', 'tpd-tool' ); ?></h5>
+										<p style="margin:0 0 12px; font-size:12px; color:#64748b;"><?php esc_html_e( 'Upload photos of your offerings to attract and educate registered travel advisors.', 'tpd-tool' ); ?></p>
+										<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="document.getElementById('tpd-file-supp-gallery').click();">
+											<i class="fa-solid fa-plus"></i> <?php esc_html_e( 'Upload Photos', 'tpd-tool' ); ?>
+										</button>
+									</div>
+
+									<div id="tpd-supp-gallery-grid" class="tpd-gallery-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap:12px;">
+										<?php if ( ! empty( $gallery_images ) ) : ?>
+											<?php foreach ( $gallery_images as $g_url ) : ?>
+												<div class="tpd-gallery-item" data-url="<?php echo esc_url( $g_url ); ?>">
+													<img src="<?php echo esc_url( $g_url ); ?>" class="tpd-gallery-thumb" alt="Showcase Photo">
+													<input type="hidden" name="gallery_images[]" value="<?php echo esc_url( $g_url ); ?>">
+													<button type="button" class="tpd-gallery-remove-btn tpd-remove-gallery-item-btn" title="<?php esc_attr_e( 'Remove photo', 'tpd-tool' ); ?>">
+														<i class="fa-solid fa-xmark"></i>
+													</button>
+												</div>
+											<?php endforeach; ?>
+										<?php endif; ?>
 									</div>
 								</div>
 							</div>
@@ -837,6 +910,25 @@ $all_directory_listings = get_posts( array(
 					<form id="tpd-supplier-rep-profile-form" class="mt-3">
 						<input type="hidden" name="action" value="tpd_save_supplier_rep_profile">
 						<input type="hidden" name="nonce" value="<?php echo esc_attr( wp_create_nonce( 'tpd_nonce' ) ); ?>">
+
+						<!-- Representative Avatar Upload -->
+						<div style="display:flex; align-items:center; gap:16px; margin-bottom:20px; padding-bottom:18px; border-bottom:1px solid #e2e8f0;">
+							<div style="position:relative; width:72px; height:72px;">
+								<img id="tpd-supp-rep-avatar-preview" src="<?php echo esc_url( $avatar_src ); ?>" style="width:72px; height:72px; border-radius:50%; object-fit:cover; border:2px solid #e2e8f0;" alt="Representative Avatar">
+								<button type="button" onclick="document.getElementById('tpd-file-supp-headshot').click();" title="<?php esc_attr_e( 'Upload Representative Photo', 'tpd-tool' ); ?>" style="position:absolute; bottom:0; right:0; width:26px; height:26px; border-radius:50%; background:#0284c7; color:#fff; border:2px solid #fff; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:11px;">
+									<i class="fa-solid fa-camera"></i>
+								</button>
+								<input type="hidden" name="headshot_url" id="tpd_supp_rep_headshot_url" value="<?php echo esc_attr( $headshot_url ); ?>">
+								<input type="file" id="tpd-file-supp-headshot" accept="image/*" style="display:none;">
+							</div>
+							<div>
+								<h4 style="margin:0 0 4px; font-size:15px; font-weight:700; color:#0f172a;"><?php esc_html_e( 'Representative Headshot Photo', 'tpd-tool' ); ?></h4>
+								<p style="margin:0; font-size:12.5px; color:#64748b;"><?php esc_html_e( 'Upload your professional headshot for travel advisors to recognise you in the directory & chat.', 'tpd-tool' ); ?></p>
+								<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="document.getElementById('tpd-file-supp-headshot').click();" style="margin-top:6px;">
+									<i class="fa-solid fa-cloud-arrow-up"></i> <?php esc_html_e( 'Upload Headshot', 'tpd-tool' ); ?>
+								</button>
+							</div>
+						</div>
 
 						<div class="tpd-form-grid-2">
 							<div class="tpd-form-group">

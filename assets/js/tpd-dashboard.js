@@ -565,66 +565,172 @@
 		});
 
 		// 7. Unified Media Uploading Helper
-		function uploadMediaFile(file, successCallback) {
+		function uploadMediaFile(file, successCallback, errorCallback) {
 			if (!file) return;
+
+			var nonce = (typeof tpd_data !== 'undefined' && tpd_data.nonce) ? tpd_data.nonce : ($('input[name="nonce"]').val() || '');
+			var ajaxUrl = (typeof tpd_data !== 'undefined' && tpd_data.ajax_url) ? tpd_data.ajax_url : '/wp-admin/admin-ajax.php';
 
 			var formData = new FormData();
 			formData.append('file', file);
 			formData.append('action', 'tpd_upload_media_file');
-			formData.append('nonce', (typeof tpd_data !== 'undefined' ? tpd_data.nonce : ''));
+			formData.append('nonce', nonce);
 
-			showToast('<i class="fa-solid fa-spinner fa-spin"></i> Uploading media file...');
+			showToast('<i class="fa-solid fa-spinner fa-spin"></i> Uploading media file (' + (file.name || 'image') + ')...');
 
 			$.ajax({
-				url: (typeof tpd_data !== 'undefined') ? tpd_data.ajax_url : '/wp-admin/admin-ajax.php',
+				url: ajaxUrl,
 				type: 'POST',
 				data: formData,
 				processData: false,
 				contentType: false,
 				success: function(res) {
 					if (res.success) {
-						successCallback(res.data.url, res.data);
+						if (typeof successCallback === 'function') {
+							successCallback(res.data.url, res.data);
+						}
 					} else {
-						alert(res.data.message || 'Media upload failed.');
+						var msg = (res.data && res.data.message) ? res.data.message : 'Media upload failed.';
+						alert(msg);
+						if (typeof errorCallback === 'function') errorCallback(msg);
 					}
 				},
-				error: function() {
+				error: function(xhr, status, error) {
 					alert('Connection error during media upload. Please try again.');
+					if (typeof errorCallback === 'function') errorCallback(error);
 				}
 			});
 		}
 
-		// Media File Triggers for Advisor & Supplier
-		$('#tpd-file-headshot').on('change', function() {
+		// Helper to sequentially upload multiple files (prevents DB lock and server overload)
+		function uploadMultipleMediaFiles(files, onEachSuccess, onComplete) {
+			if (!files || !files.length) return;
+			var fileList = Array.from(files);
+			var total = fileList.length;
+			var completed = 0;
+
+			function uploadNext(index) {
+				if (index >= total) {
+					if (typeof onComplete === 'function') onComplete(completed);
+					return;
+				}
+				var curFile = fileList[index];
+				uploadMediaFile(curFile, function(url, data) {
+					completed++;
+					if (typeof onEachSuccess === 'function') {
+						onEachSuccess(url, data, index, total);
+					}
+					uploadNext(index + 1);
+				}, function() {
+					uploadNext(index + 1);
+				});
+			}
+			uploadNext(0);
+		}
+
+		// Media File Triggers: Travel Advisor
+		$(document).on('change', '#tpd-file-headshot', function() {
 			var file = this.files[0];
+			if (!file) return;
 			uploadMediaFile(file, function(url) {
 				$('#tpd-preview-headshot').attr('src', url);
 				$('#tpd_headshot_url').val(url);
-				showToast('<i class="fa-solid fa-camera"></i> Profile photo uploaded! Click Save Profile to apply.');
+				$('.tpd-user-avatar-sm, .tpd-topbar-avatar img').attr('src', url);
+				showToast('<i class="fa-solid fa-camera"></i> Profile photo uploaded! Click Submit & Save Profile to apply.');
 			});
 		});
 
-		$('#tpd-file-logo').on('change', function() {
+		$(document).on('change', '#tpd-file-logo', function() {
 			var file = this.files[0];
+			if (!file) return;
 			uploadMediaFile(file, function(url) {
 				$('#tpd-preview-logo').attr('src', url).show();
 				$('#tpd-logo-placeholder').hide();
 				$('#tpd_logo_url').val(url);
-				showToast('<i class="fa-solid fa-image"></i> Agency logo uploaded! Click Save Profile to apply.');
+				$('#tpd-remove-logo-btn').show();
+				showToast('<i class="fa-solid fa-image"></i> Agency logo uploaded! Click Submit & Save Profile to apply.');
 			});
 		});
 
-		$('#tpd-file-banner').on('change', function() {
+		$(document).on('click', '#tpd-remove-logo-btn', function(e) {
+			e.preventDefault();
+			$('#tpd_logo_url').val('');
+			$('#tpd-preview-logo').attr('src', '').hide();
+			$('#tpd-logo-placeholder').show();
+			$(this).hide();
+			showToast('<i class="fa-solid fa-trash-can"></i> Agency logo removed. Click Submit & Save Profile to apply.');
+		});
+
+		$(document).on('change', '#tpd-file-banner', function() {
 			var file = this.files[0];
+			if (!file) return;
 			uploadMediaFile(file, function(url) {
 				$('#tpd-preview-banner').attr('src', url);
 				$('#tpd_banner_url').val(url);
-				showToast('<i class="fa-solid fa-panorama"></i> Custom banner uploaded! Click Save Profile to apply.');
+				$('.tpd-preset-banner-tile').css('border-color', 'transparent');
+				$('.tpd-preset-banner-radio').prop('checked', false);
+				showToast('<i class="fa-solid fa-panorama"></i> Custom banner uploaded! Click Submit & Save Profile to apply.');
 			});
 		});
 
-		$('#tpd-file-supp-banner').on('change', function() {
+		$(document).on('change', '#tpd-file-advisor-gallery', function() {
+			var files = this.files;
+			if (!files || !files.length) return;
+			var $grid = $('#tpd-advisor-gallery-grid');
+			var $empty = $('#tpd-advisor-gallery-empty');
+
+			uploadMultipleMediaFiles(files, function(url) {
+				var itemHtml = '<div class="tpd-gallery-item" data-url="' + url + '">' +
+					'<img src="' + url + '" class="tpd-gallery-thumb" alt="Gallery Photo">' +
+					'<input type="hidden" name="gallery_images[]" value="' + url + '">' +
+					'<button type="button" class="tpd-gallery-remove-btn tpd-remove-gallery-item-btn" title="Remove photo">' +
+						'<i class="fa-solid fa-xmark"></i>' +
+					'</button>' +
+				'</div>';
+				$grid.append(itemHtml);
+				$empty.hide();
+			}, function(count) {
+				showToast('<i class="fa-solid fa-images"></i> ' + count + ' photo(s) added to gallery! Click Submit & Save Profile to apply.');
+			});
+			$(this).val('');
+		});
+
+		// Media File Triggers: Supplier Partner
+		$(document).on('change', '#tpd-file-supp-headshot', function() {
 			var file = this.files[0];
+			if (!file) return;
+			uploadMediaFile(file, function(url) {
+				$('#tpd-supp-rep-avatar-preview').attr('src', url);
+				$('#tpd_supp_rep_headshot_url').val(url);
+				$('.tpd-user-avatar-sm, .tpd-topbar-avatar img').attr('src', url);
+				showToast('<i class="fa-solid fa-camera"></i> Representative photo uploaded! Click Save Representative Profile to apply.');
+			});
+		});
+
+		$(document).on('change', '#tpd-file-supp-logo', function() {
+			var file = this.files[0];
+			if (!file) return;
+			uploadMediaFile(file, function(url) {
+				$('#tpd-supp-logo-preview').attr('src', url).show();
+				$('#tpd-supp-logo-placeholder').hide();
+				$('#tpd_supp_logo_url').val(url);
+				$('#tpd-supp-remove-logo-btn').show();
+				showToast('<i class="fa-solid fa-image"></i> Brand logo uploaded! Click Save Listing to apply.');
+			});
+		});
+
+		$(document).on('click', '#tpd-supp-remove-logo-btn', function(e) {
+			e.preventDefault();
+			$('#tpd_supp_logo_url').val('');
+			$('#tpd-supp-logo-preview').attr('src', '').hide();
+			$('#tpd-supp-logo-placeholder').show();
+			$(this).hide();
+			showToast('<i class="fa-solid fa-trash-can"></i> Brand logo removed. Click Save Listing to apply.');
+		});
+
+		$(document).on('change', '#tpd-file-supp-banner', function() {
+			var file = this.files[0];
+			if (!file) return;
 			uploadMediaFile(file, function(url) {
 				$('#tpd-supp-banner-preview').attr('src', url);
 				$('#tpd_supp_banner_url').val(url);
@@ -632,8 +738,47 @@
 			});
 		});
 
-		$('#tpd-file-supp-pdf').on('change', function() {
+		$(document).on('change', '#tpd-file-supp-gallery', function() {
+			var files = this.files;
+			if (!files || !files.length) return;
+			var $grid = $('#tpd-supp-gallery-grid');
+			var $empty = $('#tpd-supp-gallery-empty');
+
+			uploadMultipleMediaFiles(files, function(url) {
+				var itemHtml = '<div class="tpd-gallery-item" data-url="' + url + '">' +
+					'<img src="' + url + '" class="tpd-gallery-thumb" alt="Showcase Photo">' +
+					'<input type="hidden" name="gallery_images[]" value="' + url + '">' +
+					'<button type="button" class="tpd-gallery-remove-btn tpd-remove-gallery-item-btn" title="Remove photo">' +
+						'<i class="fa-solid fa-xmark"></i>' +
+					'</button>' +
+				'</div>';
+				$grid.append(itemHtml);
+				$empty.hide();
+			}, function(count) {
+				showToast('<i class="fa-solid fa-images"></i> ' + count + ' photo(s) added to showcase gallery! Click Save Listing to apply.');
+			});
+			$(this).val('');
+		});
+
+		// Universal Gallery Item Removal
+		$(document).on('click', '.tpd-remove-gallery-item-btn', function(e) {
+			e.preventDefault();
+			var $item = $(this).closest('.tpd-gallery-item');
+			var $grid = $item.closest('.tpd-gallery-grid');
+			$item.remove();
+			if ($grid.find('.tpd-gallery-item').length === 0) {
+				if ($grid.attr('id') === 'tpd-advisor-gallery-grid') {
+					$('#tpd-advisor-gallery-empty').show();
+				} else if ($grid.attr('id') === 'tpd-supp-gallery-grid') {
+					$('#tpd-supp-gallery-empty').show();
+				}
+			}
+			showToast('<i class="fa-solid fa-trash-can"></i> Photo removed from gallery. Click Save to apply changes.');
+		});
+
+		$(document).on('change', '#tpd-file-supp-pdf', function() {
 			var file = this.files[0];
+			if (!file) return;
 			uploadMediaFile(file, function(url) {
 				showToast('<i class="fa-solid fa-file-pdf"></i> PDF Brochure uploaded successfully! Added to Advisor Resources.');
 			});
@@ -698,6 +843,12 @@
 				success: function(res) {
 					$btn.prop('disabled', false).html(origHtml);
 					if (res.success) {
+						if (res.data && res.data.headshot_url) {
+							$('.tpd-user-avatar-sm, .tpd-topbar-avatar img, #tpd-supp-rep-avatar-preview').attr('src', res.data.headshot_url);
+						}
+						if (res.data && res.data.display_name) {
+							$('.tpd-user-name').text(res.data.display_name);
+						}
 						showToast(res.data.message || 'Supplier profile updated & synced with CPT!');
 					} else {
 						alert(res.data.message || 'Update failed.');

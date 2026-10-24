@@ -48,6 +48,7 @@ $headshot_url   = get_user_meta( $current_user_id, 'tpd_headshot_url', true ) ?:
 $logo_url       = get_user_meta( $current_user_id, 'tpd_logo_url', true ) ?: ( $advisor_post_id ? get_post_meta( $advisor_post_id, 'tpd_logo_url', true ) : '' );
 $banner_url     = get_user_meta( $current_user_id, 'tpd_banner_url', true ) ?: ( $advisor_post_id ? get_post_meta( $advisor_post_id, 'tpd_banner_url', true ) : '' );
 $bio_content    = $advisor_post_id ? get_post_field( 'post_content', $advisor_post_id ) : '';
+$gallery_images = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Profile_Editor::get_user_gallery( $current_user_id, $advisor_post_id ) : array();
 
 $avatar_src = $headshot_url ?: 'https://ui-avatars.com/api/?name=' . rawurlencode( $full_name ) . '&background=2563eb&color=fff&size=128';
 
@@ -770,7 +771,9 @@ $news_posts = get_posts( array(
 						<a href="#tpd-acct-sec-cert" class="tpd-acct-nav-item" data-sec="cert" style="font-size:13px; font-weight:600; color:#475569; text-decoration:none; padding-bottom:8px;"><?php esc_html_e( 'Certification', 'tpd-tool' ); ?></a>
 						<a href="#tpd-acct-sec-spec" class="tpd-acct-nav-item" data-sec="spec" style="font-size:13px; font-weight:600; color:#475569; text-decoration:none; padding-bottom:8px;"><?php esc_html_e( 'Specialties', 'tpd-tool' ); ?></a>
 						<a href="#tpd-acct-sec-portfolio" class="tpd-acct-nav-item" data-sec="portfolio" style="font-size:13px; font-weight:600; color:#475569; text-decoration:none; padding-bottom:8px;"><?php esc_html_e( 'Accolade & Portfolio', 'tpd-tool' ); ?></a>
-						<a href="#tpd-acct-sec-social" class="tpd-acct-nav-item" data-sec="social" style="font-size:13px; font-weight:600; color:#475569; text-decoration:none; padding-bottom:8px;"><?php esc_html_e( 'Social & Banner', 'tpd-tool' ); ?></a>
+						<a href="#tpd-acct-sec-gallery" class="tpd-acct-nav-item" data-sec="gallery" style="font-size:13px; font-weight:600; color:#475569; text-decoration:none; padding-bottom:8px;"><?php esc_html_e( 'Photo Gallery', 'tpd-tool' ); ?></a>
+						<a href="#tpd-acct-sec-branding" class="tpd-acct-nav-item" data-sec="branding" style="font-size:13px; font-weight:600; color:#475569; text-decoration:none; padding-bottom:8px;"><?php esc_html_e( 'Logo & Banner', 'tpd-tool' ); ?></a>
+						<a href="#tpd-acct-sec-social" class="tpd-acct-nav-item" data-sec="social" style="font-size:13px; font-weight:600; color:#475569; text-decoration:none; padding-bottom:8px;"><?php esc_html_e( 'Social Links', 'tpd-tool' ); ?></a>
 					</div>
 
 					<form id="tpd-advisor-profile-editor-form" method="post" enctype="multipart/form-data">
@@ -1072,7 +1075,108 @@ $news_posts = get_posts( array(
 							</div>
 						</div>
 
-						<!-- SECTION 6: SOCIAL ACCOUNT PAGE LINKS & BANNER GALLERY -->
+						<!-- SECTION 6: TRAVEL PHOTO GALLERY & PORTFOLIO -->
+						<div id="tpd-acct-sec-gallery" class="tpd-acct-section" data-sec-pane="gallery">
+							<div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin:20px 0 14px;">
+								<div>
+									<h4 style="margin:0 0 4px; font-size:16px; font-weight:800; color:#0f172a;"><?php esc_html_e( 'Travel Photo Gallery & Portfolio Showcase', 'tpd-tool' ); ?></h4>
+									<p style="margin:0; font-size:12.5px; color:#64748b;"><?php esc_html_e( 'Upload photos of your recent trips, client milestones, inspected luxury resorts, and destination highlights. Showcase your travel experiences directly on your directory profile.', 'tpd-tool' ); ?></p>
+								</div>
+								<div>
+									<input type="file" id="tpd-file-advisor-gallery" accept="image/*" multiple style="display:none;">
+									<button type="button" class="tpd-btn" onclick="document.getElementById('tpd-file-advisor-gallery').click();" style="background:#00798c; color:#fff; border:none; padding:9px 18px; border-radius:6px; font-weight:700; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:8px;">
+										<i class="fa-solid fa-cloud-arrow-up"></i> <?php esc_html_e( '+ Add Photos to Gallery', 'tpd-tool' ); ?>
+									</button>
+								</div>
+							</div>
+
+							<div id="tpd-advisor-gallery-empty" style="text-align:center; padding:32px 20px; background:#f8fafc; border:2px dashed #cbd5e1; border-radius:12px; margin-bottom:18px; <?php echo ! empty( $gallery_images ) ? 'display:none;' : ''; ?>">
+								<i class="fa-regular fa-images" style="font-size:36px; color:#94a3b8; margin-bottom:10px; display:block;"></i>
+								<h5 style="margin:0 0 4px; font-size:14px; font-weight:700; color:#334155;"><?php esc_html_e( 'No Photos in Your Gallery Yet', 'tpd-tool' ); ?></h5>
+								<p style="margin:0 0 14px; font-size:12.5px; color:#64748b;"><?php esc_html_e( 'Upload multiple destination photos and showcase albums to enrich your travel profile.', 'tpd-tool' ); ?></p>
+								<button type="button" class="tpd-btn tpd-btn-outline" onclick="document.getElementById('tpd-file-advisor-gallery').click();" style="padding:7px 16px; font-size:12.5px; font-weight:600;">
+									<i class="fa-solid fa-plus"></i> <?php esc_html_e( 'Upload Your First Photo', 'tpd-tool' ); ?>
+								</button>
+							</div>
+
+							<div id="tpd-advisor-gallery-grid" class="tpd-gallery-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:12px; margin-bottom:18px;">
+								<?php if ( ! empty( $gallery_images ) ) : ?>
+									<?php foreach ( $gallery_images as $g_url ) : ?>
+										<div class="tpd-gallery-item" data-url="<?php echo esc_url( $g_url ); ?>">
+											<img src="<?php echo esc_url( $g_url ); ?>" class="tpd-gallery-thumb" alt="Gallery Photo">
+											<input type="hidden" name="gallery_images[]" value="<?php echo esc_url( $g_url ); ?>">
+											<button type="button" class="tpd-gallery-remove-btn tpd-remove-gallery-item-btn" title="<?php esc_attr_e( 'Remove photo', 'tpd-tool' ); ?>">
+												<i class="fa-solid fa-xmark"></i>
+											</button>
+										</div>
+									<?php endforeach; ?>
+								<?php endif; ?>
+							</div>
+						</div>
+
+						<!-- SECTION 7: BRANDING (AGENCY LOGO & PROFILE BANNER) -->
+						<div id="tpd-acct-sec-branding" class="tpd-acct-section" data-sec-pane="branding">
+							<h4 style="margin:20px 0 14px; font-size:16px; font-weight:800; color:#0f172a;"><?php esc_html_e( 'Agency Brand Logo & Header Banner', 'tpd-tool' ); ?></h4>
+
+							<!-- Dedicated Agency Logo Card -->
+							<div class="tpd-logo-upload-card" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:20px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+								<label style="display:block; font-size:14px; font-weight:700; color:#0f172a; margin-bottom:4px;"><?php esc_html_e( 'Agency Brand Logo', 'tpd-tool' ); ?></label>
+								<p style="margin:0 0 14px; font-size:12.5px; color:#64748b;"><?php esc_html_e( 'Upload your agency logo (PNG with transparent background, SVG, or JPG recommended). Displayed prominently on your profile card and header.', 'tpd-tool' ); ?></p>
+
+								<div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+									<div class="tpd-logo-preview-box" style="width:180px; height:90px; border:1.5px dashed #cbd5e1; border-radius:10px; background:#f8fafc; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; padding:8px;">
+										<img id="tpd-preview-logo" src="<?php echo esc_url( $logo_url ); ?>" style="max-width:100%; max-height:100%; object-fit:contain; <?php echo empty( $logo_url ) ? 'display:none;' : ''; ?>" alt="Agency Logo">
+										<div id="tpd-logo-placeholder" style="text-align:center; color:#94a3b8; <?php echo ! empty( $logo_url ) ? 'display:none;' : ''; ?>">
+											<i class="fa-regular fa-image" style="font-size:24px; margin-bottom:4px; display:block;"></i>
+											<span style="font-size:11px; font-weight:600;"><?php esc_html_e( 'No logo uploaded', 'tpd-tool' ); ?></span>
+										</div>
+									</div>
+
+									<div>
+										<input type="hidden" name="logo_url" id="tpd_logo_url" value="<?php echo esc_attr( $logo_url ); ?>">
+										<input type="file" id="tpd-file-logo" accept="image/*" style="display:none;">
+										<div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+											<button type="button" class="tpd-btn tpd-btn-sm" onclick="document.getElementById('tpd-file-logo').click();" style="background:#00798c; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:700; font-size:12.5px; cursor:pointer;">
+												<i class="fa-solid fa-cloud-arrow-up"></i> <?php esc_html_e( 'Upload Logo Image', 'tpd-tool' ); ?>
+											</button>
+											<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline" id="tpd-remove-logo-btn" style="padding:8px 14px; border-radius:6px; font-size:12.5px; <?php echo empty( $logo_url ) ? 'display:none;' : ''; ?>">
+												<i class="fa-solid fa-trash-can text-red"></i> <?php esc_html_e( 'Remove Logo', 'tpd-tool' ); ?>
+											</button>
+										</div>
+										<span style="display:block; font-size:11.5px; color:#64748b; margin-top:6px;"><?php esc_html_e( 'Recommended size: 400x200px or vector SVG.', 'tpd-tool' ); ?></span>
+									</div>
+								</div>
+							</div>
+
+							<!-- Dedicated Profile Banner Card -->
+							<div class="tpd-banner-upload-card" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:20px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+								<label style="display:block; font-size:14px; font-weight:700; color:#0f172a; margin-bottom:4px;"><?php esc_html_e( 'Profile Header Banner', 'tpd-tool' ); ?></label>
+								<p style="margin:0 0 14px; font-size:12.5px; color:#64748b;"><?php esc_html_e( 'Upload your own custom high-resolution banner photo or pick one of our scenic travel presets.', 'tpd-tool' ); ?></p>
+
+								<div style="border:1.5px dashed #cbd5e1; border-radius:10px; padding:16px; text-align:center; background:#f8fafc; margin-bottom:16px;">
+									<img id="tpd-preview-banner" src="<?php echo esc_url( $banner_url ?: $preset_banners[0] ); ?>" style="max-height:160px; width:100%; object-fit:cover; border-radius:8px; margin-bottom:12px;">
+									<input type="hidden" name="banner_url" id="tpd_banner_url" value="<?php echo esc_attr( $banner_url ?: $preset_banners[0] ); ?>">
+									<input type="file" id="tpd-file-banner" accept="image/*" style="display:none;">
+									<div style="display:flex; justify-content:center; gap:10px;">
+										<button type="button" class="tpd-btn tpd-btn-sm" onclick="document.getElementById('tpd-file-banner').click();" style="background:#00798c; color:#fff; border:none; padding:8px 18px; border-radius:6px; font-weight:700; font-size:13px; cursor:pointer;">
+											<i class="fa-solid fa-panorama"></i> <?php esc_html_e( 'Select Custom Banner Image', 'tpd-tool' ); ?>
+										</button>
+									</div>
+								</div>
+
+								<label style="font-size:12.5px; font-weight:700; color:#334155; margin-bottom:8px; display:block;"><?php esc_html_e( 'Or Choose a Preset Scenic Banner Image:', 'tpd-tool' ); ?></label>
+								<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap:12px;">
+									<?php foreach ( $preset_banners as $idx => $pb_url ) : ?>
+										<label class="tpd-preset-banner-tile" style="position:relative; cursor:pointer; border-radius:8px; overflow:hidden; height:84px; border:2px solid <?php echo ( $banner_url === $pb_url ) ? '#00798c' : 'transparent'; ?>;">
+											<input type="radio" name="preset_banner_choice" value="<?php echo esc_url( $pb_url ); ?>" class="tpd-preset-banner-radio" <?php checked( $banner_url, $pb_url ); ?> style="position:absolute; top:6px; left:6px; z-index:2;">
+											<img src="<?php echo esc_url( $pb_url ); ?>" alt="Banner <?php echo esc_attr( $idx + 1 ); ?>" style="width:100%; height:100%; object-fit:cover;">
+										</label>
+									<?php endforeach; ?>
+								</div>
+							</div>
+						</div>
+
+						<!-- SECTION 8: SOCIAL ACCOUNT PAGE LINKS -->
 						<div id="tpd-acct-sec-social" class="tpd-acct-section" data-sec-pane="social">
 							<h4 style="margin:20px 0 12px; font-size:15px; font-weight:800; color:#0f172a;"><?php esc_html_e( 'Social Account Page Links', 'tpd-tool' ); ?></h4>
 
@@ -1099,36 +1203,6 @@ $news_posts = get_posts( array(
 							<div class="tpd-form-group mb-3">
 								<label><?php esc_html_e( 'LinkedIn', 'tpd-tool' ); ?></label>
 								<input type="url" name="social_linkedin" value="<?php echo esc_attr( $li_url ); ?>" placeholder="LinkedIn Profile URL" class="tpd-input" style="background:#f1f5f9;">
-							</div>
-
-							<!-- Agency Logo & Banner Image Upload + 8 Scenic Preset Gallery -->
-							<div class="tpd-form-group mt-4">
-								<label class="font-bold"><?php esc_html_e( 'Banner Image & Agency Logo', 'tpd-tool' ); ?></label>
-								<div style="border:2px dashed #cbd5e1; border-radius:12px; padding:26px; text-align:center; background:#f8fafc; margin-bottom:14px;">
-									<img id="tpd-preview-banner" src="<?php echo esc_url( $banner_url ?: $preset_banners[0] ); ?>" style="max-height:140px; width:100%; object-fit:cover; border-radius:8px; margin-bottom:14px;">
-									<input type="hidden" name="banner_url" id="tpd_banner_url" value="<?php echo esc_attr( $banner_url ?: $preset_banners[0] ); ?>">
-									<input type="file" id="tpd-file-banner" accept="image/*" style="display:none;">
-									<input type="hidden" name="logo_url" id="tpd_logo_url" value="<?php echo esc_attr( $logo_url ); ?>">
-									<input type="file" id="tpd-file-logo" accept="image/*" style="display:none;">
-									<div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
-										<button type="button" class="tpd-btn" onclick="document.getElementById('tpd-file-banner').click();" style="background:#00798c; color:#fff; border:none; padding:9px 20px; border-radius:6px; font-weight:700; cursor:pointer;">
-											<?php esc_html_e( 'Select Custom Banner Image', 'tpd-tool' ); ?>
-										</button>
-										<button type="button" class="tpd-btn tpd-btn-outline" onclick="document.getElementById('tpd-file-logo').click();" style="padding:9px 18px; border-radius:6px; font-weight:600; cursor:pointer;">
-											<i class="fa-regular fa-image"></i> <?php esc_html_e( 'Upload Agency Logo', 'tpd-tool' ); ?>
-										</button>
-									</div>
-								</div>
-
-								<label style="font-size:12.5px; color:#475569; margin-bottom:8px; display:block;"><?php esc_html_e( 'Or Choose a Preset Scenic Banner Image:', 'tpd-tool' ); ?></label>
-								<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap:12px;">
-									<?php foreach ( $preset_banners as $idx => $pb_url ) : ?>
-										<label class="tpd-preset-banner-tile" style="position:relative; cursor:pointer; border-radius:8px; overflow:hidden; height:84px; border:2px solid <?php echo ( $banner_url === $pb_url ) ? '#00798c' : 'transparent'; ?>;">
-											<input type="radio" name="preset_banner_choice" value="<?php echo esc_url( $pb_url ); ?>" class="tpd-preset-banner-radio" <?php checked( $banner_url, $pb_url ); ?> style="position:absolute; top:6px; left:6px; z-index:2;">
-											<img src="<?php echo esc_url( $pb_url ); ?>" alt="Banner <?php echo esc_attr( $idx + 1 ); ?>" style="width:100%; height:100%; object-fit:cover;">
-										</label>
-									<?php endforeach; ?>
-								</div>
 							</div>
 						</div>
 

@@ -101,6 +101,7 @@ class TPD_Tool_Elementor {
 			'TPD_Tag_Supplier_Programs',
 			// Media & Link Tags
 			'TPD_Dynamic_Tag_Image',
+			'TPD_Dynamic_Tag_Gallery',
 			'TPD_Dynamic_Tag_URL',
 		);
 

@@ -43,6 +43,16 @@ class TPD_Tool_Roles {
 		if ( ! get_role( 'travel_advisor' ) || ! get_role( 'supplier' ) ) {
 			self::register_roles();
 		}
+
+		$adv_role = get_role( 'travel_advisor' );
+		if ( $adv_role && ! $adv_role->has_cap( 'upload_files' ) ) {
+			$adv_role->add_cap( 'upload_files' );
+		}
+
+		$sup_role = get_role( 'supplier' );
+		if ( $sup_role && ! $sup_role->has_cap( 'upload_files' ) ) {
+			$sup_role->add_cap( 'upload_files' );
+		}
 	}
 
 	public static function is_advisor( $user_id = null ) {

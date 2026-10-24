@@ -466,4 +466,80 @@ if ( class_exists( '\Elementor\Core\DynamicTags\Data_Tag' ) ) {
 			return $val ?: '#';
 		}
 	}
+
+	/**
+	 * TPD Dynamic Gallery Tag (For Elementor Pro Gallery widgets & carousels)
+	 */
+	class TPD_Dynamic_Tag_Gallery extends \Elementor\Core\DynamicTags\Data_Tag {
+
+		public function get_name() {
+			return 'tpd-dynamic-gallery';
+		}
+
+		public function get_title() {
+			return __( 'TPD Photo Gallery (Advisor & Supplier Albums)', 'tpd-tool' );
+		}
+
+		public function get_group() {
+			return 'tpd-advisor-tags';
+		}
+
+		public function get_categories() {
+			$cats = array();
+			if ( defined( '\Elementor\Modules\DynamicTags\Module::GALLERY_CATEGORY' ) ) {
+				$cats[] = \Elementor\Modules\DynamicTags\Module::GALLERY_CATEGORY;
+			}
+			$cats[] = 'gallery';
+			return array_unique( $cats );
+		}
+
+		protected function register_controls() {
+			$this->add_control(
+				'source_mode',
+				array(
+					'label'   => __( 'Data Context', 'tpd-tool' ),
+					'type'    => \Elementor\Controls_Manager::SELECT,
+					'default' => 'auto',
+					'options' => array(
+						'auto'         => __( 'Auto (Current Post or Logged-In User)', 'tpd-tool' ),
+						'current_post' => __( 'Current Post / Loop Item', 'tpd-tool' ),
+						'current_user' => __( 'Logged-In User', 'tpd-tool' ),
+					),
+				)
+			);
+		}
+
+		public function get_value( array $options = array() ) {
+			$source_mode = $this->get_settings( 'source_mode' ) ?: 'auto';
+			$user_id     = 0;
+			$post_id     = 0;
+
+			if ( 'current_user' === $source_mode ) {
+				$user_id = get_current_user_id();
+			} elseif ( 'current_post' === $source_mode ) {
+				$post_id = get_the_ID();
+			} else {
+				$post_id = get_the_ID();
+				if ( ! $post_id || ! in_array( get_post_type( $post_id ), array( 'travel_advisor', 'supplier_listing' ), true ) ) {
+					$user_id = get_current_user_id();
+				}
+			}
+
+			$gallery = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Profile_Editor::get_user_gallery( $user_id, $post_id ) : array();
+
+			$results = array();
+			if ( is_array( $gallery ) ) {
+				foreach ( $gallery as $img_url ) {
+					if ( empty( $img_url ) ) continue;
+					$att_id = attachment_url_to_postid( $img_url );
+					$results[] = array(
+						'id'  => $att_id ?: 0,
+						'url' => $img_url,
+					);
+				}
+			}
+
+			return $results;
+		}
+	}
 }

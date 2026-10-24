@@ -2071,3 +2071,74 @@ body.tpd-app-body {
 	}
 }
 
+/* ==========================================================================
+   10. Gallery & Media Upload Components (Advisors & Suppliers)
+   ========================================================================== */
+.tpd-gallery-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+	gap: 14px;
+	margin-top: 12px;
+}
+
+.tpd-gallery-item {
+	position: relative;
+	border-radius: 10px;
+	overflow: hidden;
+	aspect-ratio: 4 / 3;
+	background: #f1f5f9;
+	border: 1px solid #e2e8f0;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+	transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tpd-gallery-item:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.tpd-gallery-thumb {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
+.tpd-gallery-remove-btn {
+	position: absolute;
+	top: 6px;
+	right: 6px;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	background: rgba(15, 23, 42, 0.75);
+	color: #ffffff;
+	border: none;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 11px;
+	cursor: pointer;
+	transition: background 0.15s ease, transform 0.15s ease;
+	backdrop-filter: blur(4px);
+}
+
+.tpd-gallery-remove-btn:hover {
+	background: #dc2626;
+	transform: scale(1.1);
+	color: #ffffff;
+}
+
+.tpd-logo-preview-box {
+	position: relative;
+	background: #ffffff;
+	border: 1.5px dashed #cbd5e1;
+	border-radius: 10px;
+	transition: border-color 0.2s ease;
+}
+
+.tpd-logo-preview-box:hover {
+	border-color: #00798c;
+}
+
+
