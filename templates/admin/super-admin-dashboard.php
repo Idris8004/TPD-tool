@@ -153,13 +153,15 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 
 <style>
 	/* Dedicated Admin Shell Matching Client Reference Screenshots */
+	#wpfooter { display: none !important; }
+	#wpbody-content { padding-bottom: 0 !important; }
 	.tpd-sa-shell { display: flex; min-height: 100vh; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; background: #f1f5f9; color: #1e293b; }
-	.tpd-sa-sidebar { width: 250px; background: #ffffff; border-right: 1px solid #e2e8f0; flex-shrink: 0; display: flex; flex-direction: column; }
+	.tpd-sa-sidebar { width: 250px; background: #ffffff; border-right: 1px solid #e2e8f0; flex-shrink: 0; display: flex; flex-direction: column; min-height: 100vh; }
 	.tpd-sa-brand { background: #164e87; color: #ffffff; padding: 18px 20px; display: flex; align-items: center; gap: 12px; }
 	.tpd-sa-brand i { font-size: 24px; color: #38bdf8; }
 	.tpd-sa-brand-text strong { display: block; font-size: 13.5px; letter-spacing: 0.4px; }
 	.tpd-sa-brand-text small { font-size: 10.5px; color: #bae6fd; }
-	.tpd-sa-nav { list-style: none; padding: 12px 0; margin: 0; flex: 1; }
+	.tpd-sa-nav { list-style: none; padding: 12px 0 60px 0; margin: 0; flex: 1; overflow-y: auto; }
 	.tpd-sa-nav li a { display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #334155; text-decoration: none; font-size: 13.5px; font-weight: 600; border-left: 4px solid transparent; transition: all 0.15s; }
 	.tpd-sa-nav li a:hover { background: #f8fafc; color: #164e87; }
 	.tpd-sa-nav li.active a { background: #164e87; color: #ffffff; border-left-color: #38bdf8; }
@@ -1256,6 +1258,7 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 			<!-- =========================================================================
 			     PANE 10: AD SPACE & DASHBOARD BANNERS (WP BANNERIZE & MEDIA INTEGRATION)
 			     ========================================================================= -->
+			<div id="sa-ads" class="tpd-sa-pane">
 				<div class="tpd-sa-card">
 					<h3 class="tpd-sa-card-title"><i class="fa-solid fa-rectangle-ad text-blue"></i> <?php esc_html_e( 'Advertising Manager & Dashboard Banners (WP Bannerize Style)', 'tpd-tool' ); ?></h3>
 					<p style="font-size:13px; color:#64748b; margin-top:-6px; margin-bottom:18px;">
@@ -1698,8 +1701,21 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 			e.preventDefault();
 			var paneId = trigger.getAttribute('data-pane');
 			activateAdminPane(paneId);
+			if (history.replaceState) {
+				history.replaceState(null, null, '#' + paneId);
+			} else {
+				window.location.hash = paneId;
+			}
 		}
 	});
+
+	// Support direct hash on page load
+	if (window.location.hash) {
+		var initialHash = window.location.hash.replace(/^#/, '');
+		if (document.getElementById(initialHash)) {
+			activateAdminPane(initialHash);
+		}
+	}
 })();
 </script>
 

@@ -204,6 +204,8 @@ class TPD_Tool_Core {
 	}
 
 	public function render_super_admin_page() {
+		add_filter( 'admin_footer_text', '__return_empty_string', 999 );
+		add_filter( 'update_footer', '__return_empty_string', 999 );
 		include TPD_TOOL_DIR . 'templates/admin/super-admin-dashboard.php';
 	}
 
