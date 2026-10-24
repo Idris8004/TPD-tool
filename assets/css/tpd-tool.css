@@ -2141,4 +2141,323 @@ body.tpd-app-body {
 	border-color: #00798c;
 }
 
+/* ==========================================================================
+   Upcoming Events - 4-Column Card Grid Model (Matches Model Design)
+   ========================================================================== */
+.tpd-upcoming-events-container {
+	width: 100%;
+	max-width: 1320px;
+	margin: 0 auto;
+	padding: 24px 15px;
+	box-sizing: border-box;
+	font-family: var(--tpd-font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+}
+
+.tpd-events-heading {
+	text-align: center;
+	font-size: 28px;
+	font-weight: 800;
+	color: #0f172a;
+	margin: 0 0 28px 0;
+	letter-spacing: -0.3px;
+}
+
+.tpd-events-grid {
+	display: grid;
+	gap: 22px;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.tpd-event-card {
+	background: #ffffff;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	overflow: hidden;
+	box-shadow: 0 3px 12px rgba(15, 23, 42, 0.05);
+	display: flex;
+	flex-direction: column;
+	transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.tpd-event-card:hover {
+	transform: translateY(-4px);
+	box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
+	border-color: #cbd5e1;
+}
+
+.tpd-event-card-media {
+	position: relative;
+	height: 185px;
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+	display: flex;
+	align-items: flex-end;
+	padding: 16px;
+	overflow: hidden;
+	box-sizing: border-box;
+}
+
+.tpd-event-card-gradient {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(to bottom, rgba(15, 23, 42, 0.05) 0%, rgba(15, 23, 42, 0.45) 50%, rgba(15, 23, 42, 0.94) 100%);
+	pointer-events: none;
+	z-index: 1;
+}
+
+.tpd-event-card-title {
+	position: relative;
+	z-index: 2;
+	margin: 0;
+	color: #ffffff;
+	font-size: 16px;
+	font-weight: 700;
+	line-height: 1.35;
+	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.tpd-event-card-body {
+	padding: 18px 16px 16px;
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	box-sizing: border-box;
+}
+
+.tpd-event-date-row {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+	margin-bottom: 6px;
+	font-size: 13.5px;
+	line-height: 1.4;
+}
+
+.tpd-event-date-label {
+	font-weight: 800;
+	color: #0f172a;
+	min-width: 74px;
+	display: inline-block;
+}
+
+.tpd-event-date-val {
+	color: #00798c;
+	font-weight: 700;
+	letter-spacing: 0.2px;
+}
+
+.tpd-event-card-desc {
+	margin: 10px 0 16px;
+	font-size: 13px;
+	line-height: 1.5;
+	color: #64748b;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	min-height: 38px;
+}
+
+.tpd-event-card-footer {
+	margin-top: auto;
+	padding-top: 14px;
+	border-top: 1px solid #f1f5f9;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+}
+
+.tpd-event-location {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+	font-weight: 600;
+	color: #334155;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tpd-event-location i {
+	color: #00798c;
+	font-size: 13px;
+	flex-shrink: 0;
+}
+
+.tpd-event-btn-view {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 7px 16px;
+	font-size: 12.5px;
+	font-weight: 700;
+	color: #0f172a;
+	background: #ffffff;
+	border: 1.5px solid #eab308;
+	border-radius: 6px;
+	text-decoration: none;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+.tpd-event-btn-view:hover {
+	background: #eab308;
+	color: #ffffff;
+	border-color: #d97706;
+	text-decoration: none;
+	transform: translateY(-1px);
+	box-shadow: 0 4px 10px rgba(234, 179, 8, 0.25);
+}
+
+/* Modal Popup for Event Details */
+.tpd-event-modal-backdrop {
+	position: fixed;
+	inset: 0;
+	background: rgba(11, 21, 38, 0.65);
+	backdrop-filter: blur(4px);
+	z-index: 999999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+	box-sizing: border-box;
+}
+
+.tpd-event-modal-dialog {
+	background: #ffffff;
+	border-radius: 16px;
+	max-width: 580px;
+	width: 100%;
+	overflow: hidden;
+	box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.3);
+	position: relative;
+	animation: tpdModalSlideUp 0.25s ease-out;
+}
+
+@keyframes tpdModalSlideUp {
+	from { opacity: 0; transform: translateY(20px) scale(0.97); }
+	to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.tpd-event-modal-banner {
+	position: relative;
+	height: 220px;
+	background-size: cover;
+	background-position: center;
+	display: flex;
+	align-items: flex-end;
+	padding: 24px;
+	box-sizing: border-box;
+}
+
+.tpd-event-modal-banner::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(to bottom, rgba(15,23,42,0.1) 0%, rgba(15,23,42,0.88) 100%);
+}
+
+.tpd-event-modal-banner h3 {
+	position: relative;
+	z-index: 2;
+	color: #ffffff;
+	font-size: 22px;
+	font-weight: 800;
+	margin: 0;
+	line-height: 1.3;
+	text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+
+.tpd-event-modal-close {
+	position: absolute;
+	top: 14px;
+	right: 14px;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	background: rgba(15, 23, 42, 0.6);
+	color: #ffffff;
+	border: none;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	font-size: 15px;
+	z-index: 10;
+	transition: background 0.15s ease;
+}
+
+.tpd-event-modal-close:hover {
+	background: #ef4444;
+}
+
+.tpd-event-modal-content {
+	padding: 24px;
+}
+
+.tpd-event-modal-meta-grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 12px;
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	border-radius: 10px;
+	padding: 14px;
+	margin-bottom: 20px;
+}
+
+.tpd-event-modal-meta-item span {
+	display: block;
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	color: #64748b;
+	margin-bottom: 4px;
+}
+
+.tpd-event-modal-meta-item strong {
+	font-size: 13.5px;
+	color: #00798c;
+}
+
+.tpd-event-modal-desc-text {
+	font-size: 14px;
+	line-height: 1.6;
+	color: #334155;
+	margin: 0 0 24px;
+}
+
+.tpd-event-modal-actions {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 12px;
+}
+
+@media (max-width: 1024px) {
+	.tpd-events-grid {
+		grid-template-columns: repeat(2, 1fr) !important;
+	}
+}
+
+@media (max-width: 640px) {
+	.tpd-events-grid {
+		grid-template-columns: 1fr !important;
+	}
+	.tpd-event-modal-meta-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+
 

@@ -287,28 +287,60 @@ class TPD_Tool_Seeder {
 	private static function seed_events() {
 		$events = array(
 			array(
-				'title'  => 'Luxury Europe Deep Dive',
-				'slug'   => 'luxury-europe-deep-dive',
-				'month'  => 'OCT',
-				'day'    => '14',
-				'series' => 'Vendor Training Series',
-				'time'   => '12:00 PM - 1:00 PM ET · Virtual',
+				'title'      => 'CCRA PowerSolutions Atlanta',
+				'slug'       => 'ccra-powersolutions-atlanta',
+				'start_date' => '10-28-2026',
+				'end_date'   => '10-28-2026',
+				'location'   => 'Atlanta',
+				'image'      => 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&auto=format&fit=crop&q=80',
+				'desc'       => 'Join us for a dynamic, invitation-only experience designed to bring travel advisor...',
+				'event_url'  => '#',
+				'month'      => 'OCT',
+				'day'        => '28',
+				'series'     => 'Trade Summit',
+				'time'       => '9:00 AM - 5:00 PM EST',
 			),
 			array(
-				'title'  => 'Selling River Cruises in 2026',
-				'slug'   => 'selling-river-cruises-in-2026',
-				'month'  => 'OCT',
-				'day'    => '16',
-				'series' => 'TARC Talk Webinar',
-				'time'   => '2:00 PM - 3:00 PM ET · Virtual',
+				'title'      => 'Dream Vacations and CruiseOne 2026 National Confer',
+				'slug'       => 'dream-vacations-cruiseone-national-conference',
+				'start_date' => '11-01-2026',
+				'end_date'   => '11-08-2026',
+				'location'   => 'Cape Canaveral',
+				'image'      => 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80',
+				'desc'       => 'The conference will offer a variety of general sessions, workshops and networking events...',
+				'event_url'  => '#',
+				'month'      => 'NOV',
+				'day'        => '01',
+				'series'     => 'National Conference',
+				'time'       => 'Annual Summit',
 			),
 			array(
-				'title'  => 'The Power of Destination Specialist',
-				'slug'   => 'power-of-destination-specialist',
-				'month'  => 'OCT',
-				'day'    => '22',
-				'series' => 'Panel Discussion',
-				'time'   => '12:00 PM - 1:30 PM ET · Virtual',
+				'title'      => 'Global European Marketplace',
+				'slug'       => 'global-european-marketplace',
+				'start_date' => '11-02-2026',
+				'end_date'   => '11-06-2025',
+				'location'   => 'London',
+				'image'      => 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&auto=format&fit=crop&q=80',
+				'desc'       => 'The Global European Marketplace is ETOA\'s influential annual travel trade event...',
+				'event_url'  => '#',
+				'month'      => 'NOV',
+				'day'        => '02',
+				'series'     => 'European Marketplace',
+				'time'       => '10:00 AM - 6:00 PM GMT',
+			),
+			array(
+				'title'      => 'WTM London',
+				'slug'       => 'wtm-london',
+				'start_date' => '11-03-2026',
+				'end_date'   => '11-05-2025',
+				'location'   => 'London',
+				'image'      => 'https://images.unsplash.com/photo-1505761671935-60b3a7427bad?w=800&auto=format&fit=crop&q=80',
+				'desc'       => 'For decades, World Travel Market London has been at the heart of global travel and...',
+				'event_url'  => '#',
+				'month'      => 'NOV',
+				'day'        => '03',
+				'series'     => 'World Travel Market',
+				'time'       => '9:30 AM - 6:00 PM GMT',
 			),
 		);
 
@@ -317,13 +349,21 @@ class TPD_Tool_Seeder {
 			$pid = $existing ? $existing->ID : 0;
 			if ( ! $pid ) {
 				$pid = wp_insert_post( array(
-					'post_type'   => 'tpd_event',
-					'post_title'  => $ev['title'],
-					'post_name'   => $ev['slug'],
-					'post_status' => 'publish',
+					'post_type'    => 'tpd_event',
+					'post_title'   => $ev['title'],
+					'post_name'    => $ev['slug'],
+					'post_content' => $ev['desc'],
+					'post_status'  => 'publish',
 				) );
 			}
 			if ( $pid && ! is_wp_error( $pid ) ) {
+				update_post_meta( $pid, '_tpd_event_start_date', $ev['start_date'] );
+				update_post_meta( $pid, '_tpd_event_end_date', $ev['end_date'] );
+				update_post_meta( $pid, '_tpd_event_date', $ev['start_date'] );
+				update_post_meta( $pid, '_tpd_event_location', $ev['location'] );
+				update_post_meta( $pid, '_tpd_event_image', $ev['image'] );
+				update_post_meta( $pid, '_tpd_event_desc', $ev['desc'] );
+				update_post_meta( $pid, '_tpd_event_url', $ev['event_url'] );
 				update_post_meta( $pid, '_tpd_event_month', $ev['month'] );
 				update_post_meta( $pid, '_tpd_event_day', $ev['day'] );
 				update_post_meta( $pid, '_tpd_event_series', $ev['series'] );

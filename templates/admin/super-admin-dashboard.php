@@ -1144,25 +1144,51 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 					<h3 class="tpd-sa-card-title"><?php esc_html_e( 'Create New Event / Webinar', 'tpd-tool' ); ?></h3>
 					<form class="tpd-sa-quick-content-form">
 						<input type="hidden" name="content_type" value="event">
+						<div class="tpd-form-grid-2">
+							<div class="tpd-form-group">
+								<label><?php esc_html_e( 'Event Title *', 'tpd-tool' ); ?></label>
+								<input type="text" name="title" required placeholder="e.g. CCRA PowerSolutions Atlanta" class="tpd-input">
+							</div>
+							<div class="tpd-form-group">
+								<label><?php esc_html_e( 'Event Cover / Banner Image URL', 'tpd-tool' ); ?></label>
+								<div style="display:flex; gap:8px;">
+									<input type="url" name="event_image" id="tpd_sa_event_image" placeholder="https://images.unsplash.com/..." class="tpd-input">
+									<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline tpd-media-upload-btn" data-target="#tpd_sa_event_image" style="white-space:nowrap;">
+										<i class="fa-regular fa-image"></i> Media
+									</button>
+								</div>
+							</div>
+						</div>
+
 						<div class="tpd-form-grid-3">
 							<div class="tpd-form-group">
-								<label><?php esc_html_e( 'Event / Webinar Title *', 'tpd-tool' ); ?></label>
-								<input type="text" name="title" required placeholder="e.g. 2026 Mediterranean Masterclass" class="tpd-input">
+								<label><?php esc_html_e( 'Start Date *', 'tpd-tool' ); ?></label>
+								<input type="date" name="event_start_date" required value="<?php echo esc_attr( gmdate( 'Y-m-d', strtotime( '+7 days' ) ) ); ?>" class="tpd-input">
 							</div>
 							<div class="tpd-form-group">
-								<label><?php esc_html_e( 'Event Date *', 'tpd-tool' ); ?></label>
-								<input type="date" name="event_date" required value="<?php echo esc_attr( gmdate( 'Y-m-d', strtotime( '+7 days' ) ) ); ?>" class="tpd-input">
+								<label><?php esc_html_e( 'End Date', 'tpd-tool' ); ?></label>
+								<input type="date" name="event_end_date" value="<?php echo esc_attr( gmdate( 'Y-m-d', strtotime( '+7 days' ) ) ); ?>" class="tpd-input">
 							</div>
 							<div class="tpd-form-group">
-								<label><?php esc_html_e( 'Event Time', 'tpd-tool' ); ?></label>
-								<input type="text" name="event_time" value="2:00 PM EST" class="tpd-input">
+								<label><?php esc_html_e( 'Location / City *', 'tpd-tool' ); ?></label>
+								<input type="text" name="event_location" required value="Atlanta" placeholder="e.g. Atlanta, London, Virtual" class="tpd-input">
 							</div>
 						</div>
-						<div class="tpd-form-group">
-							<label><?php esc_html_e( 'Series / Host Name', 'tpd-tool' ); ?></label>
-							<input type="text" name="event_series" value="TARC Partner Webinar" class="tpd-input">
+
+						<div class="tpd-form-grid-2">
+							<div class="tpd-form-group">
+								<label><?php esc_html_e( 'Registration / Event URL', 'tpd-tool' ); ?></label>
+								<input type="url" name="event_url" placeholder="https://" value="#" class="tpd-input">
+							</div>
+							<div class="tpd-form-group">
+								<label><?php esc_html_e( 'Brief Description / Excerpt', 'tpd-tool' ); ?></label>
+								<input type="text" name="event_desc" placeholder="Join us for a dynamic, invitation-only experience..." class="tpd-input">
+							</div>
 						</div>
-						<button type="submit" class="tpd-btn tpd-btn-darkblue" style="background:#164e87;"><?php esc_html_e( 'Publish Event', 'tpd-tool' ); ?></button>
+
+						<button type="submit" class="tpd-btn tpd-btn-darkblue" style="background:#164e87; margin-top:8px;">
+							<i class="fa-solid fa-calendar-plus"></i> <?php esc_html_e( 'Publish Event to Dashboards', 'tpd-tool' ); ?>
+						</button>
 					</form>
 				</div>
 
@@ -1172,8 +1198,10 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 						<thead>
 							<tr>
 								<th>S.No.</th>
+								<th>Banner</th>
 								<th>Event Title</th>
-								<th>Date & Time</th>
+								<th>Dates (Start - End)</th>
+								<th>Location</th>
 								<th>Action</th>
 							</tr>
 						</thead>
@@ -1181,13 +1209,21 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 							<?php
 							$ev_i = 1;
 							foreach ( $events as $ev ) :
+								$ev_img = get_post_meta( $ev->ID, '_tpd_event_image', true ) ?: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=120&auto=format&fit=crop&q=80';
+								$ev_start = get_post_meta( $ev->ID, '_tpd_event_start_date', true ) ?: get_post_meta( $ev->ID, '_tpd_event_date', true );
+								$ev_end = get_post_meta( $ev->ID, '_tpd_event_end_date', true ) ?: $ev_start;
+								$ev_loc = get_post_meta( $ev->ID, '_tpd_event_location', true ) ?: 'Virtual';
 							?>
 								<tr id="sa-post-row-<?php echo esc_attr( $ev->ID ); ?>">
 									<td><?php echo esc_html( $ev_i++ ); ?></td>
-									<td><strong><?php echo esc_html( $ev->post_title ); ?></strong></td>
-									<td><?php echo esc_html( get_post_meta( $ev->ID, '_tpd_event_date', true ) . ' ' . get_post_meta( $ev->ID, '_tpd_event_time', true ) ); ?></td>
 									<td>
-										<button type="button" class="tpd-act-btn tpd-act-del tpd-delete-post-btn" data-post-id="<?php echo esc_attr( $ev->ID ); ?>"><i class="fa-regular fa-trash-can"></i></button>
+										<img src="<?php echo esc_url( $ev_img ); ?>" style="width:52px; height:34px; object-fit:cover; border-radius:4px; border:1px solid #cbd5e1;">
+									</td>
+									<td><strong><?php echo esc_html( $ev->post_title ); ?></strong></td>
+									<td><?php echo esc_html( $ev_start . ( $ev_end !== $ev_start ? ' to ' . $ev_end : '' ) ); ?></td>
+									<td><i class="fa-solid fa-location-dot text-blue"></i> <?php echo esc_html( $ev_loc ); ?></td>
+									<td>
+										<button type="button" class="tpd-act-btn tpd-act-del tpd-delete-post-btn" data-post-id="<?php echo esc_attr( $ev->ID ); ?>" title="Delete event"><i class="fa-regular fa-trash-can"></i></button>
 									</td>
 								</tr>
 							<?php endforeach; ?>

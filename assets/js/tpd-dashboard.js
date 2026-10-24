@@ -1219,6 +1219,81 @@
 				$toast.fadeOut(300, function() { $(this).remove(); });
 			}, 3500);
 		}
+
+		// 22. Upcoming Events Card Click / Modal Handler
+		$(document).on('click', '.tpd-event-btn-view', function(e) {
+			var href = $(this).attr('href');
+			var link = $(this).data('link');
+
+			// If it's a valid external URL, let it open normally
+			if (link && link !== '#' && link !== 'javascript:void(0);' && href && href !== '#' && href !== 'javascript:void(0);') {
+				return;
+			}
+
+			e.preventDefault();
+			var title = $(this).data('title') || 'Upcoming Event';
+			var start = $(this).data('start') || '';
+			var end   = $(this).data('end') || '';
+			var loc   = $(this).data('loc') || '';
+			var desc  = $(this).data('desc') || '';
+			var img   = $(this).data('img') || '';
+
+			var targetUrl = (link && link !== '#') ? link : '#';
+			var actionBtnHtml = (targetUrl && targetUrl !== '#') 
+				? '<a href="' + targetUrl + '" target="_blank" rel="noopener noreferrer" class="tpd-btn tpd-btn-primary" style="background:#00798c;border-color:#00798c;color:#fff;padding:9px 20px;border-radius:8px;font-weight:700;text-decoration:none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Register Now</a>'
+				: '<button type="button" class="tpd-btn tpd-btn-primary tpd-event-modal-add-cal" style="background:#00798c;border-color:#00798c;color:#fff;padding:9px 20px;border-radius:8px;font-weight:700;cursor:pointer;"><i class="fa-solid fa-calendar-plus"></i> Add to Calendar</button>';
+
+			var modalHtml = 
+				'<div class="tpd-event-modal-backdrop" id="tpd-active-event-modal">' +
+					'<div class="tpd-event-modal-dialog">' +
+						'<button type="button" class="tpd-event-modal-close" aria-label="Close">&times;</button>' +
+						'<div class="tpd-event-modal-banner" style="background-image: url(\'' + img + '\');">' +
+							'<h3>' + title + '</h3>' +
+						'</div>' +
+						'<div class="tpd-event-modal-content">' +
+							'<div class="tpd-event-modal-meta-grid">' +
+								'<div class="tpd-event-modal-meta-item">' +
+									'<span>Start Date</span>' +
+									'<strong>' + (start || 'TBD') + '</strong>' +
+								'</div>' +
+								'<div class="tpd-event-modal-meta-item">' +
+									'<span>End Date</span>' +
+									'<strong>' + (end || 'TBD') + '</strong>' +
+								'</div>' +
+								'<div class="tpd-event-modal-meta-item">' +
+									'<span>Location</span>' +
+									'<strong><i class="fa-solid fa-location-dot"></i> ' + (loc || 'Virtual') + '</strong>' +
+								'</div>' +
+							'</div>' +
+							'<p class="tpd-event-modal-desc-text">' + (desc || 'Join industry leaders and peers at this premier travel conference.') + '</p>' +
+							'<div class="tpd-event-modal-actions">' +
+								'<button type="button" class="tpd-btn tpd-btn-outline tpd-event-modal-close-btn" style="border:1px solid #cbd5e1;background:#fff;padding:9px 18px;border-radius:8px;font-weight:600;cursor:pointer;">Close</button>' +
+								actionBtnHtml +
+							'</div>' +
+						'</div>' +
+					'</div>' +
+				'</div>';
+
+			$('#tpd-active-event-modal').remove();
+			$('body').append(modalHtml);
+		});
+
+		$(document).on('click', '.tpd-event-modal-close, .tpd-event-modal-close-btn', function(e) {
+			e.preventDefault();
+			$('#tpd-active-event-modal').fadeOut(180, function() { $(this).remove(); });
+		});
+
+		$(document).on('click', '.tpd-event-modal-backdrop', function(e) {
+			if ($(e.target).hasClass('tpd-event-modal-backdrop')) {
+				$('#tpd-active-event-modal').fadeOut(180, function() { $(this).remove(); });
+			}
+		});
+
+		$(document).on('click', '.tpd-event-modal-add-cal', function(e) {
+			e.preventDefault();
+			$(this).html('<i class="fa-solid fa-check"></i> Added to Calendar').prop('disabled', true);
+			showToast('<i class="fa-solid fa-calendar-check"></i> Event saved to your calendar!');
+		});
 	});
 
 })(jQuery);

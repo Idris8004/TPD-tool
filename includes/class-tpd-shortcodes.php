@@ -21,8 +21,8 @@ class TPD_Tool_Shortcodes {
 		add_shortcode( 'tpd_login', array( __CLASS__, 'render_advisor_login' ) );
 		add_shortcode( 'tpd_supplier_login', array( __CLASS__, 'render_supplier_login' ) );
 		add_shortcode( 'tpd_chat_inbox', array( __CLASS__, 'render_chat_inbox' ) );
-		add_shortcode( 'tpd_saved_suppliers', array( __CLASS__, 'render_saved_suppliers' ) );
 		add_shortcode( 'tpd_events_list', array( __CLASS__, 'render_events_list' ) );
+		add_shortcode( 'tpd_upcoming_events', array( __CLASS__, 'render_events_list' ) );
 
 		// Client Trip Inquiry Form & Inquire Button Shortcodes
 		add_shortcode( 'tpd_advisor_inquiry_form', array( __CLASS__, 'render_inquiry_form' ) );
@@ -178,28 +178,29 @@ class TPD_Tool_Shortcodes {
 	}
 
 	public static function render_events_list( $atts ) {
-		ob_start();
-		$events = TPD_Tool_Events::get_upcoming_events();
-		?>
-		<div class="tpd-events-compact-list">
-			<?php foreach ( $events as $ev ) : ?>
-				<div class="tpd-event-row">
-					<div class="tpd-event-date-box">
-						<span class="tpd-ed-month"><?php echo esc_html( $ev['month'] ); ?></span>
-						<span class="tpd-ed-day"><?php echo esc_html( $ev['day'] ); ?></span>
-					</div>
-					<div class="tpd-event-info">
-						<h5><?php echo esc_html( $ev['title'] ); ?></h5>
-						<p><?php echo esc_html( $ev['series'] ); ?> · <?php echo esc_html( $ev['time'] ); ?></p>
-					</div>
-					<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline tpd-reg-event-btn" data-event-id="<?php echo esc_attr( $ev['id'] ); ?>">
-						<?php esc_html_e( 'Register', 'tpd-tool' ); ?>
-					</button>
-				</div>
-			<?php endforeach; ?>
-		</div>
-		<?php
-		return ob_get_clean();
+		$atts = shortcode_atts(
+			array(
+				'title'       => __( 'Upcoming Events', 'tpd-tool' ),
+				'show_title'  => 'yes',
+				'limit'       => 4,
+				'columns'     => 4,
+				'button_text' => __( 'View Event', 'tpd-tool' ),
+				'class'       => '',
+			),
+			$atts,
+			'tpd_events_list'
+		);
+
+		$show_title = ! in_array( strtolower( (string) $atts['show_title'] ), array( 'no', '0', 'false' ), true );
+
+		return class_exists( 'TPD_Tool_Events' ) ? TPD_Tool_Events::render_events_grid( array(
+			'title'       => $atts['title'],
+			'show_title'  => $show_title,
+			'limit'       => absint( $atts['limit'] ) ?: 4,
+			'columns'     => absint( $atts['columns'] ) ?: 4,
+			'button_text' => $atts['button_text'],
+			'extra_class' => sanitize_html_class( $atts['class'] ),
+		) ) : '';
 	}
 
 	public static function render_advisor_registration( $atts ) {

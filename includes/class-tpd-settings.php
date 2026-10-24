@@ -1248,11 +1248,25 @@ class TPD_Tool_Settings {
 		}
 
 		if ( 'event' === $content_type ) {
-			$ev_date   = isset( $_POST['event_date'] ) ? sanitize_text_field( wp_unslash( $_POST['event_date'] ) ) : gmdate( 'Y-m-d', strtotime( '+7 days' ) );
-			$ev_time   = isset( $_POST['event_time'] ) ? sanitize_text_field( wp_unslash( $_POST['event_time'] ) ) : '2:00 PM EST';
-			$ev_series = isset( $_POST['event_series'] ) ? sanitize_text_field( wp_unslash( $_POST['event_series'] ) ) : 'TARC Partner Webinar';
-			$ts        = strtotime( $ev_date );
-			update_post_meta( $pid, '_tpd_event_date', $ev_date );
+			$ev_start   = isset( $_POST['event_start_date'] ) ? sanitize_text_field( wp_unslash( $_POST['event_start_date'] ) ) : ( isset( $_POST['event_date'] ) ? sanitize_text_field( wp_unslash( $_POST['event_date'] ) ) : gmdate( 'Y-m-d' ) );
+			$ev_end     = isset( $_POST['event_end_date'] ) ? sanitize_text_field( wp_unslash( $_POST['event_end_date'] ) ) : $ev_start;
+			$ev_loc     = isset( $_POST['event_location'] ) ? sanitize_text_field( wp_unslash( $_POST['event_location'] ) ) : 'Virtual';
+			$ev_img     = isset( $_POST['event_image'] ) ? esc_url_raw( wp_unslash( $_POST['event_image'] ) ) : '';
+			$ev_url     = isset( $_POST['event_url'] ) ? esc_url_raw( wp_unslash( $_POST['event_url'] ) ) : '#';
+			$ev_desc    = isset( $_POST['event_desc'] ) ? sanitize_textarea_field( wp_unslash( $_POST['event_desc'] ) ) : $body;
+			$ev_time    = isset( $_POST['event_time'] ) ? sanitize_text_field( wp_unslash( $_POST['event_time'] ) ) : 'All Day';
+			$ev_series  = isset( $_POST['event_series'] ) ? sanitize_text_field( wp_unslash( $_POST['event_series'] ) ) : 'Trade Event';
+			$ts         = strtotime( $ev_start );
+
+			update_post_meta( $pid, '_tpd_event_start_date', $ev_start );
+			update_post_meta( $pid, '_tpd_event_end_date', $ev_end );
+			update_post_meta( $pid, '_tpd_event_date', $ev_start );
+			update_post_meta( $pid, '_tpd_event_location', $ev_loc );
+			if ( $ev_img ) {
+				update_post_meta( $pid, '_tpd_event_image', $ev_img );
+			}
+			update_post_meta( $pid, '_tpd_event_url', $ev_url );
+			update_post_meta( $pid, '_tpd_event_desc', $ev_desc );
 			update_post_meta( $pid, '_tpd_event_month', strtoupper( gmdate( 'M', $ts ) ) );
 			update_post_meta( $pid, '_tpd_event_day', gmdate( 'd', $ts ) );
 			update_post_meta( $pid, '_tpd_event_time', $ev_time );
