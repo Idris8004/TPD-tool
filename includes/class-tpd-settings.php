@@ -444,6 +444,102 @@ class TPD_Tool_Settings {
 		return get_option( self::OPT_AD_BANNERS, array() );
 	}
 
+	/**
+	 * Get Dynamic Left Sidebar Ads (Under Help & Support)
+	 * Returns array of active or all ads for the portal sidebar
+	 */
+	public static function get_left_sidebar_ads() {
+		$cfg = self::get_ad_banners();
+		if ( ! empty( $cfg['left_sidebar_ads'] ) && is_array( $cfg['left_sidebar_ads'] ) ) {
+			return $cfg['left_sidebar_ads'];
+		}
+
+		// Fallback / defaults based on TPD portal design
+		$defaults = array(
+			array(
+				'id'        => 'left_1',
+				'image_url' => ! empty( $cfg['left_ad_1_image'] ) ? $cfg['left_ad_1_image'] : 'https://images.unsplash.com/photo-1548574505-5e239809ee19?w=400&auto=format&fit=crop&q=80',
+				'link_url'  => ! empty( $cfg['left_ad_1_link_url'] ) ? $cfg['left_ad_1_link_url'] : '#tpd-view-suppliers',
+				'alt_text'  => 'Railbookers',
+				'target'    => '_blank',
+				'status'    => 'active',
+			),
+			array(
+				'id'        => 'left_2',
+				'image_url' => ! empty( $cfg['left_ad_2_image'] ) ? $cfg['left_ad_2_image'] : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&auto=format&fit=crop&q=80',
+				'link_url'  => ! empty( $cfg['left_ad_2_link_url'] ) ? $cfg['left_ad_2_link_url'] : '#tpd-view-suppliers',
+				'alt_text'  => 'North & Leisure',
+				'target'    => '_blank',
+				'status'    => 'active',
+			),
+			array(
+				'id'        => 'left_3',
+				'image_url' => ! empty( $cfg['left_ad_3_image'] ) ? $cfg['left_ad_3_image'] : 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&auto=format&fit=crop&q=80',
+				'link_url'  => ! empty( $cfg['left_ad_3_link_url'] ) ? $cfg['left_ad_3_link_url'] : '#tpd-view-suppliers',
+				'alt_text'  => 'Titanium Tours',
+				'target'    => '_blank',
+				'status'    => 'active',
+			),
+			array(
+				'id'        => 'left_4',
+				'image_url' => ! empty( $cfg['left_ad_4_image'] ) ? $cfg['left_ad_4_image'] : 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?w=400&auto=format&fit=crop&q=80',
+				'link_url'  => ! empty( $cfg['left_ad_4_link_url'] ) ? $cfg['left_ad_4_link_url'] : '#tpd-view-suppliers',
+				'alt_text'  => 'Arch RoamRight',
+				'target'    => '_blank',
+				'status'    => 'active',
+			),
+		);
+		return $defaults;
+	}
+
+	/**
+	 * Get Dynamic Bottom Strip Banner Ads (Overview Footer)
+	 * Returns array of panoramic/horizontal ad banners
+	 */
+	public static function get_bottom_strip_ads() {
+		$cfg = self::get_ad_banners();
+		if ( ! empty( $cfg['bottom_strip_ads'] ) && is_array( $cfg['bottom_strip_ads'] ) ) {
+			return $cfg['bottom_strip_ads'];
+		}
+
+		// Fallback / defaults based on TPD portal design
+		$defaults = array(
+			array(
+				'id'        => 'bottom_1',
+				'image_url' => ! empty( $cfg['bottom_ad_1_image'] ) ? $cfg['bottom_ad_1_image'] : 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=600&auto=format&fit=crop&q=80',
+				'link_url'  => ! empty( $cfg['bottom_ad_1_link_url'] ) ? $cfg['bottom_ad_1_link_url'] : '#tpd-view-suppliers',
+				'alt_text'  => 'Indian Vistas',
+				'target'    => '_blank',
+				'status'    => 'active',
+			),
+			array(
+				'id'        => 'bottom_2',
+				'image_url' => ! empty( $cfg['bottom_ad_2_image'] ) ? $cfg['bottom_ad_2_image'] : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=80',
+				'link_url'  => ! empty( $cfg['bottom_ad_2_link_url'] ) ? $cfg['bottom_ad_2_link_url'] : '#tpd-view-suppliers',
+				'alt_text'  => 'North & Leisure',
+				'target'    => '_blank',
+				'status'    => 'active',
+			),
+			array(
+				'id'        => 'bottom_3',
+				'image_url' => ! empty( $cfg['bottom_ad_3_image'] ) ? $cfg['bottom_ad_3_image'] : 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=600&auto=format&fit=crop&q=80',
+				'link_url'  => ! empty( $cfg['bottom_ad_3_link_url'] ) ? $cfg['bottom_ad_3_link_url'] : '#tpd-view-suppliers',
+				'alt_text'  => 'Wanderlux Collection',
+				'target'    => '_blank',
+				'status'    => 'active',
+			),
+			array(
+				'id'        => 'bottom_4',
+				'image_url' => ! empty( $cfg['bottom_ad_4_image'] ) ? $cfg['bottom_ad_4_image'] : 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format&fit=crop&q=80',
+				'link_url'  => ! empty( $cfg['bottom_ad_4_link_url'] ) ? $cfg['bottom_ad_4_link_url'] : '#tpd-view-suppliers',
+				'alt_text'  => 'Hilton All-Inclusive',
+				'target'    => '_blank',
+				'status'    => 'active',
+			),
+		);
+		return $defaults;
+	}
+
 	public static function get_faqs() {
 		self::ensure_defaults();
 		return get_option( self::OPT_FAQS, array() );
@@ -987,7 +1083,7 @@ class TPD_Tool_Settings {
 	}
 
 	/**
-	 * AJAX: Save Ad Banners & Hero Config (Supports 4 Left Sidebar Ads & 4 Bottom Grid Ads)
+	 * AJAX: Save Dynamic Ad Banners & Hero Config (WP Media Library & Bannerize Integration)
 	 */
 	public static function ajax_admin_save_ad_banners() {
 		check_ajax_referer( 'tpd_admin_nonce', 'nonce' );
@@ -996,36 +1092,102 @@ class TPD_Tool_Settings {
 		}
 
 		$ads = self::get_ad_banners();
-		$keys = array(
-			'welcome_title', 'welcome_quote', 'welcome_bg',
-			'ad_1_tag', 'ad_1_title', 'ad_1_subtitle', 'ad_1_image', 'ad_1_link_text', 'ad_1_link_url',
-			'ad_2_tag', 'ad_2_title', 'ad_2_subtitle', 'ad_2_image', 'ad_2_link_text', 'ad_2_link_url',
-		);
 
-		// Include 4x Left and 4x Bottom ad fields
-		for ( $i = 1; $i <= 4; $i++ ) {
-			$keys[] = "left_ad_{$i}_tag";
-			$keys[] = "left_ad_{$i}_title";
-			$keys[] = "left_ad_{$i}_subtitle";
-			$keys[] = "left_ad_{$i}_image";
-			$keys[] = "left_ad_{$i}_link_text";
-			$keys[] = "left_ad_{$i}_link_url";
-
-			$keys[] = "bottom_ad_{$i}_tag";
-			$keys[] = "bottom_ad_{$i}_title";
-			$keys[] = "bottom_ad_{$i}_subtitle";
-			$keys[] = "bottom_ad_{$i}_image";
-			$keys[] = "bottom_ad_{$i}_link_text";
-			$keys[] = "bottom_ad_{$i}_link_url";
+		// Welcome Banner fields
+		if ( isset( $_POST['welcome_title'] ) ) {
+			$ads['welcome_title'] = sanitize_text_field( wp_unslash( $_POST['welcome_title'] ) );
+		}
+		if ( isset( $_POST['welcome_quote'] ) ) {
+			$ads['welcome_quote'] = sanitize_text_field( wp_unslash( $_POST['welcome_quote'] ) );
+		}
+		if ( isset( $_POST['welcome_bg'] ) ) {
+			$ads['welcome_bg'] = esc_url_raw( wp_unslash( $_POST['welcome_bg'] ) );
 		}
 
-		foreach ( $keys as $k ) {
-			if ( isset( $_POST[ $k ] ) ) {
-				$ads[ $k ] = sanitize_text_field( wp_unslash( $_POST[ $k ] ) );
+		// 1. Dynamic Left Sidebar Ads (Under Help & Support)
+		$has_left_payload = false;
+		$left_ads_raw     = array();
+		if ( isset( $_POST['left_sidebar_ads_json'] ) ) {
+			$has_left_payload = true;
+			$decoded = json_decode( wp_unslash( $_POST['left_sidebar_ads_json'] ), true );
+			if ( is_array( $decoded ) ) {
+				$left_ads_raw = $decoded;
+			}
+		} elseif ( isset( $_POST['left_sidebar_ads'] ) && is_array( $_POST['left_sidebar_ads'] ) ) {
+			$has_left_payload = true;
+			$left_ads_raw = wp_unslash( $_POST['left_sidebar_ads'] );
+		}
+
+		if ( $has_left_payload ) {
+			$clean_left = array();
+			foreach ( $left_ads_raw as $item ) {
+				$img = ! empty( $item['image_url'] ) ? esc_url_raw( trim( $item['image_url'] ) ) : '';
+				if ( empty( $img ) ) {
+					continue;
+				}
+				$clean_left[] = array(
+					'id'        => ! empty( $item['id'] ) ? sanitize_key( $item['id'] ) : 'left_' . uniqid(),
+					'image_url' => $img,
+					'link_url'  => ! empty( $item['link_url'] ) ? esc_url_raw( trim( $item['link_url'] ) ) : '#tpd-view-suppliers',
+					'alt_text'  => ! empty( $item['alt_text'] ) ? sanitize_text_field( trim( $item['alt_text'] ) ) : 'Partner Sponsor',
+					'target'    => ( ! empty( $item['target'] ) && '_self' === $item['target'] ) ? '_self' : '_blank',
+					'status'    => ( isset( $item['status'] ) && 'inactive' === $item['status'] ) ? 'inactive' : 'active',
+				);
+			}
+			$ads['left_sidebar_ads'] = $clean_left;
+		}
+
+		// 2. Dynamic Bottom Strip Banner Ads (Overview Footer)
+		$has_bottom_payload = false;
+		$bottom_ads_raw     = array();
+		if ( isset( $_POST['bottom_strip_ads_json'] ) ) {
+			$has_bottom_payload = true;
+			$decoded_b = json_decode( wp_unslash( $_POST['bottom_strip_ads_json'] ), true );
+			if ( is_array( $decoded_b ) ) {
+				$bottom_ads_raw = $decoded_b;
+			}
+		} elseif ( isset( $_POST['bottom_strip_ads'] ) && is_array( $_POST['bottom_strip_ads'] ) ) {
+			$has_bottom_payload = true;
+			$bottom_ads_raw = wp_unslash( $_POST['bottom_strip_ads'] );
+		}
+
+		if ( $has_bottom_payload ) {
+			$clean_bottom = array();
+			foreach ( $bottom_ads_raw as $bitem ) {
+				$bimg = ! empty( $bitem['image_url'] ) ? esc_url_raw( trim( $bitem['image_url'] ) ) : '';
+				if ( empty( $bimg ) ) {
+					continue;
+				}
+				$clean_bottom[] = array(
+					'id'        => ! empty( $bitem['id'] ) ? sanitize_key( $bitem['id'] ) : 'bottom_' . uniqid(),
+					'image_url' => $bimg,
+					'link_url'  => ! empty( $bitem['link_url'] ) ? esc_url_raw( trim( $bitem['link_url'] ) ) : '#tpd-view-suppliers',
+					'alt_text'  => ! empty( $bitem['alt_text'] ) ? sanitize_text_field( trim( $bitem['alt_text'] ) ) : 'Partner Offer',
+					'target'    => ( ! empty( $bitem['target'] ) && '_self' === $bitem['target'] ) ? '_self' : '_blank',
+					'status'    => ( isset( $bitem['status'] ) && 'inactive' === $bitem['status'] ) ? 'inactive' : 'active',
+				);
+			}
+			$ads['bottom_strip_ads'] = $clean_bottom;
+		}
+
+		// Backwards-compatible field mapping
+		for ( $i = 1; $i <= 4; $i++ ) {
+			if ( isset( $_POST["left_ad_{$i}_image"] ) ) {
+				$ads["left_ad_{$i}_image"] = esc_url_raw( wp_unslash( $_POST["left_ad_{$i}_image"] ) );
+			}
+			if ( isset( $_POST["left_ad_{$i}_link_url"] ) ) {
+				$ads["left_ad_{$i}_link_url"] = esc_url_raw( wp_unslash( $_POST["left_ad_{$i}_link_url"] ) );
+			}
+			if ( isset( $_POST["bottom_ad_{$i}_image"] ) ) {
+				$ads["bottom_ad_{$i}_image"] = esc_url_raw( wp_unslash( $_POST["bottom_ad_{$i}_image"] ) );
+			}
+			if ( isset( $_POST["bottom_ad_{$i}_link_url"] ) ) {
+				$ads["bottom_ad_{$i}_link_url"] = esc_url_raw( wp_unslash( $_POST["bottom_ad_{$i}_link_url"] ) );
 			}
 		}
+
 		update_option( self::OPT_AD_BANNERS, $ads );
-		wp_send_json_success( array( 'message' => 'Dashboard welcome banner & 8 sponsored ad spaces updated!' ) );
+		wp_send_json_success( array( 'message' => 'Dashboard banner ads successfully saved and published!' ) );
 	}
 
 	/**

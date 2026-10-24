@@ -150,6 +150,29 @@ $all_directory_listings = get_posts( array(
 					</a>
 				</li>
 			</ul>
+
+			<!-- Dynamic Left Navigation Sidebar Square Ads (Directly Under Help & Support) -->
+			<?php
+			$left_sidebar_ads = TPD_Tool_Settings::get_left_sidebar_ads();
+			if ( ! empty( $left_sidebar_ads ) ) :
+			?>
+				<div class="tpd-sb-ads-container">
+					<?php foreach ( $left_sidebar_ads as $lad ) :
+						if ( empty( $lad['image_url'] ) || ( isset( $lad['status'] ) && 'inactive' === $lad['status'] ) ) {
+							continue;
+						}
+						$lad_link   = ! empty( $lad['link_url'] ) ? $lad['link_url'] : '#';
+						$lad_target = ( ! empty( $lad['target'] ) && '_blank' === $lad['target'] ) || ( strpos( $lad_link, 'http' ) === 0 ) ? '_blank' : '_self';
+						$lad_alt    = ! empty( $lad['alt_text'] ) ? $lad['alt_text'] : 'Partner Sponsor';
+					?>
+						<div class="tpd-sb-ad-card">
+							<a href="<?php echo esc_url( $lad_link ); ?>" target="<?php echo esc_attr( $lad_target ); ?>" rel="noopener noreferrer" title="<?php echo esc_attr( $lad_alt ); ?>">
+								<img src="<?php echo esc_url( $lad['image_url'] ); ?>" alt="<?php echo esc_attr( $lad_alt ); ?>" class="tpd-sb-ad-img">
+							</a>
+						</div>
+					<?php endforeach; ?>
+				</div>
+			<?php endif; ?>
 		</nav>
 
 		<div class="tpd-sb-bottom-actions">
@@ -391,6 +414,31 @@ $all_directory_listings = get_posts( array(
 						</div>
 					</div>
 				</div>
+
+				<!-- Dynamic Bottom Banner Ads (Overview Workspace Footer) -->
+				<?php
+				$bottom_strip_ads = TPD_Tool_Settings::get_bottom_strip_ads();
+				if ( ! empty( $bottom_strip_ads ) ) :
+				?>
+					<div class="tpd-overview-bottom-ads-strip" style="margin-top:28px;">
+						<div class="tpd-bottom-ads-grid" style="display:grid; grid-template-columns: repeat(<?php echo min( count( $bottom_strip_ads ), 4 ); ?>, 1fr); gap:16px;">
+							<?php foreach ( $bottom_strip_ads as $b_ad ) :
+								if ( empty( $b_ad['image_url'] ) || ( isset( $b_ad['status'] ) && 'inactive' === $b_ad['status'] ) ) {
+									continue;
+								}
+								$b_link   = ! empty( $b_ad['link_url'] ) ? $b_ad['link_url'] : '#';
+								$b_target = ( ! empty( $b_ad['target'] ) && '_blank' === $b_ad['target'] ) || ( strpos( $b_link, 'http' ) === 0 ) ? '_blank' : '_self';
+								$b_alt    = ! empty( $b_ad['alt_text'] ) ? $b_ad['alt_text'] : 'Partner Offer';
+							?>
+								<div class="tpd-bottom-ad-card" style="border-radius:12px; overflow:hidden; border:1px solid #e2e8f0; box-shadow:0 2px 8px rgba(0,0,0,0.04); transition:all 0.2s ease; background:#fff;">
+									<a href="<?php echo esc_url( $b_link ); ?>" target="<?php echo esc_attr( $b_target ); ?>" rel="noopener noreferrer" title="<?php echo esc_attr( $b_alt ); ?>" style="display:block; width:100%; height:100%;">
+										<img src="<?php echo esc_url( $b_ad['image_url'] ); ?>" alt="<?php echo esc_attr( $b_alt ); ?>" style="width:100%; height:140px; object-fit:cover; display:block;">
+									</a>
+								</div>
+							<?php endforeach; ?>
+						</div>
+					</div>
+				<?php endif; ?>
 			</div>
 
 			<!-- VIEW 2: MY PARTNER LISTINGS (Manage Showcase + Claim Listing + Dynamic ACF/Custom Fields) -->

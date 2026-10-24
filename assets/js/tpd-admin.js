@@ -582,24 +582,155 @@
 			});
 		});
 
-		// 14. Ad Space Configurator Save
+		// 14. WordPress Media Library Picker for Ad Images & Banners
+		$(document).on('click', '.tpd-choose-media-btn', function(e) {
+			e.preventDefault();
+			var $btn = $(this);
+			var targetSelector = $btn.data('target');
+			var $input, $previewImg, $placeholder;
+
+			if (targetSelector) {
+				$input = $(targetSelector);
+			} else {
+				var $card = $btn.closest('.tpd-ad-repeater-card');
+				$input = $card.find('.tpd-ad-field-image');
+				$previewImg = $card.find('.tpd-ad-preview-img');
+				$placeholder = $card.find('.tpd-ad-placeholder');
+			}
+
+			if (typeof wp === 'undefined' || !wp.media) {
+				alert('WordPress Media Library is unavailable. Please verify admin privileges.');
+				return;
+			}
+
+			var mediaFrame = wp.media({
+				title: 'Select Ad Banner Image',
+				button: { text: 'Use This Image' },
+				multiple: false,
+				library: { type: 'image' }
+			});
+
+			mediaFrame.on('select', function() {
+				var attachment = mediaFrame.state().get('selection').first().toJSON();
+				if (attachment && attachment.url) {
+					if ($input) {
+						$input.val(attachment.url).trigger('change');
+					}
+					if ($previewImg) {
+						$previewImg.attr('src', attachment.url).show();
+						if ($placeholder) $placeholder.hide();
+					}
+				}
+			});
+
+			mediaFrame.open();
+		});
+
+		// Live preview update on image URL change/input
+		$(document).on('input change', '.tpd-ad-field-image', function() {
+			var url = $(this).val().trim();
+			var $card = $(this).closest('.tpd-ad-repeater-card');
+			var $preview = $card.find('.tpd-ad-preview-img');
+			var $placeholder = $card.find('.tpd-ad-placeholder');
+			if (url) {
+				$preview.attr('src', url).show();
+				$placeholder.hide();
+			} else {
+				$preview.hide();
+				$placeholder.show();
+			}
+		});
+
+		// Add New Left Sidebar Ad Row
+		$(document).on('click', '#tpd-add-left-ad-btn', function(e) {
+			e.preventDefault();
+			var tmpl = document.getElementById('tpd-left-ad-template');
+			if (tmpl) {
+				var clone = tmpl.content.cloneNode(true);
+				$('#tpd-left-ads-list').append(clone);
+				showAdminToast('New Left Sidebar Ad row added.');
+			}
+		});
+
+		// Add New Bottom Strip Banner Ad Row
+		$(document).on('click', '#tpd-add-bottom-ad-btn', function(e) {
+			e.preventDefault();
+			var tmpl = document.getElementById('tpd-bottom-ad-template');
+			if (tmpl) {
+				var clone = tmpl.content.cloneNode(true);
+				$('#tpd-bottom-ads-list').append(clone);
+				showAdminToast('New Bottom Banner Ad row added.');
+			}
+		});
+
+		// Remove Ad Row
+		$(document).on('click', '.tpd-remove-ad-btn', function(e) {
+			e.preventDefault();
+			var $card = $(this).closest('.tpd-ad-repeater-card');
+			$card.fadeOut(200, function() {
+				$(this).remove();
+			});
+		});
+
+		// Save Ad Banners & Dynamic Repeater Configuration (WP Bannerize Style)
 		$(document).on('submit', '#tpd-sa-ad-banners-form', function(e) {
 			e.preventDefault();
 			var $form = $(this);
 			var $btn = $form.find('button[type="submit"]');
-			$btn.prop('disabled', true).text('Saving Ad Space...');
+			var origHtml = $btn.html();
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Saving All Ads...');
 
-			var payload = $form.serialize() + '&action=tpd_admin_save_ad_banners&nonce=' + encodeURIComponent(adminNonce);
+			var leftAds = [];
+			$('#tpd-left-ads-list .tpd-left-ad-row').each(function(i) {
+				var $row = $(this);
+				var img = $row.find('.tpd-ad-field-image').val().trim();
+				if (!img) return;
+				leftAds.push({
+					id: 'left_' + (i + 1),
+					image_url: img,
+					link_url: $row.find('.tpd-ad-field-link').val().trim() || '#tpd-view-suppliers',
+					alt_text: $row.find('.tpd-ad-field-alt').val().trim() || 'Partner Sponsor',
+					target: $row.find('.tpd-ad-field-target').val() || '_blank',
+					status: $row.find('.tpd-ad-field-status').val() || 'active'
+				});
+			});
+
+			var bottomAds = [];
+			$('#tpd-bottom-ads-list .tpd-bottom-ad-row').each(function(i) {
+				var $row = $(this);
+				var img = $row.find('.tpd-ad-field-image').val().trim();
+				if (!img) return;
+				bottomAds.push({
+					id: 'bottom_' + (i + 1),
+					image_url: img,
+					link_url: $row.find('.tpd-ad-field-link').val().trim() || '#tpd-view-suppliers',
+					alt_text: $row.find('.tpd-ad-field-alt').val().trim() || 'Partner Offer',
+					target: $row.find('.tpd-ad-field-target').val() || '_blank',
+					status: $row.find('.tpd-ad-field-status').val() || 'active'
+				});
+			});
+
+			var formData = $form.serializeArray();
+			formData.push({ name: 'action', value: 'tpd_admin_save_ad_banners' });
+			formData.push({ name: 'nonce', value: adminNonce });
+			formData.push({ name: 'left_sidebar_ads_json', value: JSON.stringify(leftAds) });
+			formData.push({ name: 'bottom_strip_ads_json', value: JSON.stringify(bottomAds) });
 
 			$.ajax({
 				url: ajaxUrl,
 				type: 'POST',
-				data: payload,
+				data: formData,
 				success: function(res) {
-					$btn.prop('disabled', false).html('<i class="fa-solid fa-floppy-disk"></i> Save Ad Space Configuration');
+					$btn.prop('disabled', false).html(origHtml);
 					if (res && res.success) {
-						showAdminToast(res.data.message);
+						showAdminToast(res.data.message || 'Ad banners successfully saved and published!');
+					} else {
+						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to save ad banners.');
 					}
+				},
+				error: function() {
+					$btn.prop('disabled', false).html(origHtml);
+					alert('Network error while saving ad banners.');
 				}
 			});
 		});

@@ -183,6 +183,29 @@ $news_posts = get_posts( array(
 					</a>
 				</li>
 			</ul>
+
+			<!-- Dynamic Left Navigation Sidebar Square Ads (Directly Under Help & Support) -->
+			<?php
+			$left_sidebar_ads = TPD_Tool_Settings::get_left_sidebar_ads();
+			if ( ! empty( $left_sidebar_ads ) ) :
+			?>
+				<div class="tpd-sb-ads-container">
+					<?php foreach ( $left_sidebar_ads as $lad ) :
+						if ( empty( $lad['image_url'] ) || ( isset( $lad['status'] ) && 'inactive' === $lad['status'] ) ) {
+							continue;
+						}
+						$lad_link   = ! empty( $lad['link_url'] ) ? $lad['link_url'] : '#tpd-view-suppliers';
+						$lad_target = ( ! empty( $lad['target'] ) && '_blank' === $lad['target'] ) || ( strpos( $lad_link, 'http' ) === 0 ) ? '_blank' : '_self';
+						$lad_alt    = ! empty( $lad['alt_text'] ) ? $lad['alt_text'] : 'Partner Sponsor';
+					?>
+						<div class="tpd-sb-ad-card">
+							<a href="<?php echo esc_url( $lad_link ); ?>" target="<?php echo esc_attr( $lad_target ); ?>" rel="noopener noreferrer" title="<?php echo esc_attr( $lad_alt ); ?>">
+								<img src="<?php echo esc_url( $lad['image_url'] ); ?>" alt="<?php echo esc_attr( $lad_alt ); ?>" class="tpd-sb-ad-img">
+							</a>
+						</div>
+					<?php endforeach; ?>
+				</div>
+			<?php endif; ?>
 		</nav>
 
 		<div class="tpd-sb-footer-card" style="background-image: url('https://images.unsplash.com/photo-1533105079780-92b9be482077?w=400&auto=format&fit=crop&q=80');">
@@ -671,131 +694,33 @@ $news_posts = get_posts( array(
 							</div>
 						</div>
 
-						<!-- 5. 4x Square Ads (Sidebar Column) -->
-						<?php
-						$sidebar_ads = array(
-							array(
-								'tag'      => ! empty( $ads_cfg['left_ad_1_tag'] ) ? $ads_cfg['left_ad_1_tag'] : 'SPONSORED',
-								'title'    => ! empty( $ads_cfg['left_ad_1_title'] ) ? $ads_cfg['left_ad_1_title'] : 'Earn 18% Commission on 2026 Danube Charters',
-								'subtitle' => ! empty( $ads_cfg['left_ad_1_subtitle'] ) ? $ads_cfg['left_ad_1_subtitle'] : 'Exclusive trade incentive for certified advisors',
-								'image'    => ! empty( $ads_cfg['left_ad_1_image'] ) ? $ads_cfg['left_ad_1_image'] : 'https://images.unsplash.com/photo-1548574505-5e239809ee19?w=300&auto=format&fit=crop&q=80',
-								'text'     => ! empty( $ads_cfg['left_ad_1_link_text'] ) ? $ads_cfg['left_ad_1_link_text'] : 'View Cruise Details',
-								'url'      => ! empty( $ads_cfg['left_ad_1_link_url'] ) ? $ads_cfg['left_ad_1_link_url'] : '#tpd-view-suppliers',
-							),
-							array(
-								'tag'      => ! empty( $ads_cfg['left_ad_2_tag'] ) ? $ads_cfg['left_ad_2_tag'] : 'FEATURED',
-								'title'    => ! empty( $ads_cfg['left_ad_2_title'] ) ? $ads_cfg['left_ad_2_title'] : 'Preferred Luxury All-Inclusive Perks',
-								'subtitle' => ! empty( $ads_cfg['left_ad_2_subtitle'] ) ? $ads_cfg['left_ad_2_subtitle'] : '$150 resort credits & VIP airport transfers',
-								'image'    => ! empty( $ads_cfg['left_ad_2_image'] ) ? $ads_cfg['left_ad_2_image'] : 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=300&auto=format&fit=crop&q=80',
-								'text'     => ! empty( $ads_cfg['left_ad_2_link_text'] ) ? $ads_cfg['left_ad_2_link_text'] : 'Access Partner Portal',
-								'url'      => ! empty( $ads_cfg['left_ad_2_link_url'] ) ? $ads_cfg['left_ad_2_link_url'] : '#tpd-view-suppliers',
-							),
-							array(
-								'tag'      => ! empty( $ads_cfg['left_ad_3_tag'] ) ? $ads_cfg['left_ad_3_tag'] : 'PARTNER SPOTLIGHT',
-								'title'    => ! empty( $ads_cfg['left_ad_3_title'] ) ? $ads_cfg['left_ad_3_title'] : '2026 Polar Expedition Fam Trips',
-								'subtitle' => ! empty( $ads_cfg['left_ad_3_subtitle'] ) ? $ads_cfg['left_ad_3_subtitle'] : 'Applications open for top-producing advisors',
-								'image'    => ! empty( $ads_cfg['left_ad_3_image'] ) ? $ads_cfg['left_ad_3_image'] : 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?w=300&auto=format&fit=crop&q=80',
-								'text'     => ! empty( $ads_cfg['left_ad_3_link_text'] ) ? $ads_cfg['left_ad_3_link_text'] : 'Apply for Fam Trip',
-								'url'      => ! empty( $ads_cfg['left_ad_3_link_url'] ) ? $ads_cfg['left_ad_3_link_url'] : '#tpd-view-suppliers',
-							),
-							array(
-								'tag'      => ! empty( $ads_cfg['left_ad_4_tag'] ) ? $ads_cfg['left_ad_4_tag'] : 'EXCLUSIVE',
-								'title'    => ! empty( $ads_cfg['left_ad_4_title'] ) ? $ads_cfg['left_ad_4_title'] : 'Private European Villa Collections',
-								'subtitle' => ! empty( $ads_cfg['left_ad_4_subtitle'] ) ? $ads_cfg['left_ad_4_subtitle'] : 'Guaranteed 15% net commission & concierge',
-								'image'    => ! empty( $ads_cfg['left_ad_4_image'] ) ? $ads_cfg['left_ad_4_image'] : 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=300&auto=format&fit=crop&q=80',
-								'text'     => ! empty( $ads_cfg['left_ad_4_link_text'] ) ? $ads_cfg['left_ad_4_link_text'] : 'Explore Inventory',
-								'url'      => ! empty( $ads_cfg['left_ad_4_link_url'] ) ? $ads_cfg['left_ad_4_link_url'] : '#tpd-view-suppliers',
-							),
-						);
-						?>
-						<div class="tpd-card-box tpd-sidebar-ads-card" style="padding:16px; margin-bottom:20px;">
-							<div class="tpd-box-header-clean" style="margin-bottom:12px;">
-								<h4 style="font-size:13.5px; font-weight:800; color:#013243;"><?php esc_html_e( 'Partner Highlights', 'tpd-tool' ); ?></h4>
-							</div>
-							<div class="tpd-sidebar-ads-grid" style="display:flex; flex-direction:column; gap:14px;">
-								<?php foreach ( $sidebar_ads as $s_ad ) : ?>
-									<div class="tpd-ad-square-card" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px; position:relative;">
-										<span style="position:absolute; top:8px; right:8px; font-size:9px; font-weight:800; background:#fef3c7; color:#b45309; padding:2px 6px; border-radius:4px; text-transform:uppercase;">
-											<?php echo esc_html( $s_ad['tag'] ); ?>
-										</span>
-										<div style="display:flex; gap:12px; align-items:center;">
-											<img src="<?php echo esc_url( $s_ad['image'] ); ?>" alt="Ad" style="width:64px; height:64px; border-radius:8px; object-fit:cover; flex-shrink:0;">
-											<div style="flex:1; min-width:0;">
-												<h5 style="margin:0 0 3px; font-size:12.5px; font-weight:700; color:#0f172a; line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><?php echo esc_html( $s_ad['title'] ); ?></h5>
-												<p style="margin:0 0 5px; font-size:11px; color:#64748b; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;"><?php echo esc_html( $s_ad['subtitle'] ); ?></p>
-												<a href="<?php echo esc_url( $s_ad['url'] ); ?>" class="tpd-tab-link" data-view="suppliers" style="font-size:11px; font-weight:700; color:#00798c; text-decoration:none;">
-													<?php echo esc_html( $s_ad['text'] ); ?> &rarr;
-												</a>
-											</div>
-										</div>
-									</div>
-								<?php endforeach; ?>
-							</div>
-						</div>
 					</aside>
 				</div>
 
-				<!-- 4x Square Ads Across Bottom of Overview Workspace -->
+				<!-- Dynamic Bottom Banner Ads (Overview Workspace Footer) -->
 				<?php
-				$bottom_ads = array(
-					array(
-						'tag'      => ! empty( $ads_cfg['bottom_ad_1_tag'] ) ? $ads_cfg['bottom_ad_1_tag'] : 'CRUISE PARTNER',
-						'title'    => ! empty( $ads_cfg['bottom_ad_1_title'] ) ? $ads_cfg['bottom_ad_1_title'] : 'Luxury Yacht Charters 2026',
-						'subtitle' => ! empty( $ads_cfg['bottom_ad_1_subtitle'] ) ? $ads_cfg['bottom_ad_1_subtitle'] : 'Bonus commission on Mediterranean bookings',
-						'image'    => ! empty( $ads_cfg['bottom_ad_1_image'] ) ? $ads_cfg['bottom_ad_1_image'] : 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=300&auto=format&fit=crop&q=80',
-						'text'     => ! empty( $ads_cfg['bottom_ad_1_link_text'] ) ? $ads_cfg['bottom_ad_1_link_text'] : 'View Fleet',
-						'url'      => ! empty( $ads_cfg['bottom_ad_1_link_url'] ) ? $ads_cfg['bottom_ad_1_link_url'] : '#tpd-view-suppliers',
-					),
-					array(
-						'tag'      => ! empty( $ads_cfg['bottom_ad_2_tag'] ) ? $ads_cfg['bottom_ad_2_tag'] : 'TOUR OPERATOR',
-						'title'    => ! empty( $ads_cfg['bottom_ad_2_title'] ) ? $ads_cfg['bottom_ad_2_title'] : 'Bespoke African Safaris',
-						'subtitle' => ! empty( $ads_cfg['bottom_ad_2_subtitle'] ) ? $ads_cfg['bottom_ad_2_subtitle'] : 'Full group protection & dedicated DMC team',
-						'image'    => ! empty( $ads_cfg['bottom_ad_2_image'] ) ? $ads_cfg['bottom_ad_2_image'] : 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=300&auto=format&fit=crop&q=80',
-						'text'     => ! empty( $ads_cfg['bottom_ad_2_link_text'] ) ? $ads_cfg['bottom_ad_2_link_text'] : 'Download Itineraries',
-						'url'      => ! empty( $ads_cfg['bottom_ad_2_link_url'] ) ? $ads_cfg['bottom_ad_2_link_url'] : '#tpd-view-suppliers',
-					),
-					array(
-						'tag'      => ! empty( $ads_cfg['bottom_ad_3_tag'] ) ? $ads_cfg['bottom_ad_3_tag'] : 'TRAIN & RAIL',
-						'title'    => ! empty( $ads_cfg['bottom_ad_3_title'] ) ? $ads_cfg['bottom_ad_3_title'] : 'Scenic Alpine Rail Journeys',
-						'subtitle' => ! empty( $ads_cfg['bottom_ad_3_subtitle'] ) ? $ads_cfg['bottom_ad_3_subtitle'] : 'Instant booking confirmation for advisors',
-						'image'    => ! empty( $ads_cfg['bottom_ad_3_image'] ) ? $ads_cfg['bottom_ad_3_image'] : 'https://images.unsplash.com/photo-1515238152791-8216bfdf89a7?w=300&auto=format&fit=crop&q=80',
-						'text'     => ! empty( $ads_cfg['bottom_ad_3_link_text'] ) ? $ads_cfg['bottom_ad_3_link_text'] : 'View Rail Routes',
-						'url'      => ! empty( $ads_cfg['bottom_ad_3_link_url'] ) ? $ads_cfg['bottom_ad_3_link_url'] : '#tpd-view-suppliers',
-					),
-					array(
-						'tag'      => ! empty( $ads_cfg['bottom_ad_4_tag'] ) ? $ads_cfg['bottom_ad_4_tag'] : 'RESORT COLLECTION',
-						'title'    => ! empty( $ads_cfg['bottom_ad_4_title'] ) ? $ads_cfg['bottom_ad_4_title'] : 'Boutique Island Hideaways',
-						'subtitle' => ! empty( $ads_cfg['bottom_ad_4_subtitle'] ) ? $ads_cfg['bottom_ad_4_subtitle'] : 'Upgraded amenities & late checkout for clients',
-						'image'    => ! empty( $ads_cfg['bottom_ad_4_image'] ) ? $ads_cfg['bottom_ad_4_image'] : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&auto=format&fit=crop&q=80',
-						'text'     => ! empty( $ads_cfg['bottom_ad_4_link_text'] ) ? $ads_cfg['bottom_ad_4_link_text'] : 'Explore Properties',
-						'url'      => ! empty( $ads_cfg['bottom_ad_4_link_url'] ) ? $ads_cfg['bottom_ad_4_link_url'] : '#tpd-view-suppliers',
-					),
-				);
+				$bottom_strip_ads = TPD_Tool_Settings::get_bottom_strip_ads();
+				if ( ! empty( $bottom_strip_ads ) ) :
 				?>
-				<div class="tpd-overview-bottom-ads-strip" style="margin-top:28px;">
-					<div class="tpd-fss-header" style="margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;">
-						<h3 style="font-size:16px; font-weight:800; color:#013243; margin:0;"><i class="fa-solid fa-rectangle-ad text-blue"></i> <?php esc_html_e( 'Featured Trade Incentives & Partner Offers', 'tpd-tool' ); ?></h3>
-						<span style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;"><?php esc_html_e( 'Verified Partners', 'tpd-tool' ); ?></span>
-					</div>
-					<div class="tpd-bottom-ads-grid" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:16px;">
-						<?php foreach ( $bottom_ads as $b_ad ) : ?>
-							<div class="tpd-bottom-ad-card" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 2px 8px rgba(0,0,0,0.03); transition:all 0.2s ease;">
-								<div style="height:120px; background-image:url('<?php echo esc_url( $b_ad['image'] ); ?>'); background-size:cover; background-position:center; position:relative;">
-									<span style="position:absolute; top:8px; left:8px; font-size:9px; font-weight:800; background:#013243; color:#ffffff; padding:2px 7px; border-radius:4px; text-transform:uppercase;">
-										<?php echo esc_html( $b_ad['tag'] ); ?>
-									</span>
-								</div>
-								<div style="padding:14px; display:flex; flex-direction:column; flex:1;">
-									<h5 style="margin:0 0 6px; font-size:13px; font-weight:700; color:#0f172a; line-height:1.35;"><?php echo esc_html( $b_ad['title'] ); ?></h5>
-									<p style="margin:0 0 10px; font-size:11.5px; color:#64748b; line-height:1.4; flex:1;"><?php echo esc_html( $b_ad['subtitle'] ); ?></p>
-									<a href="<?php echo esc_url( $b_ad['url'] ); ?>" class="tpd-tab-link" data-view="suppliers" style="font-size:11.5px; font-weight:700; color:#00798c; text-decoration:none; margin-top:auto;">
-										<?php echo esc_html( $b_ad['text'] ); ?> &rarr;
+					<div class="tpd-overview-bottom-ads-strip" style="margin-top:28px;">
+						<div class="tpd-bottom-ads-grid" style="display:grid; grid-template-columns: repeat(<?php echo min( count( $bottom_strip_ads ), 4 ); ?>, 1fr); gap:16px;">
+							<?php foreach ( $bottom_strip_ads as $b_ad ) :
+								if ( empty( $b_ad['image_url'] ) || ( isset( $b_ad['status'] ) && 'inactive' === $b_ad['status'] ) ) {
+									continue;
+								}
+								$b_link   = ! empty( $b_ad['link_url'] ) ? $b_ad['link_url'] : '#tpd-view-suppliers';
+								$b_target = ( ! empty( $b_ad['target'] ) && '_blank' === $b_ad['target'] ) || ( strpos( $b_link, 'http' ) === 0 ) ? '_blank' : '_self';
+								$b_alt    = ! empty( $b_ad['alt_text'] ) ? $b_ad['alt_text'] : 'Partner Offer';
+							?>
+								<div class="tpd-bottom-ad-card" style="border-radius:12px; overflow:hidden; border:1px solid #e2e8f0; box-shadow:0 2px 8px rgba(0,0,0,0.04); transition:all 0.2s ease; background:#fff;">
+									<a href="<?php echo esc_url( $b_link ); ?>" target="<?php echo esc_attr( $b_target ); ?>" rel="noopener noreferrer" title="<?php echo esc_attr( $b_alt ); ?>" style="display:block; width:100%; height:100%;">
+										<img src="<?php echo esc_url( $b_ad['image_url'] ); ?>" alt="<?php echo esc_attr( $b_alt ); ?>" style="width:100%; height:140px; object-fit:cover; display:block;">
 									</a>
 								</div>
-							</div>
-						<?php endforeach; ?>
+							<?php endforeach; ?>
+						</div>
 					</div>
-				</div>
+				<?php endif; ?>
 			</div>
 
 			<!-- VIEW 2: ACCOUNT INFO & PROFILE EDITOR (Matches Travel Partner Directory Account Info Design) -->

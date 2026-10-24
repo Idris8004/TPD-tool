@@ -51,7 +51,12 @@ if ( ! $is_in_admin ) {
 		<meta charset="<?php bloginfo( 'charset' ); ?>">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title><?php esc_html_e( 'Super Admin Hub | Travel Partner Directory', 'tpd-tool' ); ?></title>
-		<?php wp_head(); ?>
+		<?php
+		if ( function_exists( 'wp_enqueue_media' ) ) {
+			wp_enqueue_media();
+		}
+		wp_head();
+		?>
 	</head>
 	<body class="tpd-app-body" style="background: #f1f5f9; margin: 0;">
 	<?php
@@ -1213,18 +1218,23 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 			</div>
 
 			<!-- =========================================================================
-			     PANE 10: AD SPACE & DASHBOARD BANNERS
+			     PANE 10: AD SPACE & DASHBOARD BANNERS (WP BANNERIZE & MEDIA INTEGRATION)
 			     ========================================================================= -->
 				<div class="tpd-sa-card">
-					<h3 class="tpd-sa-card-title"><i class="fa-solid fa-rectangle-ad text-blue"></i> <?php esc_html_e( 'Configure Welcome Hero Banner & Sponsored Ad Spaces', 'tpd-tool' ); ?></h3>
+					<h3 class="tpd-sa-card-title"><i class="fa-solid fa-rectangle-ad text-blue"></i> <?php esc_html_e( 'Advertising Manager & Dashboard Banners (WP Bannerize Style)', 'tpd-tool' ); ?></h3>
 					<p style="font-size:13px; color:#64748b; margin-top:-6px; margin-bottom:18px;">
-						<?php esc_html_e( 'Control the Advisor Dashboard welcome quote/banner, the 4 Left Sidebar Square Ads, and the 4 Bottom Strip Square Ads with custom images, tags, and click links.', 'tpd-tool' ); ?>
+						<?php esc_html_e( 'Manage sponsored ad spaces directly from the WordPress Media Library. Configure Left Sidebar Square Ads (stacked under Help & Support) and Bottom Strip Panoramic Banner Ads. Ads feature pure clickable imagery without title or text overlays.', 'tpd-tool' ); ?>
 					</p>
+
+					<?php
+					$left_sidebar_ads = TPD_Tool_Settings::get_left_sidebar_ads();
+					$bottom_strip_ads = TPD_Tool_Settings::get_bottom_strip_ads();
+					?>
 
 					<form id="tpd-sa-ad-banners-form">
 						<!-- Hero Welcome Banner -->
-						<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:18px; margin-bottom:24px;">
-							<h4 style="margin:0 0 12px; font-size:15px; color:#1e3a8a;"><i class="fa-solid fa-panorama"></i> <?php esc_html_e( 'Dashboard Top Welcome Banner', 'tpd-tool' ); ?></h4>
+						<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:20px; margin-bottom:28px;">
+							<h4 style="margin:0 0 14px; font-size:15px; color:#1e3a8a;"><i class="fa-solid fa-panorama"></i> <?php esc_html_e( 'Dashboard Top Welcome Banner', 'tpd-tool' ); ?></h4>
 							<div class="tpd-form-grid-3">
 								<div class="tpd-form-group">
 									<label><?php esc_html_e( 'Welcome Banner Subtitle', 'tpd-tool' ); ?></label>
@@ -1235,105 +1245,262 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 									<input type="text" name="welcome_quote" value="<?php echo esc_attr( $ads_cfg['welcome_quote'] ?? '' ); ?>" class="tpd-input">
 								</div>
 								<div class="tpd-form-group">
-									<label><?php esc_html_e( 'Welcome Banner Background Image URL', 'tpd-tool' ); ?></label>
-									<input type="url" name="welcome_bg" value="<?php echo esc_attr( $ads_cfg['welcome_bg'] ?? '' ); ?>" class="tpd-input">
+									<label><?php esc_html_e( 'Background Image', 'tpd-tool' ); ?></label>
+									<div style="display:flex; gap:8px;">
+										<input type="url" name="welcome_bg" id="tpd-welcome-bg-input" value="<?php echo esc_attr( $ads_cfg['welcome_bg'] ?? '' ); ?>" class="tpd-input" placeholder="https://...">
+										<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline tpd-choose-media-btn" data-target="#tpd-welcome-bg-input" style="white-space:nowrap;">
+											<i class="fa-solid fa-photo-film"></i> <?php esc_html_e( 'Media Library', 'tpd-tool' ); ?>
+										</button>
+									</div>
 								</div>
 							</div>
 						</div>
 
-						<!-- 4 Left Sidebar Square Ads -->
-						<h4 style="margin:24px 0 12px; font-size:16px; color:#0b1526; display:flex; align-items:center; gap:8px;">
-							<span style="background:#1d4ed8; color:#fff; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:11px;">4</span>
-							<?php esc_html_e( 'Left Column Square Ads (Advisor Dashboard Sidebar)', 'tpd-tool' ); ?>
-						</h4>
-
-						<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-bottom:28px;">
-							<?php for ( $i = 1; $i <= 4; $i++ ) :
-								$tag   = $ads_cfg["left_ad_{$i}_tag"] ?? ( 1 === $i ? 'SPONSORED' : ( 2 === $i ? 'FEATURED' : ( 3 === $i ? 'PARTNER SPOTLIGHT' : 'EXCLUSIVE' ) ) );
-								$title = $ads_cfg["left_ad_{$i}_title"] ?? "Left Sidebar Ad #{$i}";
-								$sub   = $ads_cfg["left_ad_{$i}_subtitle"] ?? 'Special incentive for advisors';
-								$img   = $ads_cfg["left_ad_{$i}_image"] ?? 'https://images.unsplash.com/photo-1548574505-5e239809ee19?w=300&auto=format&fit=crop&q=80';
-								$link  = $ads_cfg["left_ad_{$i}_link_url"] ?? '#tpd-view-suppliers';
-								$txt   = $ads_cfg["left_ad_{$i}_link_text"] ?? 'Learn More';
-							?>
-								<div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:16px; box-shadow:0 1px 4px rgba(0,0,0,0.03);">
-									<strong style="display:block; margin-bottom:10px; font-size:13.5px; color:#1e40af;">Left Ad Slot #<?php echo esc_html( $i ); ?></strong>
-									<div class="tpd-form-group mb-2">
-										<label style="font-size:11px;">Badge Tag</label>
-										<input type="text" name="left_ad_<?php echo esc_attr( $i ); ?>_tag" value="<?php echo esc_attr( $tag ); ?>" class="tpd-input tpd-input-sm">
-									</div>
-									<div class="tpd-form-group mb-2">
-										<label style="font-size:11px;">Headline</label>
-										<input type="text" name="left_ad_<?php echo esc_attr( $i ); ?>_title" value="<?php echo esc_attr( $title ); ?>" class="tpd-input tpd-input-sm">
-									</div>
-									<div class="tpd-form-group mb-2">
-										<label style="font-size:11px;">Subtitle</label>
-										<input type="text" name="left_ad_<?php echo esc_attr( $i ); ?>_subtitle" value="<?php echo esc_attr( $sub ); ?>" class="tpd-input tpd-input-sm">
-									</div>
-									<div class="tpd-form-group mb-2">
-										<label style="font-size:11px;">Image URL</label>
-										<input type="url" name="left_ad_<?php echo esc_attr( $i ); ?>_image" value="<?php echo esc_attr( $img ); ?>" class="tpd-input tpd-input-sm">
-									</div>
-									<div class="tpd-form-group mb-2">
-										<label style="font-size:11px;">Destination URL</label>
-										<input type="text" name="left_ad_<?php echo esc_attr( $i ); ?>_link_url" value="<?php echo esc_attr( $link ); ?>" class="tpd-input tpd-input-sm">
-									</div>
-									<div class="tpd-form-group">
-										<label style="font-size:11px;">Button / Link Text</label>
-										<input type="text" name="left_ad_<?php echo esc_attr( $i ); ?>_link_text" value="<?php echo esc_attr( $txt ); ?>" class="tpd-input tpd-input-sm">
-									</div>
-								</div>
-							<?php endfor; ?>
+						<!-- Section 1: Left Sidebar Square Ads (Under Help & Support) -->
+						<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+							<div>
+								<h4 style="margin:0; font-size:16px; color:#0b1526; display:flex; align-items:center; gap:8px;">
+									<span style="background:#1d4ed8; color:#fff; width:24px; height:24px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:800;"><i class="fa-solid fa-table-columns"></i></span>
+									<?php esc_html_e( 'Left Sidebar Square Ads (Under Help & Support)', 'tpd-tool' ); ?>
+								</h4>
+								<p style="font-size:12px; color:#64748b; margin:4px 0 0;">
+									<?php esc_html_e( 'Pure clickable square banner images (recommended 400x400px or 1:1 ratio) displayed on Advisor & Supplier navigation sidebars.', 'tpd-tool' ); ?>
+								</p>
+							</div>
+							<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-primary" id="tpd-add-left-ad-btn" style="background:#1d4ed8;">
+								<i class="fa-solid fa-plus"></i> <?php esc_html_e( 'Add New Sidebar Ad', 'tpd-tool' ); ?>
+							</button>
 						</div>
 
-						<!-- 4 Bottom Strip Square Ads -->
-						<h4 style="margin:24px 0 12px; font-size:16px; color:#0b1526; display:flex; align-items:center; gap:8px;">
-							<span style="background:#0f766e; color:#fff; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:11px;">4</span>
-							<?php esc_html_e( 'Bottom Strip Square Ads (Advisor Dashboard Bottom Row)', 'tpd-tool' ); ?>
-						</h4>
-
-						<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-bottom:28px;">
-							<?php for ( $j = 1; $j <= 4; $j++ ) :
-								$tag   = $ads_cfg["bottom_ad_{$j}_tag"] ?? ( 1 === $j ? 'CRUISE PARTNER' : ( 2 === $j ? 'TOUR OPERATOR' : ( 3 === $j ? 'TRAIN & RAIL' : 'RESORT COLLECTION' ) ) );
-								$title = $ads_cfg["bottom_ad_{$j}_title"] ?? "Bottom Grid Ad #{$j}";
-								$sub   = $ads_cfg["bottom_ad_{$j}_subtitle"] ?? 'Preferred trade rates and perks';
-								$img   = $ads_cfg["bottom_ad_{$j}_image"] ?? 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=300&auto=format&fit=crop&q=80';
-								$link  = $ads_cfg["bottom_ad_{$j}_link_url"] ?? '#tpd-view-suppliers';
-								$txt   = $ads_cfg["bottom_ad_{$j}_link_text"] ?? 'Explore Partner';
+						<div class="tpd-ad-repeater-list" id="tpd-left-ads-list">
+							<?php foreach ( $left_sidebar_ads as $l_idx => $l_ad ) :
+								$l_img    = ! empty( $l_ad['image_url'] ) ? $l_ad['image_url'] : '';
+								$l_link   = ! empty( $l_ad['link_url'] ) ? $l_ad['link_url'] : '#tpd-view-suppliers';
+								$l_alt    = ! empty( $l_ad['alt_text'] ) ? $l_ad['alt_text'] : 'Partner Sponsor';
+								$l_target = ! empty( $l_ad['target'] ) ? $l_ad['target'] : '_blank';
+								$l_status = ! empty( $l_ad['status'] ) ? $l_ad['status'] : 'active';
 							?>
-								<div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:16px; box-shadow:0 1px 4px rgba(0,0,0,0.03);">
-									<strong style="display:block; margin-bottom:10px; font-size:13.5px; color:#0f766e;">Bottom Ad Slot #<?php echo esc_html( $j ); ?></strong>
-									<div class="tpd-form-group mb-2">
-										<label style="font-size:11px;">Badge Tag</label>
-										<input type="text" name="bottom_ad_<?php echo esc_attr( $j ); ?>_tag" value="<?php echo esc_attr( $tag ); ?>" class="tpd-input tpd-input-sm">
+								<div class="tpd-ad-repeater-card tpd-left-ad-row" data-index="<?php echo esc_attr( $l_idx ); ?>">
+									<div class="tpd-ad-thumb-box">
+										<img src="<?php echo esc_url( $l_img ); ?>" alt="Preview" class="tpd-ad-preview-img" style="<?php echo empty( $l_img ) ? 'display:none;' : ''; ?>">
+										<i class="fa-regular fa-image tpd-ad-placeholder" style="<?php echo ! empty( $l_img ) ? 'display:none;' : ''; ?>"></i>
 									</div>
-									<div class="tpd-form-group mb-2">
-										<label style="font-size:11px;">Headline</label>
-										<input type="text" name="bottom_ad_<?php echo esc_attr( $j ); ?>_title" value="<?php echo esc_attr( $title ); ?>" class="tpd-input tpd-input-sm">
+									<div class="tpd-ad-fields-grid">
+										<div class="tpd-form-group">
+											<label><?php esc_html_e( 'Banner Image URL / WordPress Media', 'tpd-tool' ); ?></label>
+											<div style="display:flex; gap:6px;">
+												<input type="url" class="tpd-input tpd-input-sm tpd-ad-field-image" value="<?php echo esc_attr( $l_img ); ?>" placeholder="https://...">
+												<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-choose-media-btn" title="Choose from WordPress Media Library">
+													<i class="fa-solid fa-photo-film"></i> Media
+												</button>
+											</div>
+										</div>
+										<div class="tpd-form-group">
+											<label><?php esc_html_e( 'Destination Click Link URL', 'tpd-tool' ); ?></label>
+											<input type="text" class="tpd-input tpd-input-sm tpd-ad-field-link" value="<?php echo esc_attr( $l_link ); ?>" placeholder="https:// or #target">
+										</div>
+										<div class="tpd-form-group">
+											<label><?php esc_html_e( 'Partner Brand / Alt Label', 'tpd-tool' ); ?></label>
+											<input type="text" class="tpd-input tpd-input-sm tpd-ad-field-alt" value="<?php echo esc_attr( $l_alt ); ?>" placeholder="e.g. Railbookers">
+										</div>
+										<div class="tpd-form-group">
+											<label><?php esc_html_e( 'Open Link Target', 'tpd-tool' ); ?></label>
+											<select class="tpd-select tpd-select-sm tpd-ad-field-target">
+												<option value="_blank" <?php selected( $l_target, '_blank' ); ?>>New Window (_blank)</option>
+												<option value="_self" <?php selected( $l_target, '_self' ); ?>>Same Window (_self)</option>
+											</select>
+										</div>
+										<div class="tpd-form-group">
+											<label><?php esc_html_e( 'Status', 'tpd-tool' ); ?></label>
+											<select class="tpd-select tpd-select-sm tpd-ad-field-status">
+												<option value="active" <?php selected( $l_status, 'active' ); ?>>Active (Visible)</option>
+												<option value="inactive" <?php selected( $l_status, 'inactive' ); ?>>Inactive (Hidden)</option>
+											</select>
+										</div>
 									</div>
-									<div class="tpd-form-group mb-2">
-										<label style="font-size:11px;">Subtitle</label>
-										<input type="text" name="bottom_ad_<?php echo esc_attr( $j ); ?>_subtitle" value="<?php echo esc_attr( $sub ); ?>" class="tpd-input tpd-input-sm">
-									</div>
-									<div class="tpd-form-group mb-2">
-										<label style="font-size:11px;">Image URL</label>
-										<input type="url" name="bottom_ad_<?php echo esc_attr( $j ); ?>_image" value="<?php echo esc_attr( $img ); ?>" class="tpd-input tpd-input-sm">
-									</div>
-									<div class="tpd-form-group mb-2">
-										<label style="font-size:11px;">Destination URL</label>
-										<input type="text" name="bottom_ad_<?php echo esc_attr( $j ); ?>_link_url" value="<?php echo esc_attr( $link ); ?>" class="tpd-input tpd-input-sm">
-									</div>
-									<div class="tpd-form-group">
-										<label style="font-size:11px;">Button / Link Text</label>
-										<input type="text" name="bottom_ad_<?php echo esc_attr( $j ); ?>_link_text" value="<?php echo esc_attr( $txt ); ?>" class="tpd-input tpd-input-sm">
+									<div class="tpd-ad-actions-box">
+										<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-remove-ad-btn" title="Delete this ad">
+											<i class="fa-solid fa-trash-can"></i>
+										</button>
 									</div>
 								</div>
-							<?php endfor; ?>
+							<?php endforeach; ?>
 						</div>
 
-						<button type="submit" class="tpd-btn tpd-btn-darkblue" style="background:#164e87; padding:12px 28px; font-size:14px; font-weight:700;">
-							<i class="fa-solid fa-floppy-disk"></i> <?php esc_html_e( 'Save All 8 Ad Slots & Welcome Banner', 'tpd-tool' ); ?>
-						</button>
+						<!-- Section 2: Bottom Strip Panoramic Banner Ads (Overview Footer) -->
+						<div style="display:flex; justify-content:space-between; align-items:center; margin-top:32px; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+							<div>
+								<h4 style="margin:0; font-size:16px; color:#0b1526; display:flex; align-items:center; gap:8px;">
+									<span style="background:#0f766e; color:#fff; width:24px; height:24px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:800;"><i class="fa-solid fa-panorama"></i></span>
+									<?php esc_html_e( 'Bottom Strip Panoramic Banner Ads (Overview Footer)', 'tpd-tool' ); ?>
+								</h4>
+								<p style="font-size:12px; color:#64748b; margin:4px 0 0;">
+									<?php esc_html_e( 'Pure clickable horizontal banners (recommended 600x300px or 2:1 ratio) displayed in a 4-column responsive grid at the bottom of the overview workspace.', 'tpd-tool' ); ?>
+								</p>
+							</div>
+							<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-primary" id="tpd-add-bottom-ad-btn" style="background:#0f766e;">
+								<i class="fa-solid fa-plus"></i> <?php esc_html_e( 'Add New Bottom Banner Ad', 'tpd-tool' ); ?>
+							</button>
+						</div>
+
+						<div class="tpd-ad-repeater-list" id="tpd-bottom-ads-list">
+							<?php foreach ( $bottom_strip_ads as $b_idx => $b_ad ) :
+								$b_img    = ! empty( $b_ad['image_url'] ) ? $b_ad['image_url'] : '';
+								$b_link   = ! empty( $b_ad['link_url'] ) ? $b_ad['link_url'] : '#tpd-view-suppliers';
+								$b_alt    = ! empty( $b_ad['alt_text'] ) ? $b_ad['alt_text'] : 'Partner Offer';
+								$b_target = ! empty( $b_ad['target'] ) ? $b_ad['target'] : '_blank';
+								$b_status = ! empty( $b_ad['status'] ) ? $b_ad['status'] : 'active';
+							?>
+								<div class="tpd-ad-repeater-card tpd-bottom-ad-row" data-index="<?php echo esc_attr( $b_idx ); ?>">
+									<div class="tpd-ad-thumb-box is-panoramic">
+										<img src="<?php echo esc_url( $b_img ); ?>" alt="Preview" class="tpd-ad-preview-img" style="<?php echo empty( $b_img ) ? 'display:none;' : ''; ?>">
+										<i class="fa-regular fa-image tpd-ad-placeholder" style="<?php echo ! empty( $b_img ) ? 'display:none;' : ''; ?>"></i>
+									</div>
+									<div class="tpd-ad-fields-grid">
+										<div class="tpd-form-group">
+											<label><?php esc_html_e( 'Banner Image URL / WordPress Media', 'tpd-tool' ); ?></label>
+											<div style="display:flex; gap:6px;">
+												<input type="url" class="tpd-input tpd-input-sm tpd-ad-field-image" value="<?php echo esc_attr( $b_img ); ?>" placeholder="https://...">
+												<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-choose-media-btn" title="Choose from WordPress Media Library">
+													<i class="fa-solid fa-photo-film"></i> Media
+												</button>
+											</div>
+										</div>
+										<div class="tpd-form-group">
+											<label><?php esc_html_e( 'Destination Click Link URL', 'tpd-tool' ); ?></label>
+											<input type="text" class="tpd-input tpd-input-sm tpd-ad-field-link" value="<?php echo esc_attr( $b_link ); ?>" placeholder="https:// or #target">
+										</div>
+										<div class="tpd-form-group">
+											<label><?php esc_html_e( 'Partner Brand / Alt Label', 'tpd-tool' ); ?></label>
+											<input type="text" class="tpd-input tpd-input-sm tpd-ad-field-alt" value="<?php echo esc_attr( $b_alt ); ?>" placeholder="e.g. Indian Vistas">
+										</div>
+										<div class="tpd-form-group">
+											<label><?php esc_html_e( 'Open Link Target', 'tpd-tool' ); ?></label>
+											<select class="tpd-select tpd-select-sm tpd-ad-field-target">
+												<option value="_blank" <?php selected( $b_target, '_blank' ); ?>>New Window (_blank)</option>
+												<option value="_self" <?php selected( $b_target, '_self' ); ?>>Same Window (_self)</option>
+											</select>
+										</div>
+										<div class="tpd-form-group">
+											<label><?php esc_html_e( 'Status', 'tpd-tool' ); ?></label>
+											<select class="tpd-select tpd-select-sm tpd-ad-field-status">
+												<option value="active" <?php selected( $b_status, 'active' ); ?>>Active (Visible)</option>
+												<option value="inactive" <?php selected( $b_status, 'inactive' ); ?>>Inactive (Hidden)</option>
+											</select>
+										</div>
+									</div>
+									<div class="tpd-ad-actions-box">
+										<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-remove-ad-btn" title="Delete this ad">
+											<i class="fa-solid fa-trash-can"></i>
+										</button>
+									</div>
+								</div>
+							<?php endforeach; ?>
+						</div>
+
+						<!-- Templates for dynamically adding new ads -->
+						<template id="tpd-left-ad-template">
+							<div class="tpd-ad-repeater-card tpd-left-ad-row">
+								<div class="tpd-ad-thumb-box">
+									<img src="" alt="Preview" class="tpd-ad-preview-img" style="display:none;">
+									<i class="fa-regular fa-image tpd-ad-placeholder"></i>
+								</div>
+								<div class="tpd-ad-fields-grid">
+									<div class="tpd-form-group">
+										<label><?php esc_html_e( 'Banner Image URL / WordPress Media', 'tpd-tool' ); ?></label>
+										<div style="display:flex; gap:6px;">
+											<input type="url" class="tpd-input tpd-input-sm tpd-ad-field-image" placeholder="https://...">
+											<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-choose-media-btn" title="Choose from WordPress Media Library">
+												<i class="fa-solid fa-photo-film"></i> Media
+											</button>
+										</div>
+									</div>
+									<div class="tpd-form-group">
+										<label><?php esc_html_e( 'Destination Click Link URL', 'tpd-tool' ); ?></label>
+										<input type="text" class="tpd-input tpd-input-sm tpd-ad-field-link" value="#tpd-view-suppliers" placeholder="https:// or #target">
+									</div>
+									<div class="tpd-form-group">
+										<label><?php esc_html_e( 'Partner Brand / Alt Label', 'tpd-tool' ); ?></label>
+										<input type="text" class="tpd-input tpd-input-sm tpd-ad-field-alt" placeholder="e.g. Partner Sponsor">
+									</div>
+									<div class="tpd-form-group">
+										<label><?php esc_html_e( 'Open Link Target', 'tpd-tool' ); ?></label>
+										<select class="tpd-select tpd-select-sm tpd-ad-field-target">
+											<option value="_blank" selected>New Window (_blank)</option>
+											<option value="_self">Same Window (_self)</option>
+										</select>
+									</div>
+									<div class="tpd-form-group">
+										<label><?php esc_html_e( 'Status', 'tpd-tool' ); ?></label>
+										<select class="tpd-select tpd-select-sm tpd-ad-field-status">
+											<option value="active" selected>Active (Visible)</option>
+											<option value="inactive">Inactive (Hidden)</option>
+										</select>
+									</div>
+								</div>
+								<div class="tpd-ad-actions-box">
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-remove-ad-btn" title="Delete this ad">
+										<i class="fa-solid fa-trash-can"></i>
+									</button>
+								</div>
+							</div>
+						</template>
+
+						<template id="tpd-bottom-ad-template">
+							<div class="tpd-ad-repeater-card tpd-bottom-ad-row">
+								<div class="tpd-ad-thumb-box is-panoramic">
+									<img src="" alt="Preview" class="tpd-ad-preview-img" style="display:none;">
+									<i class="fa-regular fa-image tpd-ad-placeholder"></i>
+								</div>
+								<div class="tpd-ad-fields-grid">
+									<div class="tpd-form-group">
+										<label><?php esc_html_e( 'Banner Image URL / WordPress Media', 'tpd-tool' ); ?></label>
+										<div style="display:flex; gap:6px;">
+											<input type="url" class="tpd-input tpd-input-sm tpd-ad-field-image" placeholder="https://...">
+											<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-choose-media-btn" title="Choose from WordPress Media Library">
+												<i class="fa-solid fa-photo-film"></i> Media
+											</button>
+										</div>
+									</div>
+									<div class="tpd-form-group">
+										<label><?php esc_html_e( 'Destination Click Link URL', 'tpd-tool' ); ?></label>
+										<input type="text" class="tpd-input tpd-input-sm tpd-ad-field-link" value="#tpd-view-suppliers" placeholder="https:// or #target">
+									</div>
+									<div class="tpd-form-group">
+										<label><?php esc_html_e( 'Partner Brand / Alt Label', 'tpd-tool' ); ?></label>
+										<input type="text" class="tpd-input tpd-input-sm tpd-ad-field-alt" placeholder="e.g. Partner Offer">
+									</div>
+									<div class="tpd-form-group">
+										<label><?php esc_html_e( 'Open Link Target', 'tpd-tool' ); ?></label>
+										<select class="tpd-select tpd-select-sm tpd-ad-field-target">
+											<option value="_blank" selected>New Window (_blank)</option>
+											<option value="_self">Same Window (_self)</option>
+										</select>
+									</div>
+									<div class="tpd-form-group">
+										<label><?php esc_html_e( 'Status', 'tpd-tool' ); ?></label>
+										<select class="tpd-select tpd-select-sm tpd-ad-field-status">
+											<option value="active" selected>Active (Visible)</option>
+											<option value="inactive">Inactive (Hidden)</option>
+										</select>
+									</div>
+								</div>
+								<div class="tpd-ad-actions-box">
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-remove-ad-btn" title="Delete this ad">
+										<i class="fa-solid fa-trash-can"></i>
+									</button>
+								</div>
+							</div>
+						</template>
+
+						<div style="margin-top:28px; padding-top:20px; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+							<button type="submit" class="tpd-btn tpd-btn-darkblue" style="background:#164e87; padding:12px 28px; font-size:14px; font-weight:700;">
+								<i class="fa-solid fa-floppy-disk"></i> <?php esc_html_e( 'Save All Ad Banners & Welcome Configuration', 'tpd-tool' ); ?>
+							</button>
+							<span style="font-size:12.5px; color:#64748b;">
+								<i class="fa-solid fa-circle-check text-green"></i> <?php esc_html_e( 'Live sync to both Advisor and Supplier portals', 'tpd-tool' ); ?>
+							</span>
+						</div>
 					</form>
 				</div>
 			</div>

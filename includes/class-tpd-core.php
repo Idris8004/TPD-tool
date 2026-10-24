@@ -51,7 +51,11 @@ class TPD_Tool_Core {
 
 		$current_uid = get_current_user_id();
 
-		wp_localize_script( 'tpd-dashboard-js', 'tpd_data', array(
+		if ( current_user_can( 'manage_options' ) && function_exists( 'wp_enqueue_media' ) ) {
+			wp_enqueue_media();
+		}
+
+		$localize_payload = array(
 			'ajax_url'    => admin_url( 'admin-ajax.php' ),
 			'nonce'       => wp_create_nonce( 'tpd_nonce' ),
 			'chat_nonce'  => wp_create_nonce( 'tpd_chat_nonce' ),
@@ -62,7 +66,10 @@ class TPD_Tool_Core {
 			'is_advisor'  => TPD_Tool_Roles::is_advisor( $current_uid ),
 			'is_supplier' => TPD_Tool_Roles::is_supplier( $current_uid ),
 			'is_admin'    => TPD_Tool_Roles::is_admin( $current_uid ),
-		) );
+		);
+
+		wp_localize_script( 'tpd-dashboard-js', 'tpd_data', $localize_payload );
+		wp_localize_script( 'tpd-admin-js', 'tpd_data', $localize_payload );
 	}
 
 	public function enqueue_admin_assets() {
@@ -73,6 +80,10 @@ class TPD_Tool_Core {
 		wp_enqueue_style( 'tpd-fonts', 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap', array(), null );
 		wp_enqueue_style( 'tpd-tool-style', TPD_TOOL_URL . 'assets/css/tpd-tool.css', array( 'font-awesome-6' ), $css_ver );
 		wp_enqueue_script( 'tpd-admin-js', TPD_TOOL_URL . 'assets/js/tpd-admin.js', array( 'jquery' ), $adm_ver, true );
+
+		if ( function_exists( 'wp_enqueue_media' ) ) {
+			wp_enqueue_media();
+		}
 
 		wp_localize_script( 'tpd-admin-js', 'tpd_data', array(
 			'ajax_url'    => admin_url( 'admin-ajax.php' ),
