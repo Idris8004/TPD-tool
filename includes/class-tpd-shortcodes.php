@@ -23,6 +23,7 @@ class TPD_Tool_Shortcodes {
 		add_shortcode( 'tpd_chat_inbox', array( __CLASS__, 'render_chat_inbox' ) );
 		add_shortcode( 'tpd_events_list', array( __CLASS__, 'render_events_list' ) );
 		add_shortcode( 'tpd_upcoming_events', array( __CLASS__, 'render_events_list' ) );
+		add_shortcode( 'tpd_saved_suppliers', array( __CLASS__, 'render_saved_suppliers' ) );
 
 		// Client Trip Inquiry Form & Inquire Button Shortcodes
 		add_shortcode( 'tpd_advisor_inquiry_form', array( __CLASS__, 'render_inquiry_form' ) );
@@ -158,23 +159,16 @@ class TPD_Tool_Shortcodes {
 	}
 
 	public static function render_saved_suppliers( $atts ) {
-		ob_start();
-		$saved_ids = TPD_Tool_Favorites::get_saved_supplier_ids();
-		?>
-		<div class="tpd-saved-suppliers-widget">
-			<h4><?php esc_html_e( 'Saved Suppliers', 'tpd-tool' ); ?></h4>
-			<?php if ( ! empty( $saved_ids ) ) : ?>
-				<ul class="tpd-saved-list">
-					<?php foreach ( $saved_ids as $sid ) : ?>
-						<li><a href="<?php echo esc_url( get_permalink( $sid ) ); ?>"><?php echo esc_html( get_the_title( $sid ) ); ?></a></li>
-					<?php endforeach; ?>
-				</ul>
-			<?php else : ?>
-				<p class="text-muted"><?php esc_html_e( 'No saved suppliers yet.', 'tpd-tool' ); ?></p>
-			<?php endif; ?>
-		</div>
-		<?php
-		return ob_get_clean();
+		$atts = shortcode_atts(
+			array(
+				'user_id' => 0,
+			),
+			$atts,
+			'tpd_saved_suppliers'
+		);
+
+		$user_id = $atts['user_id'] ? absint( $atts['user_id'] ) : get_current_user_id();
+		return class_exists( 'TPD_Tool_Favorites' ) ? TPD_Tool_Favorites::render_saved_suppliers( $user_id ) : '';
 	}
 
 	public static function render_events_list( $atts ) {

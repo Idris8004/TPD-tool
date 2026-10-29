@@ -1318,30 +1318,24 @@ $news_posts = get_posts( array(
 					<div class="tpd-ss-header">
 						<h3><i class="fa-regular fa-bookmark text-blue"></i> <?php esc_html_e( 'Your Saved Suppliers', 'tpd-tool' ); ?></h3>
 					</div>
-					<div class="tpd-featured-suppliers-grid mt-4">
-						<?php echo do_shortcode( '[tpd_saved_suppliers]' ); ?>
-					</div>
+					<?php echo TPD_Tool_Favorites::render_saved_suppliers( $current_user_id ); ?>
 				</div>
 			</div>
 
 			<!-- VIEW 5: CLIENT INQUIRIES & TRIP LEADS -->
 			<div id="tpd-view-inquiries" class="tpd-tab-panel">
-				<!-- Inquiries Shortcode Embed Helper -->
-				<div style="background:#f0fdfa; border:1px solid #99f6e4; border-radius:12px; padding:16px 20px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
-					<div style="display:flex; align-items:center; gap:12px;">
-						<i class="fa-solid fa-paper-plane" style="font-size:22px; color:#00798c;"></i>
-						<div>
-							<strong style="color:#013243; font-size:14px; display:block;"><?php esc_html_e( 'Collect Inquiries on Your Public Website or Elementor Pages', 'tpd-tool' ); ?></strong>
-							<span style="color:#475569; font-size:12.5px;"><?php esc_html_e( 'Use your personal shortcode to drop an Inquire button or full trip request form anywhere.', 'tpd-tool' ); ?></span>
-						</div>
+				<!-- Inquiries Welcome Banner -->
+				<div class="tpd-card-box mb-4" style="background:linear-gradient(135deg, #013243 0%, #00798c 100%); color:#ffffff; padding:22px 28px; border-radius:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+					<div>
+						<h3 style="margin:0 0 6px; font-size:18px; font-weight:800; color:#ffffff;"><i class="fa-solid fa-inbox text-gold"></i> <?php esc_html_e( 'Client Trip Inquiries & Traveler Leads', 'tpd-tool' ); ?></h3>
+						<p style="margin:0; font-size:13px; color:#e0f2fe; max-width:620px; line-height:1.5;">
+							<?php esc_html_e( 'Direct trip requests submitted by clients from your public advisor profile and directory listing. Respond to leads and schedule 1-on-1 consultations.', 'tpd-tool' ); ?>
+						</p>
 					</div>
-					<div style="display:flex; gap:8px; align-items:center;">
-						<code style="background:#ffffff; border:1px solid #cbd5e1; padding:6px 10px; border-radius:6px; font-size:12px; font-family:monospace; color:#00798c;">
-							[tpd_inquire_button advisor_id="<?php echo esc_attr( $current_user_id ); ?>"]
-						</code>
-						<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_inquire_button advisor_id=\'<?php echo esc_attr( $current_user_id ); ?>\']'); alert('Shortcode copied to clipboard!');">
-							<i class="fa-regular fa-copy"></i> <?php esc_html_e( 'Copy', 'tpd-tool' ); ?>
-						</button>
+					<div>
+						<a href="<?php echo esc_url( home_url( '/advisor/' . sanitize_title( $advisor_name ) ) ); ?>" target="_blank" class="tpd-btn tpd-btn-sm tpd-btn-outline-white" style="text-decoration:none; font-weight:700;">
+							<i class="fa-solid fa-arrow-up-right-from-square"></i> <?php esc_html_e( 'View Public Profile', 'tpd-tool' ); ?>
+						</a>
 					</div>
 				</div>
 

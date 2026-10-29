@@ -267,6 +267,11 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 					<i class="fa-solid fa-rectangle-ad"></i> <span><?php esc_html_e( 'Ad Space & Banners', 'tpd-tool' ); ?></span>
 				</a>
 			</li>
+			<li>
+				<a href="#sa-shortcodes" class="tpd-sa-nav-link" data-pane="sa-shortcodes">
+					<i class="fa-solid fa-code"></i> <span><?php esc_html_e( 'Shortcodes & Dev Hub', 'tpd-tool' ); ?></span>
+				</a>
+			</li>
 		</ul>
 	</aside>
 
@@ -1541,6 +1546,273 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 							</span>
 						</div>
 					</form>
+				</div>
+			</div>
+
+			<!-- =========================================================================
+			     PANE 11: SHORTCODES & DEVELOPER HUB (Elementor & Frontend Toolkit)
+			     ========================================================================= -->
+			<div id="sa-shortcodes" class="tpd-sa-pane">
+				<div class="tpd-sa-card">
+					<div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:14px; margin-bottom:20px;">
+						<div>
+							<h3 class="tpd-sa-card-title" style="margin:0 0 6px;">
+								<i class="fa-solid fa-code text-blue"></i> <?php esc_html_e( 'Shortcodes & Developer Toolkit (Elementor Ready)', 'tpd-tool' ); ?>
+							</h3>
+							<p style="font-size:13px; color:#64748b; margin:0;">
+								<?php esc_html_e( 'Complete documentation of all available TPD Tool shortcodes, parameters, and native Elementor Pro Dynamic Tags. Copy and paste into any Elementor widget, Gutenberg block, or WordPress page.', 'tpd-tool' ); ?>
+							</p>
+						</div>
+						<div style="display:flex; gap:8px;">
+							<span style="background:#e0f2fe; color:#0369a1; font-size:12px; font-weight:700; padding:6px 12px; border-radius:999px;">
+								<i class="fa-solid fa-bolt"></i> <?php esc_html_e( 'Elementor Native Tags Active', 'tpd-tool' ); ?>
+							</span>
+						</div>
+					</div>
+
+					<!-- Section 1: Portals & User Dashboards -->
+					<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:20px; margin-bottom:24px;">
+						<h4 style="margin:0 0 14px; font-size:15px; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:8px;">
+							<span style="background:#1d4ed8; color:#fff; width:24px; height:24px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; font-size:11px;"><i class="fa-solid fa-table-columns"></i></span>
+							<?php esc_html_e( 'Portals & Dedicated Dashboards', 'tpd-tool' ); ?>
+						</h4>
+
+						<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:14px;">
+							<!-- Shortcode 1 -->
+							<div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+								<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+									<strong style="font-size:13.5px; color:#0f172a;">Advisor Workspace Portal</strong>
+									<span style="font-size:10px; font-weight:800; background:#dcfce7; color:#15803d; padding:2px 6px; border-radius:4px;">PORTAL</span>
+								</div>
+								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Full Travel Advisor workspace with sidebar navigation, profile editor, supplier directory search, saved favorites, inquiries, and chat.</p>
+								<div style="display:flex; align-items:center; gap:8px;">
+									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_advisor_dashboard]</code>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_advisor_dashboard]'); alert('Copied [tpd_advisor_dashboard] to clipboard!');">
+										<i class="fa-regular fa-copy"></i>
+									</button>
+								</div>
+							</div>
+
+							<!-- Shortcode 2 -->
+							<div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+								<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+									<strong style="font-size:13.5px; color:#0f172a;">Supplier Partner Portal</strong>
+									<span style="font-size:10px; font-weight:800; background:#ede9fe; color:#6d28d9; padding:2px 6px; border-radius:4px;">PORTAL</span>
+								</div>
+								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Full Supplier portal with listing creator, listing editor, delete actions, virtual office team roster, and partner inquiry manager.</p>
+								<div style="display:flex; align-items:center; gap:8px;">
+									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_supplier_dashboard]</code>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_supplier_dashboard]'); alert('Copied [tpd_supplier_dashboard] to clipboard!');">
+										<i class="fa-regular fa-copy"></i>
+									</button>
+								</div>
+							</div>
+
+							<!-- Shortcode 3 -->
+							<div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+								<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+									<strong style="font-size:13.5px; color:#0f172a;">Super Admin Control Hub</strong>
+									<span style="font-size:10px; font-weight:800; background:#fee2e2; color:#b91c1c; padding:2px 6px; border-radius:4px;">ADMIN</span>
+								</div>
+								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Renders the Super Admin Control Hub on any front-end page (restricted to administrators with manage_options).</p>
+								<div style="display:flex; align-items:center; gap:8px;">
+									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_admin_dashboard]</code>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_admin_dashboard]'); alert('Copied [tpd_admin_dashboard] to clipboard!');">
+										<i class="fa-regular fa-copy"></i>
+									</button>
+								</div>
+							</div>
+
+							<!-- Shortcode 4 -->
+							<div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+								<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+									<strong style="font-size:13.5px; color:#0f172a;">Real-Time Chat Messenger</strong>
+									<span style="font-size:10px; font-weight:800; background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px;">COMMUNICATION</span>
+								</div>
+								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Standalone real-time chat inbox and conversation thread between Travel Advisors and Verified Suppliers.</p>
+								<div style="display:flex; align-items:center; gap:8px;">
+									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_chat_inbox]</code>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_chat_inbox]'); alert('Copied [tpd_chat_inbox] to clipboard!');">
+										<i class="fa-regular fa-copy"></i>
+									</button>
+								</div>
+							</div>
+
+							<!-- Shortcode 5 -->
+							<div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+								<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+									<strong style="font-size:13.5px; color:#0f172a;">Saved / Bookmarked Suppliers</strong>
+									<span style="font-size:10px; font-weight:800; background:#fef3c7; color:#b45309; padding:2px 6px; border-radius:4px;">FAVORITES</span>
+								</div>
+								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Renders the responsive card grid of all suppliers saved by the currently logged-in Travel Advisor with remove action.</p>
+								<div style="display:flex; align-items:center; gap:8px;">
+									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_saved_suppliers]</code>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_saved_suppliers]'); alert('Copied [tpd_saved_suppliers] to clipboard!');">
+										<i class="fa-regular fa-copy"></i>
+									</button>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Section 2: Authentication & Registration Flows -->
+					<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:20px; margin-bottom:24px;">
+						<h4 style="margin:0 0 14px; font-size:15px; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:8px;">
+							<span style="background:#0d9488; color:#fff; width:24px; height:24px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; font-size:11px;"><i class="fa-solid fa-user-lock"></i></span>
+							<?php esc_html_e( 'Authentication & Multi-Step Registration Wizards', 'tpd-tool' ); ?>
+						</h4>
+
+						<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:14px;">
+							<div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:16px;">
+								<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+									<strong style="font-size:13.5px; color:#0f172a;">Advisor Registration Wizard</strong>
+									<span style="font-size:10px; font-weight:800; background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px;">ONBOARDING</span>
+								</div>
+								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Multi-step application flow for travel advisors (Credentials, Business Profile, Verification, Plan Selection).</p>
+								<div style="display:flex; align-items:center; gap:8px;">
+									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_advisor_registration]</code>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_advisor_registration]'); alert('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
+								</div>
+							</div>
+
+							<div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:16px;">
+								<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+									<strong style="font-size:13.5px; color:#0f172a;">Supplier Registration Wizard</strong>
+									<span style="font-size:10px; font-weight:800; background:#ede9fe; color:#6d28d9; padding:2px 6px; border-radius:4px;">ONBOARDING</span>
+								</div>
+								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Multi-step onboarding form for supplier partners with trade verification, rep details, and plan selection.</p>
+								<div style="display:flex; align-items:center; gap:8px;">
+									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_supplier_registration]</code>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_supplier_registration]'); alert('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
+								</div>
+							</div>
+
+							<div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:16px;">
+								<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+									<strong style="font-size:13.5px; color:#0f172a;">Advisor Login Form</strong>
+									<span style="font-size:10px; font-weight:800; background:#f1f5f9; color:#475569; padding:2px 6px; border-radius:4px;">AUTH</span>
+								</div>
+								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Secure login box redirecting authenticated travel advisors straight to /advisor-dashboard/.</p>
+								<div style="display:flex; align-items:center; gap:8px;">
+									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_advisor_login]</code>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_advisor_login]'); alert('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
+								</div>
+							</div>
+
+							<div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:16px;">
+								<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+									<strong style="font-size:13.5px; color:#0f172a;">Supplier Login Form</strong>
+									<span style="font-size:10px; font-weight:800; background:#f1f5f9; color:#475569; padding:2px 6px; border-radius:4px;">AUTH</span>
+								</div>
+								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Secure login box redirecting authenticated supplier users straight to /supplier-dashboard/.</p>
+								<div style="display:flex; align-items:center; gap:8px;">
+									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_supplier_login]</code>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_supplier_login]'); alert('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Section 3: Marketplace, Upcoming Events & Leads -->
+					<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:20px; margin-bottom:24px;">
+						<h4 style="margin:0 0 14px; font-size:15px; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:8px;">
+							<span style="background:#eab308; color:#0f172a; width:24px; height:24px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; font-size:11px;"><i class="fa-solid fa-calendar-star"></i></span>
+							<?php esc_html_e( 'Marketplace, Events & Traveler Leads', 'tpd-tool' ); ?>
+						</h4>
+
+						<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:14px;">
+							<div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:16px;">
+								<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+									<strong style="font-size:13.5px; color:#0f172a;">Upcoming Events (Model Grid)</strong>
+									<span style="font-size:10px; font-weight:800; background:#fef3c7; color:#b45309; padding:2px 6px; border-radius:4px;">EVENTS</span>
+								</div>
+								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Modern 4-column card grid with gradient cover image, start/end dates in cyan (#00798c), location pin, and View Event modal.</p>
+								<div style="display:flex; align-items:center; gap:8px;">
+									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:11.5px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_upcoming_events limit="4" columns="4"]</code>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_upcoming_events limit=\'4\' columns=\'4\']'); alert('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
+								</div>
+							</div>
+
+							<div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:16px;">
+								<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+									<strong style="font-size:13.5px; color:#0f172a;">Traveler Inquiry Button (Modal)</strong>
+									<span style="font-size:10px; font-weight:800; background:#dcfce7; color:#15803d; padding:2px 6px; border-radius:4px;">LEADS</span>
+								</div>
+								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Embeddable 'Inquire Now' button on public advisor pages that opens an interactive consultation request modal popup.</p>
+								<div style="display:flex; align-items:center; gap:8px;">
+									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:11.5px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_inquire_button advisor_id="1"]</code>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_inquire_button advisor_id=\'1\']'); alert('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
+								</div>
+							</div>
+
+							<div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:16px;">
+								<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+									<strong style="font-size:13.5px; color:#0f172a;">Embedded Trip Request Form</strong>
+									<span style="font-size:10px; font-weight:800; background:#dcfce7; color:#15803d; padding:2px 6px; border-radius:4px;">LEADS</span>
+								</div>
+								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Full inline trip consultation inquiry form collecting traveler name, email, phone, destination, dates, passengers, and budget.</p>
+								<div style="display:flex; align-items:center; gap:8px;">
+									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:11.5px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_advisor_inquiry_form advisor_id="1"]</code>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_advisor_inquiry_form advisor_id=\'1\']'); alert('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Section 4: Elementor Pro Dynamic Tags & Custom Field Keys -->
+					<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:20px;">
+						<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+							<div>
+								<h4 style="margin:0; font-size:15px; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:8px;">
+									<span style="background:#7c3aed; color:#fff; width:24px; height:24px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; font-size:11px;"><i class="fa-solid fa-database"></i></span>
+									<?php esc_html_e( 'Elementor Dynamic Tags & ACF Universal Field Resolver', 'tpd-tool' ); ?>
+								</h4>
+								<p style="margin:3px 0 0; font-size:12.5px; color:#64748b;">
+									<?php esc_html_e( 'Use [tpd_field key="..."] or select TPD Dynamic Tags inside Elementor Pro to pull any profile field into your templates.', 'tpd-tool' ); ?>
+								</p>
+							</div>
+							<code style="background:#ffffff; border:1px solid #cbd5e1; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c;">
+								[tpd_field key="tpd_agency_name"]
+							</code>
+						</div>
+
+						<!-- Field Cheatsheet Tables -->
+						<div class="tpd-form-grid-2" style="gap:16px;">
+							<div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:14px;">
+								<strong style="font-size:13px; color:#1e40af; display:block; margin-bottom:8px;"><i class="fa-solid fa-user-tie"></i> Key Advisor Field Keys:</strong>
+								<ul style="margin:0; padding-left:18px; font-size:12px; color:#334155; line-height:1.8; font-family:monospace;">
+									<li><strong>display_name</strong> — Full Name</li>
+									<li><strong>tpd_agency_name</strong> — Agency Name</li>
+									<li><strong>tpd_location</strong> — City, State</li>
+									<li><strong>tpd_phone</strong> — Phone Number</li>
+									<li><strong>tpd_website</strong> — Website URL</li>
+									<li><strong>tpd_consortia</strong> — Consortia Affiliation</li>
+									<li><strong>tpd_clia_number</strong> — CLIA Number</li>
+									<li><strong>tpd_iata_number</strong> — IATA Number</li>
+									<li><strong>tpd_years_experience</strong> — Industry Experience</li>
+									<li><strong>tpd_logo_url</strong> — Agency Brand Logo</li>
+									<li><strong>tpd_headshot_url</strong> — Profile Headshot</li>
+								</ul>
+							</div>
+
+							<div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:14px;">
+								<strong style="font-size:13px; color:#7c3aed; display:block; margin-bottom:8px;"><i class="fa-solid fa-building"></i> Key Supplier Field Keys:</strong>
+								<ul style="margin:0; padding-left:18px; font-size:12px; color:#334155; line-height:1.8; font-family:monospace;">
+									<li><strong>tpd_company_name</strong> — Brand Display Name</li>
+									<li><strong>tpd_tagline</strong> — Tagline / Value Proposition</li>
+									<li><strong>tpd_headquarters</strong> — Country / HQ</li>
+									<li><strong>tpd_booking_portal_url</strong> — Booking Portal URL</li>
+									<li><strong>tpd_primary_rep_phone</strong> — Advisor Support Phone</li>
+									<li><strong>tpd_agent_rewards</strong> — Rewards Program (Yes/No)</li>
+									<li><strong>tpd_member_ustoa</strong> — USTOA Membership</li>
+									<li><strong>tpd_member_asta</strong> — ASTA Membership</li>
+									<li><strong>tpd_logo_url</strong> — Company Brand Logo</li>
+									<li><strong>tpd_banner_url</strong> — Showcase Header Banner</li>
+									<li><strong>tpd_main_video_url</strong> — Video Showcase Embed</li>
+								</ul>
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 

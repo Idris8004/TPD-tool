@@ -20,6 +20,8 @@ class TPD_Tool_Profile_Editor {
 		add_action( 'wp_ajax_tpd_submit_claim_listing', array( __CLASS__, 'ajax_submit_claim_listing' ) );
 		add_action( 'wp_ajax_tpd_admin_review_claim', array( __CLASS__, 'ajax_review_claim' ) );
 		add_action( 'wp_ajax_tpd_manage_team_member', array( __CLASS__, 'ajax_manage_team_member' ) );
+		add_action( 'wp_ajax_tpd_delete_supplier_listing', array( __CLASS__, 'ajax_delete_supplier_listing' ) );
+		add_action( 'wp_ajax_tpd_get_supplier_listing_data', array( __CLASS__, 'ajax_get_supplier_listing_data' ) );
 	}
 
 	/**
@@ -478,6 +480,94 @@ class TPD_Tool_Profile_Editor {
 			'company_name' => $company_name,
 			'logo_url'     => $logo_url,
 			'banner_url'   => $banner_url,
+		) );
+	}
+
+	/**
+	 * AJAX: Delete a Supplier Listing
+	 */
+	public static function ajax_delete_supplier_listing() {
+		check_ajax_referer( 'tpd_nonce', 'nonce' );
+
+		$user_id = get_current_user_id();
+		if ( ! $user_id || ! TPD_Tool_Roles::is_account_active( $user_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Authentication required.', 'tpd-tool' ) ) );
+		}
+
+		$listing_id = isset( $_POST['listing_id'] ) ? absint( $_POST['listing_id'] ) : 0;
+		if ( ! $listing_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid listing ID.', 'tpd-tool' ) ) );
+		}
+
+		$post = get_post( $listing_id );
+		if ( ! $post || 'supplier_listing' !== $post->post_type ) {
+			wp_send_json_error( array( 'message' => __( 'Listing not found.', 'tpd-tool' ) ) );
+		}
+
+		$assigned = (int) get_post_meta( $listing_id, 'tpd_assigned_user', true );
+		if ( ! TPD_Tool_Roles::is_admin( $user_id ) && (int) $post->post_author !== $user_id && $assigned !== $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized: You do not own this listing.', 'tpd-tool' ) ) );
+		}
+
+		$title = $post->post_title;
+		$deleted = wp_delete_post( $listing_id, true );
+
+		if ( ! $deleted ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to delete listing. Please try again.', 'tpd-tool' ) ) );
+		}
+
+		wp_send_json_success( array(
+			'message'    => sprintf( __( 'Listing "%s" deleted successfully.', 'tpd-tool' ), $title ),
+			'listing_id' => $listing_id,
+		) );
+	}
+
+	/**
+	 * AJAX: Fetch Supplier Listing Data to Load into Frontend Editor
+	 */
+	public static function ajax_get_supplier_listing_data() {
+		check_ajax_referer( 'tpd_nonce', 'nonce' );
+
+		$user_id = get_current_user_id();
+		if ( ! $user_id || ! TPD_Tool_Roles::is_account_active( $user_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Authentication required.', 'tpd-tool' ) ) );
+		}
+
+		$listing_id = isset( $_POST['listing_id'] ) ? absint( $_POST['listing_id'] ) : 0;
+		if ( ! $listing_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid listing ID.', 'tpd-tool' ) ) );
+		}
+
+		$post = get_post( $listing_id );
+		if ( ! $post || 'supplier_listing' !== $post->post_type ) {
+			wp_send_json_error( array( 'message' => __( 'Listing not found.', 'tpd-tool' ) ) );
+		}
+
+		$assigned = (int) get_post_meta( $listing_id, 'tpd_assigned_user', true );
+		if ( ! TPD_Tool_Roles::is_admin( $user_id ) && (int) $post->post_author !== $user_id && $assigned !== $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized.', 'tpd-tool' ) ) );
+		}
+
+		$gallery = self::get_user_gallery( $user_id, $listing_id );
+
+		wp_send_json_success( array(
+			'listing_id'   => $listing_id,
+			'company_name' => $post->post_title,
+			'tagline'      => get_post_meta( $listing_id, 'tpd_tagline', true ) ?: '',
+			'phone'        => get_post_meta( $listing_id, 'tpd_primary_rep_phone', true ) ?: '',
+			'booking_url'  => get_post_meta( $listing_id, 'tpd_booking_portal_url', true ) ?: '',
+			'headquarters' => get_post_meta( $listing_id, 'tpd_headquarters', true ) ?: '',
+			'rewards'      => get_post_meta( $listing_id, 'tpd_agent_rewards', true ) ?: 'No',
+			'ustoa'        => get_post_meta( $listing_id, 'tpd_member_ustoa', true ) ?: 'No',
+			'asta'         => get_post_meta( $listing_id, 'tpd_member_asta', true ) ?: 'No',
+			'description'  => $post->post_content ?: '',
+			'logo_url'     => get_post_meta( $listing_id, 'tpd_logo_url', true ) ?: '',
+			'banner_url'   => get_post_meta( $listing_id, 'tpd_banner_url', true ) ?: '',
+			'video_url'    => get_post_meta( $listing_id, 'tpd_main_video_url', true ) ?: '',
+			'promo_title'  => get_post_meta( $listing_id, 'tpd_promo_title', true ) ?: '',
+			'promo_desc'   => get_post_meta( $listing_id, 'tpd_promo_desc', true ) ?: '',
+			'gallery'      => $gallery,
+			'public_url'   => get_permalink( $listing_id ),
 		) );
 	}
 

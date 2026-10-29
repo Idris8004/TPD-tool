@@ -494,6 +494,30 @@
 							$btn.addClass('active saved text-gold').html('<i class="fa-solid fa-bookmark"></i> Saved');
 						} else {
 							$btn.removeClass('active saved text-gold').html('<i class="fa-regular fa-bookmark"></i> Save');
+
+							// If inside Saved Suppliers tab, smoothly animate out the card
+							var $savedCard = $('#tpd-saved-card-' + supplierId);
+							if ($savedCard.length) {
+								$savedCard.fadeOut(250, function() {
+									$(this).remove();
+									if (!$('.tpd-saved-supplier-card').length) {
+										$('.tpd-saved-suppliers-grid').replaceWith(
+											'<div class="tpd-empty-state-box" style="text-align:center; padding:48px 24px; background:#ffffff; border:1.5px dashed #cbd5e1; border-radius:14px; margin-top:8px;">' +
+												'<div style="width:64px; height:64px; border-radius:50%; background:#f0f9ff; color:#0284c7; display:inline-flex; align-items:center; justify-content:center; font-size:26px; margin-bottom:16px;">' +
+													'<i class="fa-regular fa-bookmark"></i>' +
+												'</div>' +
+												'<h4 style="margin:0 0 8px; font-size:18px; font-weight:700; color:#0f172a;">No Saved Suppliers Yet</h4>' +
+												'<p style="margin:0 0 20px; font-size:13.5px; color:#64748b; max-width:440px; margin-left:auto; margin-right:auto; line-height:1.5;">' +
+													'Bookmark preferred supplier partners while browsing the directory to save them here for fast 1-click access and direct communication.' +
+												'</p>' +
+												'<a href="#tpd-view-suppliers" class="tpd-btn tpd-btn-sm tpd-btn-darkblue tpd-tab-link" data-view="suppliers" style="padding:10px 22px; font-weight:700; border-radius:8px; text-decoration:none; display:inline-flex; align-items:center; gap:8px;">' +
+													'<i class="fa-solid fa-compass"></i> Explore Supplier Directory' +
+												'</a>' +
+											'</div>'
+										);
+									}
+								});
+							}
 						}
 						showToast(res.data.message);
 					}
@@ -883,6 +907,9 @@
 							.html('<i class="fa-solid fa-circle-check"></i> ' + (res.data.message || 'Showcase saved successfully!'))
 							.fadeIn();
 						showToast(res.data.message || 'Supplier listing updated & synced with WP CPT!');
+						setTimeout(function() {
+							window.location.reload();
+						}, 900);
 					} else {
 						$status.addClass('error')
 							.html('<i class="fa-solid fa-circle-exclamation"></i> ' + (res.data.message || 'Save failed.'))
@@ -894,6 +921,166 @@
 					$status.addClass('error')
 						.html('<i class="fa-solid fa-triangle-exclamation"></i> Connection error. Please try again.')
 						.fadeIn();
+				}
+			});
+		});
+
+		// 10-A. Supplier Listing Management: Create New Listing
+		$(document).on('click', '#tpd-btn-create-new-listing, #tpd-btn-create-first-listing', function(e) {
+			e.preventDefault();
+			var $form = $('#tpd-supplier-listing-editor-form');
+			if ($form.length) {
+				$form[0].reset();
+				$form.find('input[name="listing_id"]').val('0');
+				$form.find('input[name="logo_url"]').val('');
+				$form.find('input[name="banner_url"]').val('');
+				$form.find('input[name="gallery_images_json"]').val('[]');
+				$('#tpd-logo-preview-img').attr('src', '').hide();
+				$('#tpd-logo-placeholder').show();
+				$('#tpd-banner-preview-img').attr('src', '').hide();
+				$('#tpd-banner-placeholder').show();
+				$('#tpd-gallery-preview-grid').empty();
+				$('#tpd-listing-editor-heading').html('<i class="fa-solid fa-plus-circle text-blue"></i> Create New Partner Listing');
+				$('#tpd-listing-editor-live-link').hide();
+				$('#tpd-supp-claim-section').slideUp(200);
+				$('#tpd-supp-manage-section').slideDown(250);
+				$('html, body').animate({ scrollTop: $('#tpd-supp-manage-section').offset().top - 30 }, 400);
+				showToast('Creating new listing — fill in your company details below.');
+			}
+		});
+
+		// 10-B. Supplier Listing Management: Toggle Claim Section
+		$(document).on('click', '#tpd-btn-toggle-claim-box', function(e) {
+			e.preventDefault();
+			$('#tpd-supp-claim-section').slideToggle(200);
+		});
+
+		// 10-C. Supplier Listing Management: Load Listing for Editing
+		$(document).on('click', '.tpd-btn-load-listing-edit', function(e) {
+			e.preventDefault();
+			var $btn = $(this);
+			var listingId = $btn.data('id');
+			var orig = $btn.html();
+
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
+
+			$.ajax({
+				url: (typeof tpd_data !== 'undefined') ? tpd_data.ajax_url : '/wp-admin/admin-ajax.php',
+				type: 'POST',
+				data: {
+					action: 'tpd_get_supplier_listing_data',
+					listing_id: listingId,
+					nonce: (typeof tpd_data !== 'undefined') ? tpd_data.nonce : $('#tpd-supplier-listing-editor-form input[name="nonce"]').val()
+				},
+				success: function(res) {
+					$btn.prop('disabled', false).html(orig);
+					if (res.success && res.data) {
+						var d = res.data;
+						var $f = $('#tpd-supplier-listing-editor-form');
+						$f.find('input[name="listing_id"]').val(d.listing_id);
+						$f.find('input[name="company_name"]').val(d.company_name);
+						$f.find('input[name="tagline"]').val(d.tagline);
+						$f.find('input[name="phone"]').val(d.phone);
+						$f.find('input[name="booking_url"]').val(d.booking_url);
+						$f.find('input[name="headquarters"]').val(d.headquarters);
+						$f.find('select[name="rewards"]').val(d.rewards);
+						$f.find('select[name="ustoa"]').val(d.ustoa);
+						$f.find('select[name="asta"]').val(d.asta);
+						$f.find('textarea[name="description"]').val(d.description);
+						$f.find('input[name="logo_url"]').val(d.logo_url);
+						$f.find('input[name="banner_url"]').val(d.banner_url);
+						$f.find('input[name="video_url"]').val(d.video_url);
+						$f.find('input[name="promo_title"]').val(d.promo_title);
+						$f.find('textarea[name="promo_desc"]').val(d.promo_desc);
+
+						// Update previews
+						if (d.logo_url) {
+							$('#tpd-logo-preview-img').attr('src', d.logo_url).show();
+							$('#tpd-logo-placeholder').hide();
+						} else {
+							$('#tpd-logo-preview-img').hide();
+							$('#tpd-logo-placeholder').show();
+						}
+						if (d.banner_url) {
+							$('#tpd-banner-preview-img').attr('src', d.banner_url).show();
+							$('#tpd-banner-placeholder').hide();
+						} else {
+							$('#tpd-banner-preview-img').hide();
+							$('#tpd-banner-placeholder').show();
+						}
+
+						// Update headings
+						$('#tpd-listing-editor-heading').html('<i class="fa-solid fa-sliders"></i> Manage Listing & Showcase (' + (d.company_name || 'Listing') + ')');
+						if (d.public_url) {
+							$('#tpd-listing-editor-live-link').attr('href', d.public_url).show();
+						}
+
+						// Highlight active row in table
+						$('#tpd-supp-listings-tbody tr').css('background', '');
+						$('#tpd-listing-row-' + d.listing_id).css('background', '#f0f9ff');
+
+						$('#tpd-supp-claim-section').slideUp(200);
+						$('#tpd-supp-manage-section').slideDown(250);
+						$('html, body').animate({ scrollTop: $('#tpd-supp-manage-section').offset().top - 30 }, 400);
+
+						showToast('Loaded "' + (d.company_name || 'Listing') + '" into editor.');
+					} else {
+						showToast(res.data ? res.data.message : 'Error loading listing.');
+					}
+				},
+				error: function() {
+					$btn.prop('disabled', false).html(orig);
+					showToast('Connection error loading listing.');
+				}
+			});
+		});
+
+		// 10-D. Supplier Listing Management: Delete Listing
+		$(document).on('click', '.tpd-btn-delete-listing', function(e) {
+			e.preventDefault();
+			var $btn = $(this);
+			var listingId = $btn.data('id');
+			var title = $btn.data('title') || 'this listing';
+
+			if (!confirm('Are you sure you want to permanently delete "' + title + '"? This action cannot be undone.')) {
+				return;
+			}
+
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
+
+			$.ajax({
+				url: (typeof tpd_data !== 'undefined') ? tpd_data.ajax_url : '/wp-admin/admin-ajax.php',
+				type: 'POST',
+				data: {
+					action: 'tpd_delete_supplier_listing',
+					listing_id: listingId,
+					nonce: (typeof tpd_data !== 'undefined') ? tpd_data.nonce : $('#tpd-supplier-listing-editor-form input[name="nonce"]').val()
+				},
+				success: function(res) {
+					if (res.success) {
+						var $row = $('#tpd-listing-row-' + listingId);
+						$row.fadeOut(300, function() {
+							$(this).remove();
+							if (!$('#tpd-supp-listings-tbody tr').length) {
+								window.location.reload();
+							}
+						});
+
+						// If deleted listing was being edited, reset form
+						var activeEditId = $('#tpd-supplier-listing-editor-form input[name="listing_id"]').val();
+						if (String(activeEditId) === String(listingId)) {
+							$('#tpd-btn-create-new-listing').trigger('click');
+						}
+
+						showToast(res.data.message || 'Listing deleted successfully.');
+					} else {
+						$btn.prop('disabled', false).html('<i class="fa-regular fa-trash-can"></i>');
+						showToast(res.data ? res.data.message : 'Could not delete listing.');
+					}
+				},
+				error: function() {
+					$btn.prop('disabled', false).html('<i class="fa-regular fa-trash-can"></i>');
+					showToast('Connection error deleting listing.');
 				}
 			});
 		});

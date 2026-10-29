@@ -19,18 +19,33 @@ $first_name = ( $user && $user->first_name ) ? $user->first_name : ( $user ? $us
 $last_name  = ( $user && $user->last_name ) ? $user->last_name : '';
 $full_name  = ( $user && $user->display_name ) ? $user->display_name : trim( $first_name . ' ' . $last_name );
 
-// Paired supplier_listing CPT post ID
-$supplier_post_id = 0;
-$query_supp = get_posts( array(
+// All supplier_listing CPT posts owned by or assigned to this supplier
+$my_listings = get_posts( array(
 	'post_type'      => 'supplier_listing',
-	'posts_per_page' => 1,
-	'meta_key'       => 'tpd_assigned_user',
-	'meta_value'     => $current_user_id,
-	'fields'         => 'ids',
+	'post_status'    => array( 'publish', 'pending', 'draft', 'private' ),
+	'posts_per_page' => -1,
+	'meta_query'     => array(
+		'relation' => 'OR',
+		array(
+			'key'   => 'tpd_assigned_user',
+			'value' => $current_user_id,
+		),
+		array(
+			'key'   => 'post_author',
+			'value' => $current_user_id,
+		),
+	),
 ) );
-if ( ! empty( $query_supp ) ) {
-	$supplier_post_id = $query_supp[0];
+if ( empty( $my_listings ) ) {
+	$my_listings = get_posts( array(
+		'post_type'      => 'supplier_listing',
+		'post_status'    => array( 'publish', 'pending', 'draft', 'private' ),
+		'posts_per_page' => -1,
+		'author'         => $current_user_id,
+	) );
 }
+
+$supplier_post_id = ! empty( $my_listings ) ? $my_listings[0]->ID : 0;
 
 // Pull real metadata from User & Paired supplier_listing CPT
 $company_name   = ( $supplier_post_id ? get_the_title( $supplier_post_id ) : '' ) ?: get_user_meta( $current_user_id, 'tpd_company_name', true ) ?: __( 'Partner Brand', 'tpd-tool' );
@@ -448,17 +463,109 @@ $all_directory_listings = get_posts( array(
 					<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
 						<div>
 							<h3 style="margin:0 0 6px; font-size:20px; font-weight:800; color:#ffffff;"><i class="fa-solid fa-building-flag text-gold"></i> <?php esc_html_e( 'Partner Listings & Virtual Showcase Hub', 'tpd-tool' ); ?></h3>
-							<p style="margin:0; font-size:13.5px; color:#cbd5e1;"><?php esc_html_e( 'Manage your company listing, add Virtual Office reps, or claim an existing brand listing.', 'tpd-tool' ); ?></p>
+							<p style="margin:0; font-size:13.5px; color:#cbd5e1;"><?php esc_html_e( 'Manage your brand showcases, create new listings, edit details, or remove inactive directory profiles.', 'tpd-tool' ); ?></p>
 						</div>
 						<div style="display:flex; gap:10px;">
-							<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-primary" onclick="jQuery('#tpd-supp-manage-section').slideDown(); jQuery('#tpd-supp-claim-section').slideUp();">
-								<i class="fa-solid fa-pen-to-square"></i> <?php esc_html_e( 'Manage My Listing', 'tpd-tool' ); ?>
+							<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-primary" id="tpd-btn-create-new-listing" style="background:#00798c; border-color:#00798c;">
+								<i class="fa-solid fa-plus"></i> <?php esc_html_e( 'Add New Listing', 'tpd-tool' ); ?>
 							</button>
-							<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline-white" onclick="jQuery('#tpd-supp-claim-section').slideDown(); jQuery('#tpd-supp-manage-section').slideUp();">
+							<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline-white" id="tpd-btn-toggle-claim-box">
 								<i class="fa-solid fa-hand-holding-hand"></i> <?php esc_html_e( 'Claim Existing Listing', 'tpd-tool' ); ?>
 							</button>
 						</div>
 					</div>
+				</div>
+
+				<!-- Section 0: MY DIRECTORY LISTINGS TABLE (List, Edit, Delete) -->
+				<div class="tpd-card-box mb-4" id="tpd-supp-my-listings-overview">
+					<div class="tpd-ss-header mb-3" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+						<div>
+							<h4 style="margin:0; font-size:16px; font-weight:800; color:#0f172a;"><i class="fa-solid fa-list-check text-blue"></i> <?php esc_html_e( 'My Directory Listings', 'tpd-tool' ); ?></h4>
+							<p style="margin:2px 0 0; font-size:12.5px; color:#64748b;"><?php esc_html_e( 'Click Edit to update your showcase content, media, and resources, or Delete to remove a listing.', 'tpd-tool' ); ?></p>
+						</div>
+					</div>
+
+					<?php if ( ! empty( $my_listings ) ) : ?>
+						<div style="overflow-x:auto;">
+							<table class="tpd-inquiries-table" style="width:100%; min-width:650px;">
+								<thead>
+									<tr>
+										<th><?php esc_html_e( 'Showcase / Brand', 'tpd-tool' ); ?></th>
+										<th><?php esc_html_e( 'Category / Tagline', 'tpd-tool' ); ?></th>
+										<th><?php esc_html_e( 'Status', 'tpd-tool' ); ?></th>
+										<th><?php esc_html_e( 'Engagement', 'tpd-tool' ); ?></th>
+										<th style="text-align:right;"><?php esc_html_e( 'Actions', 'tpd-tool' ); ?></th>
+									</tr>
+								</thead>
+								<tbody id="tpd-supp-listings-tbody">
+									<?php foreach ( $my_listings as $ml ) :
+										$ml_logo    = get_post_meta( $ml->ID, 'tpd_logo_url', true ) ?: '';
+										$ml_tagline = get_post_meta( $ml->ID, 'tpd_tagline', true ) ?: get_post_meta( $ml->ID, 'tpd_supplier_category', true ) ?: 'Supplier Partner';
+										$ml_views   = (int) get_post_meta( $ml->ID, 'tpd_listing_views', true );
+										$ml_saves   = (int) get_post_meta( $ml->ID, 'tpd_listing_saves', true );
+										$ml_status  = get_post_status( $ml->ID );
+										$is_active_editing = ( $ml->ID === $supplier_post_id );
+									?>
+										<tr id="tpd-listing-row-<?php echo esc_attr( $ml->ID ); ?>" style="<?php echo $is_active_editing ? 'background:#f0f9ff;' : ''; ?>">
+											<td>
+												<div style="display:flex; align-items:center; gap:12px;">
+													<?php if ( $ml_logo ) : ?>
+														<img src="<?php echo esc_url( $ml_logo ); ?>" alt="<?php echo esc_attr( $ml->post_title ); ?>" style="width:40px; height:40px; object-fit:contain; border-radius:6px; border:1px solid #e2e8f0; background:#fff; padding:2px;">
+													<?php else : ?>
+														<div style="width:40px; height:40px; border-radius:6px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; color:#94a3b8; font-size:16px;">
+															<i class="fa-solid fa-building"></i>
+														</div>
+													<?php endif; ?>
+													<div>
+														<strong style="font-size:14px; color:#0f172a; display:block;"><?php echo esc_html( $ml->post_title ); ?></strong>
+														<span style="font-size:11.5px; color:#64748b;">ID #<?php echo esc_html( $ml->ID ); ?> · <?php echo esc_html( get_post_meta( $ml->ID, 'tpd_headquarters', true ) ?: 'Global' ); ?></span>
+													</div>
+												</div>
+											</td>
+											<td><span style="font-size:13px; color:#334155;"><?php echo esc_html( wp_trim_words( $ml_tagline, 5 ) ); ?></span></td>
+											<td>
+												<?php if ( 'publish' === $ml_status ) : ?>
+													<span style="background:#dcfce7; color:#15803d; font-size:11px; font-weight:700; padding:3px 8px; border-radius:4px; text-transform:uppercase;"><i class="fa-solid fa-circle-check"></i> Published</span>
+												<?php elseif ( 'pending' === $ml_status ) : ?>
+													<span style="background:#fef3c7; color:#b45309; font-size:11px; font-weight:700; padding:3px 8px; border-radius:4px; text-transform:uppercase;"><i class="fa-solid fa-clock"></i> Pending</span>
+												<?php else : ?>
+													<span style="background:#f1f5f9; color:#64748b; font-size:11px; font-weight:700; padding:3px 8px; border-radius:4px; text-transform:uppercase;">Draft</span>
+												<?php endif; ?>
+											</td>
+											<td>
+												<span style="font-size:12px; color:#475569;">
+													<i class="fa-regular fa-eye text-blue"></i> <?php echo esc_html( $ml_views ); ?> ·
+													<i class="fa-regular fa-bookmark text-gold"></i> <?php echo esc_html( $ml_saves ); ?>
+												</span>
+											</td>
+											<td style="text-align:right;">
+												<div style="display:inline-flex; gap:6px; align-items:center;">
+													<a href="<?php echo esc_url( get_permalink( $ml->ID ) ); ?>" target="_blank" class="tpd-btn tpd-btn-xs tpd-btn-outline" style="text-decoration:none;" title="<?php esc_attr_e( 'View Public Showcase', 'tpd-tool' ); ?>">
+														<i class="fa-solid fa-eye"></i> View
+													</a>
+													<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-darkblue tpd-btn-load-listing-edit" data-id="<?php echo esc_attr( $ml->ID ); ?>" data-title="<?php echo esc_attr( $ml->post_title ); ?>" title="<?php esc_attr_e( 'Edit this Listing', 'tpd-tool' ); ?>" style="background:#00798c;">
+														<i class="fa-solid fa-pen-to-square"></i> Edit
+													</button>
+													<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-btn-delete-listing" data-id="<?php echo esc_attr( $ml->ID ); ?>" data-title="<?php echo esc_attr( $ml->post_title ); ?>" title="<?php esc_attr_e( 'Delete this Listing', 'tpd-tool' ); ?>" style="background:#dc2626; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">
+														<i class="fa-regular fa-trash-can"></i>
+													</button>
+												</div>
+											</td>
+										</tr>
+									<?php endforeach; ?>
+								</tbody>
+							</table>
+						</div>
+					<?php else : ?>
+						<div class="tpd-empty-state-box" style="text-align:center; padding:36px 20px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:10px;">
+							<i class="fa-solid fa-building-circle-check" style="font-size:36px; color:#94a3b8; margin-bottom:12px; display:block;"></i>
+							<h4 style="margin:0 0 6px; font-size:16px; font-weight:700; color:#1e293b;"><?php esc_html_e( 'No Listings Created Yet', 'tpd-tool' ); ?></h4>
+							<p style="margin:0 0 16px; font-size:13px; color:#64748b;"><?php esc_html_e( 'Publish your brand showcase so travel advisors across North America can discover and book with you.', 'tpd-tool' ); ?></p>
+							<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-primary" id="tpd-btn-create-first-listing" style="background:#00798c; border-color:#00798c;">
+								<i class="fa-solid fa-plus"></i> <?php esc_html_e( 'Create Your First Listing', 'tpd-tool' ); ?>
+							</button>
+						</div>
+					<?php endif; ?>
 				</div>
 
 				<!-- Section A: CLAIM A LISTING (Dynamically lists all supplier_listing CPT posts) -->
@@ -506,13 +613,13 @@ $all_directory_listings = get_posts( array(
 					<div class="tpd-card-box">
 						<div class="tpd-ss-header mb-4">
 							<div>
-								<h3 style="margin:0;"><i class="fa-solid fa-sliders"></i> <?php printf( esc_html__( 'Manage Listing & Showcase (%s)', 'tpd-tool' ), esc_html( $company_name ) ); ?></h3>
+								<h3 style="margin:0;" id="tpd-listing-editor-heading"><i class="fa-solid fa-sliders"></i> <?php printf( esc_html__( 'Manage Listing & Showcase (%s)', 'tpd-tool' ), esc_html( $company_name ) ); ?></h3>
 								<span class="text-muted" style="font-size:13px;">
 									<?php printf( esc_html__( 'Plan Level: %s · Status: Published & Live', 'tpd-tool' ), '<strong>' . esc_html( $plan_info['name'] ) . '</strong>' ); ?>
 								</span>
 							</div>
 							<div>
-								<a href="<?php echo esc_url( $public_url ); ?>" target="_blank" class="tpd-btn tpd-btn-sm tpd-btn-outline" style="text-decoration:none;">
+								<a href="<?php echo esc_url( $public_url ); ?>" target="_blank" class="tpd-btn tpd-btn-sm tpd-btn-outline" id="tpd-listing-editor-live-link" style="text-decoration:none;">
 									<i class="fa-solid fa-eye"></i> <?php esc_html_e( 'View Live Showcase', 'tpd-tool' ); ?> &rarr;
 								</a>
 							</div>
