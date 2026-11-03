@@ -24,6 +24,8 @@ class TPD_Tool_Shortcodes {
 		add_shortcode( 'tpd_events_list', array( __CLASS__, 'render_events_list' ) );
 		add_shortcode( 'tpd_upcoming_events', array( __CLASS__, 'render_events_list' ) );
 		add_shortcode( 'tpd_saved_suppliers', array( __CLASS__, 'render_saved_suppliers' ) );
+		add_shortcode( 'tpd_supplier_profile', array( __CLASS__, 'render_supplier_profile' ) );
+		add_shortcode( 'tpd_supplier_showcase', array( __CLASS__, 'render_supplier_profile' ) );
 
 		// Client Trip Inquiry Form & Inquire Button Shortcodes
 		add_shortcode( 'tpd_advisor_inquiry_form', array( __CLASS__, 'render_inquiry_form' ) );
@@ -120,6 +122,76 @@ class TPD_Tool_Shortcodes {
 			include $template;
 		}
 		return ob_get_clean();
+	}
+
+	/**
+	 * Render Public Supplier Profile Showcase (6 Tabs for Enhanced, Basic for Free)
+	 * Usage: [tpd_supplier_profile id="123"] or [tpd_supplier_showcase id="123"]
+	 */
+	public static function render_supplier_profile( $atts ) {
+		$atts = shortcode_atts(
+			array(
+				'id' => 0,
+			),
+			$atts,
+			'tpd_supplier_profile'
+		);
+
+		$listing_id = absint( $atts['id'] );
+
+		// If no ID specified, try current post if it's supplier_listing, or find listing for current logged-in user
+		if ( ! $listing_id ) {
+			$post_id = get_the_ID();
+			if ( $post_id && 'supplier_listing' === get_post_type( $post_id ) ) {
+				$listing_id = $post_id;
+			} else {
+				$user_id = get_current_user_id();
+				if ( $user_id ) {
+					$user_listings = get_posts( array(
+						'post_type'      => 'supplier_listing',
+						'post_status'    => array( 'publish', 'draft' ),
+						'author'         => $user_id,
+						'posts_per_page' => 1,
+						'fields'         => 'ids',
+					) );
+					if ( ! empty( $user_listings ) ) {
+						$listing_id = (int) $user_listings[0];
+					}
+				}
+			}
+		}
+
+		if ( ! $listing_id ) {
+			return '<div class="tpd-alert tpd-alert-info" style="padding:16px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; color:#1e40af; font-size:14px;"><i class="fa-solid fa-circle-info"></i> ' . esc_html__( 'No supplier listing found to display.', 'tpd-tool' ) . '</div>';
+		}
+
+		global $post;
+		$orig_post = $post;
+		$post = get_post( $listing_id );
+		if ( ! $post ) {
+			return '';
+		}
+		setup_postdata( $post );
+
+		if ( ! defined( 'TPD_EMBEDDED_PROFILE' ) ) {
+			define( 'TPD_EMBEDDED_PROFILE', true );
+		}
+
+		ob_start();
+		$template = TPD_TOOL_DIR . 'templates/supplier/single-supplier.php';
+		if ( file_exists( $template ) ) {
+			include $template;
+		}
+		$output = ob_get_clean();
+
+		$post = $orig_post;
+		if ( $post ) {
+			setup_postdata( $post );
+		} else {
+			wp_reset_postdata();
+		}
+
+		return $output;
 	}
 
 	public static function render_admin_dashboard( $atts ) {

@@ -396,20 +396,19 @@ class TPD_Tool_Profile_Editor {
 			}
 		}
 
+		$user_tier   = class_exists( 'TPD_Tool_Tiers' ) ? TPD_Tool_Tiers::get_user_tier( $user_id ) : 'basic';
+		$is_enhanced = class_exists( 'TPD_Tool_Tiers' ) ? TPD_Tool_Tiers::is_enhanced_supplier( $user_id ) : false;
+
+		// 1. Basic Company Information (Accessible to ALL suppliers: Free & Paid)
 		$company_name = isset( $_POST['company_name'] ) ? sanitize_text_field( wp_unslash( $_POST['company_name'] ) ) : '';
 		$tagline      = isset( $_POST['tagline'] ) ? sanitize_text_field( wp_unslash( $_POST['tagline'] ) ) : '';
 		$phone        = isset( $_POST['phone'] ) ? sanitize_text_field( wp_unslash( $_POST['phone'] ) ) : '';
 		$booking_url  = isset( $_POST['booking_url'] ) ? esc_url_raw( wp_unslash( $_POST['booking_url'] ) ) : '';
 		$headquarters = isset( $_POST['headquarters'] ) ? sanitize_text_field( wp_unslash( $_POST['headquarters'] ) ) : '';
-		$rewards      = isset( $_POST['rewards'] ) ? sanitize_text_field( wp_unslash( $_POST['rewards'] ) ) : 'No';
-		$ustoa        = isset( $_POST['ustoa'] ) ? sanitize_text_field( wp_unslash( $_POST['ustoa'] ) ) : 'No';
-		$asta         = isset( $_POST['asta'] ) ? sanitize_text_field( wp_unslash( $_POST['asta'] ) ) : 'No';
+		$country      = isset( $_POST['country'] ) ? sanitize_text_field( wp_unslash( $_POST['country'] ) ) : '';
 		$description  = isset( $_POST['description'] ) ? wp_kses_post( wp_unslash( $_POST['description'] ) ) : '';
 		$logo_url     = isset( $_POST['logo_url'] ) ? esc_url_raw( wp_unslash( $_POST['logo_url'] ) ) : '';
 		$banner_url   = isset( $_POST['banner_url'] ) ? esc_url_raw( wp_unslash( $_POST['banner_url'] ) ) : '';
-		$video_url    = isset( $_POST['video_url'] ) ? esc_url_raw( wp_unslash( $_POST['video_url'] ) ) : '';
-		$promo_title  = isset( $_POST['promo_title'] ) ? sanitize_text_field( wp_unslash( $_POST['promo_title'] ) ) : '';
-		$promo_desc   = isset( $_POST['promo_desc'] ) ? sanitize_textarea_field( wp_unslash( $_POST['promo_desc'] ) ) : '';
 
 		if ( ! $listing_id ) {
 			$listing_id = wp_insert_post( array(
@@ -433,9 +432,9 @@ class TPD_Tool_Profile_Editor {
 		update_post_meta( $listing_id, 'tpd_primary_rep_phone', $phone );
 		update_post_meta( $listing_id, 'tpd_booking_portal_url', $booking_url );
 		update_post_meta( $listing_id, 'tpd_headquarters', $headquarters );
-		update_post_meta( $listing_id, 'tpd_agent_rewards', $rewards );
-		update_post_meta( $listing_id, 'tpd_member_ustoa', $ustoa );
-		update_post_meta( $listing_id, 'tpd_member_asta', $asta );
+		if ( $country ) {
+			update_post_meta( $listing_id, 'tpd_country_of_residence', $country );
+		}
 		if ( isset( $_POST['logo_url'] ) ) {
 			update_post_meta( $listing_id, 'tpd_logo_url', $logo_url );
 			update_user_meta( $user_id, 'tpd_logo_url', $logo_url );
@@ -444,24 +443,159 @@ class TPD_Tool_Profile_Editor {
 			update_post_meta( $listing_id, 'tpd_banner_url', $banner_url );
 			update_user_meta( $user_id, 'tpd_banner_url', $banner_url );
 		}
-		update_post_meta( $listing_id, 'tpd_main_video_url', $video_url );
-		update_post_meta( $listing_id, 'tpd_promo_title', $promo_title );
-		update_post_meta( $listing_id, 'tpd_promo_desc', $promo_desc );
+		update_post_meta( $listing_id, 'tpd_user_tier', $user_tier );
 
-		// Save Supplier Showcase Photo Gallery
-		$gallery_imgs = array();
-		if ( isset( $_POST['gallery_images_json'] ) ) {
-			$dec = json_decode( wp_unslash( $_POST['gallery_images_json'] ), true );
-			if ( is_array( $dec ) ) {
-				$gallery_imgs = array_map( 'esc_url_raw', $dec );
+		// 2. Enhanced / Paid Listing Features & Separate Tabs (Associations, Resources, FAQs, Gallery, Videos)
+		if ( $is_enhanced ) {
+			$rewards      = isset( $_POST['rewards'] ) ? sanitize_text_field( wp_unslash( $_POST['rewards'] ) ) : 'No';
+			$rewards_desc = isset( $_POST['rewards_desc'] ) ? sanitize_textarea_field( wp_unslash( $_POST['rewards_desc'] ) ) : '';
+			$ustoa        = isset( $_POST['ustoa'] ) ? sanitize_text_field( wp_unslash( $_POST['ustoa'] ) ) : 'No';
+			$asta         = isset( $_POST['asta'] ) ? sanitize_text_field( wp_unslash( $_POST['asta'] ) ) : 'No';
+			$clia         = isset( $_POST['clia'] ) ? sanitize_text_field( wp_unslash( $_POST['clia'] ) ) : 'No';
+			$associations = isset( $_POST['associations'] ) ? sanitize_text_field( wp_unslash( $_POST['associations'] ) ) : '';
+			$video_url    = isset( $_POST['video_url'] ) ? esc_url_raw( wp_unslash( $_POST['video_url'] ) ) : '';
+			$promo_title  = isset( $_POST['promo_title'] ) ? sanitize_text_field( wp_unslash( $_POST['promo_title'] ) ) : '';
+			$promo_desc   = isset( $_POST['promo_desc'] ) ? sanitize_textarea_field( wp_unslash( $_POST['promo_desc'] ) ) : '';
+
+			update_post_meta( $listing_id, 'tpd_agent_rewards', $rewards );
+			update_post_meta( $listing_id, 'tpd_agent_rewards_desc', $rewards_desc );
+			update_post_meta( $listing_id, 'tpd_member_ustoa', $ustoa );
+			update_post_meta( $listing_id, 'tpd_member_asta', $asta );
+			update_post_meta( $listing_id, 'tpd_member_clia', $clia );
+			update_post_meta( $listing_id, 'tpd_associations', $associations );
+			update_post_meta( $listing_id, 'tpd_main_video_url', $video_url );
+			update_post_meta( $listing_id, 'tpd_promo_title', $promo_title );
+			update_post_meta( $listing_id, 'tpd_promo_desc', $promo_desc );
+
+			// Associations & Conferences: Save upcoming conferences
+			$conferences = array();
+			if ( isset( $_POST['conferences_json'] ) ) {
+				$dec = json_decode( wp_unslash( $_POST['conferences_json'] ), true );
+				if ( is_array( $dec ) ) {
+					foreach ( $dec as $c ) {
+						if ( ! empty( $c['name'] ) ) {
+							$conferences[] = array(
+								'name'     => sanitize_text_field( $c['name'] ),
+								'date'     => sanitize_text_field( isset( $c['date'] ) ? $c['date'] : '' ),
+								'location' => sanitize_text_field( isset( $c['location'] ) ? $c['location'] : '' ),
+								'url'      => esc_url_raw( isset( $c['url'] ) ? $c['url'] : '' ),
+							);
+						}
+					}
+				}
+			} elseif ( isset( $_POST['conferences'] ) && is_array( $_POST['conferences'] ) ) {
+				foreach ( wp_unslash( $_POST['conferences'] ) as $c ) {
+					if ( ! empty( $c['name'] ) ) {
+						$conferences[] = array(
+							'name'     => sanitize_text_field( $c['name'] ),
+							'date'     => sanitize_text_field( isset( $c['date'] ) ? $c['date'] : '' ),
+							'location' => sanitize_text_field( isset( $c['location'] ) ? $c['location'] : '' ),
+							'url'      => esc_url_raw( isset( $c['url'] ) ? $c['url'] : '' ),
+						);
+					}
+				}
 			}
-		} elseif ( isset( $_POST['gallery_images'] ) && is_array( $_POST['gallery_images'] ) ) {
-			$gallery_imgs = array_map( 'esc_url_raw', wp_unslash( $_POST['gallery_images'] ) );
-		}
-		$gallery_imgs = array_values( array_filter( $gallery_imgs ) );
-		if ( isset( $_POST['gallery_images_json'] ) || isset( $_POST['gallery_images'] ) ) {
-			update_post_meta( $listing_id, 'tpd_gallery_images', $gallery_imgs );
-			update_user_meta( $user_id, 'tpd_gallery_images', $gallery_imgs );
+			update_post_meta( $listing_id, '_tpd_supplier_conferences', $conferences );
+
+			// Resources & Brochures: Save documents
+			$resources = array();
+			if ( isset( $_POST['resources_json'] ) ) {
+				$dec = json_decode( wp_unslash( $_POST['resources_json'] ), true );
+				if ( is_array( $dec ) ) {
+					foreach ( $dec as $r ) {
+						if ( ! empty( $r['title'] ) && ! empty( $r['file_url'] ) ) {
+							$resources[] = array(
+								'title'       => sanitize_text_field( $r['title'] ),
+								'file_url'    => esc_url_raw( $r['file_url'] ),
+								'category'    => sanitize_text_field( isset( $r['category'] ) ? $r['category'] : 'Brochure' ),
+								'description' => sanitize_text_field( isset( $r['description'] ) ? $r['description'] : '' ),
+							);
+						}
+					}
+				}
+			} elseif ( isset( $_POST['resources'] ) && is_array( $_POST['resources'] ) ) {
+				foreach ( wp_unslash( $_POST['resources'] ) as $r ) {
+					if ( ! empty( $r['title'] ) && ! empty( $r['file_url'] ) ) {
+						$resources[] = array(
+							'title'       => sanitize_text_field( $r['title'] ),
+							'file_url'    => esc_url_raw( $r['file_url'] ),
+							'category'    => sanitize_text_field( isset( $r['category'] ) ? $r['category'] : 'Brochure' ),
+							'description' => sanitize_text_field( isset( $r['description'] ) ? $r['description'] : '' ),
+						);
+					}
+				}
+			}
+			update_post_meta( $listing_id, '_tpd_supplier_resources', $resources );
+
+			// FAQs: Save Supplier Travel Advisor FAQs
+			$faqs_list = array();
+			if ( isset( $_POST['faqs_json'] ) ) {
+				$dec = json_decode( wp_unslash( $_POST['faqs_json'] ), true );
+				if ( is_array( $dec ) ) {
+					foreach ( $dec as $f ) {
+						if ( ! empty( $f['question'] ) ) {
+							$faqs_list[] = array(
+								'question' => sanitize_text_field( $f['question'] ),
+								'answer'   => wp_kses_post( isset( $f['answer'] ) ? $f['answer'] : '' ),
+							);
+						}
+					}
+				}
+			} elseif ( isset( $_POST['faqs'] ) && is_array( $_POST['faqs'] ) ) {
+				foreach ( wp_unslash( $_POST['faqs'] ) as $f ) {
+					if ( ! empty( $f['question'] ) ) {
+						$faqs_list[] = array(
+							'question' => sanitize_text_field( $f['question'] ),
+							'answer'   => wp_kses_post( isset( $f['answer'] ) ? $f['answer'] : '' ),
+						);
+					}
+				}
+			}
+			update_post_meta( $listing_id, '_tpd_supplier_faqs', $faqs_list );
+
+			// Photo Gallery: Save multiple images
+			$gallery_imgs = array();
+			if ( isset( $_POST['gallery_images_json'] ) ) {
+				$dec = json_decode( wp_unslash( $_POST['gallery_images_json'] ), true );
+				if ( is_array( $dec ) ) {
+					$gallery_imgs = array_map( 'esc_url_raw', $dec );
+				}
+			} elseif ( isset( $_POST['gallery_images'] ) && is_array( $_POST['gallery_images'] ) ) {
+				$gallery_imgs = array_map( 'esc_url_raw', wp_unslash( $_POST['gallery_images'] ) );
+			}
+			$gallery_imgs = array_values( array_filter( $gallery_imgs ) );
+			if ( isset( $_POST['gallery_images_json'] ) || isset( $_POST['gallery_images'] ) ) {
+				update_post_meta( $listing_id, 'tpd_gallery_images', $gallery_imgs );
+				update_user_meta( $user_id, 'tpd_gallery_images', $gallery_imgs );
+			}
+
+			// Videos: Save additional video showcase items
+			$videos_list = array();
+			if ( isset( $_POST['videos_json'] ) ) {
+				$dec = json_decode( wp_unslash( $_POST['videos_json'] ), true );
+				if ( is_array( $dec ) ) {
+					foreach ( $dec as $v ) {
+						if ( ! empty( $v['video_url'] ) ) {
+							$videos_list[] = array(
+								'title'       => sanitize_text_field( isset( $v['title'] ) ? $v['title'] : '' ),
+								'video_url'   => esc_url_raw( $v['video_url'] ),
+								'description' => sanitize_text_field( isset( $v['description'] ) ? $v['description'] : '' ),
+							);
+						}
+					}
+				}
+			} elseif ( isset( $_POST['videos'] ) && is_array( $_POST['videos'] ) ) {
+				foreach ( wp_unslash( $_POST['videos'] ) as $v ) {
+					if ( ! empty( $v['video_url'] ) ) {
+						$videos_list[] = array(
+							'title'       => sanitize_text_field( isset( $v['title'] ) ? $v['title'] : '' ),
+							'video_url'   => esc_url_raw( $v['video_url'] ),
+							'description' => sanitize_text_field( isset( $v['description'] ) ? $v['description'] : '' ),
+						);
+					}
+				}
+			}
+			update_post_meta( $listing_id, '_tpd_supplier_videos', $videos_list );
 		}
 
 		// Sync company name back to user meta
@@ -475,11 +609,12 @@ class TPD_Tool_Profile_Editor {
 		}
 
 		wp_send_json_success( array(
-			'message'      => __( 'Supplier Listing, Showcase & Custom Fields updated!', 'tpd-tool' ),
+			'message'      => __( 'Supplier Listing & Showcase successfully updated and saved!', 'tpd-tool' ),
 			'listing_id'   => $listing_id,
 			'company_name' => $company_name,
 			'logo_url'     => $logo_url,
 			'banner_url'   => $banner_url,
+			'is_enhanced'  => $is_enhanced,
 		) );
 	}
 
@@ -548,25 +683,39 @@ class TPD_Tool_Profile_Editor {
 			wp_send_json_error( array( 'message' => __( 'Unauthorized.', 'tpd-tool' ) ) );
 		}
 
-		$gallery = self::get_user_gallery( $user_id, $listing_id );
+		$is_enhanced  = class_exists( 'TPD_Tool_Tiers' ) ? TPD_Tool_Tiers::is_listing_enhanced( $listing_id ) : false;
+		$gallery      = self::get_user_gallery( $user_id, $listing_id );
+		$conferences  = get_post_meta( $listing_id, '_tpd_supplier_conferences', true );
+		$resources    = get_post_meta( $listing_id, '_tpd_supplier_resources', true );
+		$faqs         = get_post_meta( $listing_id, '_tpd_supplier_faqs', true );
+		$videos       = get_post_meta( $listing_id, '_tpd_supplier_videos', true );
 
 		wp_send_json_success( array(
 			'listing_id'   => $listing_id,
+			'is_enhanced'  => $is_enhanced,
 			'company_name' => $post->post_title,
 			'tagline'      => get_post_meta( $listing_id, 'tpd_tagline', true ) ?: '',
 			'phone'        => get_post_meta( $listing_id, 'tpd_primary_rep_phone', true ) ?: '',
 			'booking_url'  => get_post_meta( $listing_id, 'tpd_booking_portal_url', true ) ?: '',
 			'headquarters' => get_post_meta( $listing_id, 'tpd_headquarters', true ) ?: '',
+			'country'      => get_post_meta( $listing_id, 'tpd_country_of_residence', true ) ?: '',
 			'rewards'      => get_post_meta( $listing_id, 'tpd_agent_rewards', true ) ?: 'No',
+			'rewards_desc' => get_post_meta( $listing_id, 'tpd_agent_rewards_desc', true ) ?: '',
 			'ustoa'        => get_post_meta( $listing_id, 'tpd_member_ustoa', true ) ?: 'No',
 			'asta'         => get_post_meta( $listing_id, 'tpd_member_asta', true ) ?: 'No',
+			'clia'         => get_post_meta( $listing_id, 'tpd_member_clia', true ) ?: 'No',
+			'associations' => get_post_meta( $listing_id, 'tpd_associations', true ) ?: '',
 			'description'  => $post->post_content ?: '',
 			'logo_url'     => get_post_meta( $listing_id, 'tpd_logo_url', true ) ?: '',
 			'banner_url'   => get_post_meta( $listing_id, 'tpd_banner_url', true ) ?: '',
 			'video_url'    => get_post_meta( $listing_id, 'tpd_main_video_url', true ) ?: '',
 			'promo_title'  => get_post_meta( $listing_id, 'tpd_promo_title', true ) ?: '',
 			'promo_desc'   => get_post_meta( $listing_id, 'tpd_promo_desc', true ) ?: '',
-			'gallery'      => $gallery,
+			'gallery'      => is_array( $gallery ) ? $gallery : array(),
+			'conferences'  => is_array( $conferences ) ? $conferences : array(),
+			'resources'    => is_array( $resources ) ? $resources : array(),
+			'faqs'         => is_array( $faqs ) ? $faqs : array(),
+			'videos'       => is_array( $videos ) ? $videos : array(),
 			'public_url'   => get_permalink( $listing_id ),
 		) );
 	}

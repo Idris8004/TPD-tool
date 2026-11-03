@@ -161,6 +161,19 @@ class TPD_Tool_Core {
 			}
 		}
 
+		// Single Supplier Listing Profile / Showcase
+		if ( is_singular( 'supplier_listing' ) ) {
+			$theme_file = locate_template( array( 'single-supplier_listing.php', 'single-supplier.php' ) );
+			if ( $theme_file ) {
+				return $theme_file;
+			}
+			$file = TPD_TOOL_DIR . 'templates/supplier/single-supplier.php';
+			if ( file_exists( $file ) ) {
+				status_header( 200 );
+				return $file;
+			}
+		}
+
 		return $template;
 	}
 

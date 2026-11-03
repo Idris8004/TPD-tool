@@ -885,9 +885,189 @@
 			});
 		});
 
+		// Helper functions for 6-Tab Supplier Listing Repeaters
+		function syncConferences() {
+			var arr = [];
+			$('#tpd-conferences-container .tpd-conf-row').each(function() {
+				var name = $(this).find('.conf-name').val() || '';
+				var date = $(this).find('.conf-date').val() || '';
+				var loc  = $(this).find('.conf-location').val() || '';
+				var url  = $(this).find('.conf-url').val() || '';
+				if ($.trim(name)) {
+					arr.push({ name: $.trim(name), date: $.trim(date), location: $.trim(loc), url: $.trim(url) });
+				}
+			});
+			$('#tpd-conferences-json').val(JSON.stringify(arr));
+		}
+
+		function syncResources() {
+			var arr = [];
+			$('#tpd-resources-container .tpd-res-row').each(function() {
+				var title = $(this).find('.res-title').val() || '';
+				var cat   = $(this).find('.res-category').val() || 'Brochure';
+				var url   = $(this).find('.res-url').val() || '';
+				var desc  = $(this).find('.res-desc').val() || '';
+				if ($.trim(title) && $.trim(url)) {
+					arr.push({ title: $.trim(title), category: cat, file_url: $.trim(url), description: $.trim(desc) });
+				}
+			});
+			$('#tpd-resources-json').val(JSON.stringify(arr));
+		}
+
+		function syncFaqs() {
+			var arr = [];
+			$('#tpd-faqs-container .tpd-faq-row').each(function() {
+				var q = $(this).find('.faq-question').val() || '';
+				var a = $(this).find('.faq-answer').val() || '';
+				if ($.trim(q)) {
+					arr.push({ question: $.trim(q), answer: $.trim(a) });
+				}
+			});
+			$('#tpd-faqs-json').val(JSON.stringify(arr));
+		}
+
+		function syncVideos() {
+			var arr = [];
+			$('#tpd-videos-container .tpd-vid-row').each(function() {
+				var title = $(this).find('.vid-title').val() || '';
+				var url   = $(this).find('.vid-url').val() || '';
+				var desc  = $(this).find('.vid-desc').val() || '';
+				if ($.trim(url)) {
+					arr.push({ title: $.trim(title), video_url: $.trim(url), description: $.trim(desc) });
+				}
+			});
+			$('#tpd-videos-json').val(JSON.stringify(arr));
+		}
+
+		function syncGallery() {
+			var arr = [];
+			$('#tpd-supp-gallery-grid .tpd-gallery-item').each(function() {
+				var url = $(this).data('url') || $(this).find('input[name="gallery_images[]"]').val();
+				if (url) arr.push(url);
+			});
+			$('#tpd-gallery-images-json').val(JSON.stringify(arr));
+		}
+
+		function syncAllSupplierRepeaters() {
+			syncConferences();
+			syncResources();
+			syncFaqs();
+			syncVideos();
+			syncGallery();
+		}
+
+		// Repeater Add / Remove Events
+		$(document).on('click', '#tpd-btn-add-conference', function(e) {
+			e.preventDefault();
+			var rowHtml = '<div class="tpd-repeater-row tpd-conf-row" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; display:grid; grid-template-columns: 2fr 1.5fr 2fr 1fr auto; gap:10px; align-items:center;">' +
+				'<input type="text" class="tpd-input tpd-input-sm conf-name" placeholder="Conference / Event Name">' +
+				'<input type="text" class="tpd-input tpd-input-sm conf-date" placeholder="Date (e.g. Oct 14-17, 2026)">' +
+				'<input type="text" class="tpd-input tpd-input-sm conf-location" placeholder="Location / Booth #">' +
+				'<input type="url" class="tpd-input tpd-input-sm conf-url" placeholder="Info Link https://">' +
+				'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-remove-repeater-row" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;" title="Remove conference"><i class="fa-solid fa-trash-can"></i></button>' +
+			'</div>';
+			$('#tpd-conferences-container').append(rowHtml);
+			syncConferences();
+		});
+
+		$(document).on('click', '#tpd-btn-add-resource', function(e) {
+			e.preventDefault();
+			var rowHtml = '<div class="tpd-repeater-row tpd-res-row" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:14px; display:grid; grid-template-columns: 2fr 1.5fr 2fr 2fr auto; gap:10px; align-items:center;">' +
+				'<input type="text" class="tpd-input tpd-input-sm res-title" placeholder="Resource Title (e.g. 2026 Fleet Brochure)">' +
+				'<select class="tpd-select tpd-input-sm res-category">' +
+					'<option value="Brochure">Brochure</option>' +
+					'<option value="Sales Guide">Sales Guide</option>' +
+					'<option value="Deck Plan">Deck Plan / Factsheet</option>' +
+					'<option value="Commission Sheet">Commission Sheet</option>' +
+					'<option value="Advisor Flyer">Advisor Flyer</option>' +
+					'<option value="Webinar PDF">Webinar PDF</option>' +
+				'</select>' +
+				'<input type="url" class="tpd-input tpd-input-sm res-url" placeholder="File URL https://">' +
+				'<input type="text" class="tpd-input tpd-input-sm res-desc" placeholder="Brief note for advisors">' +
+				'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-remove-repeater-row" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;" title="Remove resource"><i class="fa-solid fa-trash-can"></i></button>' +
+			'</div>';
+			$('#tpd-resources-container').append(rowHtml);
+			syncResources();
+		});
+
+		$(document).on('change', '#tpd-file-supp-resource-upload', function() {
+			var file = this.files[0];
+			if (!file) return;
+			var fileName = file.name.replace(/\.[^/.]+$/, "");
+			uploadMediaFile(file, function(url) {
+				var rowHtml = '<div class="tpd-repeater-row tpd-res-row" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:14px; display:grid; grid-template-columns: 2fr 1.5fr 2fr 2fr auto; gap:10px; align-items:center;">' +
+					'<input type="text" class="tpd-input tpd-input-sm res-title" placeholder="Resource Title" value="' + fileName + '">' +
+					'<select class="tpd-select tpd-input-sm res-category">' +
+						'<option value="Brochure" selected>Brochure</option>' +
+						'<option value="Sales Guide">Sales Guide</option>' +
+						'<option value="Deck Plan">Deck Plan / Factsheet</option>' +
+						'<option value="Commission Sheet">Commission Sheet</option>' +
+						'<option value="Advisor Flyer">Advisor Flyer</option>' +
+						'<option value="Webinar PDF">Webinar PDF</option>' +
+					'</select>' +
+					'<input type="url" class="tpd-input tpd-input-sm res-url" placeholder="File URL https://" value="' + url + '">' +
+					'<input type="text" class="tpd-input tpd-input-sm res-desc" placeholder="Brief note for advisors">' +
+					'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-remove-repeater-row" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;" title="Remove resource"><i class="fa-solid fa-trash-can"></i></button>' +
+				'</div>';
+				$('#tpd-resources-container').append(rowHtml);
+				syncResources();
+				showToast('<i class="fa-solid fa-file-pdf"></i> Document uploaded and added to Advisor Resources list!');
+			});
+			$(this).val('');
+		});
+
+		$(document).on('click', '#tpd-btn-add-faq', function(e) {
+			e.preventDefault();
+			var rowHtml = '<div class="tpd-repeater-row tpd-faq-row" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:14px;">' +
+				'<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">' +
+					'<label style="font-weight:700; font-size:13px; color:#1e293b;"><i class="fa-solid fa-circle-question text-blue"></i> Question:</label>' +
+					'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-remove-repeater-row" style="background:#fee2e2; color:#dc2626; border:none; padding:4px 8px; border-radius:6px; cursor:pointer;" title="Remove FAQ"><i class="fa-solid fa-trash-can"></i> Remove</button>' +
+				'</div>' +
+				'<input type="text" class="tpd-input tpd-input-sm faq-question mb-2" placeholder="e.g. What is your advisor commission payment schedule?" style="width:100%;">' +
+				'<label style="font-weight:700; font-size:12.5px; color:#475569; display:block; margin-bottom:4px;">Answer:</label>' +
+				'<textarea class="tpd-textarea faq-answer" rows="2" placeholder="e.g. Commissions are paid bi-weekly upon receipt of final client payment..." style="width:100%; font-size:12.5px;"></textarea>' +
+			'</div>';
+			$('#tpd-faqs-container').append(rowHtml);
+			syncFaqs();
+		});
+
+		$(document).on('click', '#tpd-btn-add-video', function(e) {
+			e.preventDefault();
+			var rowHtml = '<div class="tpd-repeater-row tpd-vid-row" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; display:grid; grid-template-columns: 2fr 3fr 2fr auto; gap:10px; align-items:center;">' +
+				'<input type="text" class="tpd-input tpd-input-sm vid-title" placeholder="Video Title (e.g. 2026 Fleet Walkthrough)">' +
+				'<input type="url" class="tpd-input tpd-input-sm vid-url" placeholder="YouTube or Vimeo URL">' +
+				'<input type="text" class="tpd-input tpd-input-sm vid-desc" placeholder="Brief note / duration">' +
+				'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-remove-repeater-row" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;" title="Remove video"><i class="fa-solid fa-trash-can"></i></button>' +
+			'</div>';
+			$('#tpd-videos-container').append(rowHtml);
+			syncVideos();
+		});
+
+		$(document).on('click', '.tpd-remove-repeater-row', function(e) {
+			e.preventDefault();
+			var $row = $(this).closest('.tpd-repeater-row');
+			$row.fadeOut(150, function() {
+				$(this).remove();
+				syncAllSupplierRepeaters();
+			});
+		});
+
+		$(document).on('input change', '#tpd-conferences-container input', syncConferences);
+		$(document).on('input change', '#tpd-resources-container input, #tpd-resources-container select', syncResources);
+		$(document).on('input change', '#tpd-faqs-container input, #tpd-faqs-container textarea', syncFaqs);
+		$(document).on('input change', '#tpd-videos-container input', syncVideos);
+
+		$(document).on('click', '.tpd-btn-trigger-plan-tab', function(e) {
+			e.preventDefault();
+			$('.tpd-tab-link[data-view="supp-settings"]').trigger('click');
+			$('html, body').animate({ scrollTop: $('#tpd-supp-settings').offset().top - 30 }, 350);
+		});
+
 		// 10. Supplier Listing Showcase Editor AJAX Save
 		$('#tpd-supplier-listing-editor-form').on('submit', function(e) {
 			e.preventDefault();
+			syncAllSupplierRepeaters();
+
 			var $form = $(this);
 			var $btn = $('#tpd-save-supplier-listing-btn');
 			var $status = $('#tpd-supplier-listing-status');
@@ -935,15 +1115,31 @@
 				$form.find('input[name="logo_url"]').val('');
 				$form.find('input[name="banner_url"]').val('');
 				$form.find('input[name="gallery_images_json"]').val('[]');
-				$('#tpd-logo-preview-img').attr('src', '').hide();
-				$('#tpd-logo-placeholder').show();
-				$('#tpd-banner-preview-img').attr('src', '').hide();
-				$('#tpd-banner-placeholder').show();
-				$('#tpd-gallery-preview-grid').empty();
+				$form.find('input[name="conferences_json"]').val('[]');
+				$form.find('input[name="resources_json"]').val('[]');
+				$form.find('input[name="faqs_json"]').val('[]');
+				$form.find('input[name="videos_json"]').val('[]');
+
+				$('#tpd-supp-logo-preview').attr('src', '').hide();
+				$('#tpd-supp-logo-placeholder').show();
+				$('#tpd-supp-remove-logo-btn').hide();
+				$('#tpd-supp-banner-preview').attr('src', '');
+
+				$('#tpd-conferences-container').empty();
+				$('#tpd-resources-container').empty();
+				$('#tpd-faqs-container').empty();
+				$('#tpd-videos-container').empty();
+				$('#tpd-supp-gallery-grid').empty();
+				$('#tpd-supp-gallery-empty').show();
+
 				$('#tpd-listing-editor-heading').html('<i class="fa-solid fa-plus-circle text-blue"></i> Create New Partner Listing');
 				$('#tpd-listing-editor-live-link').hide();
 				$('#tpd-supp-claim-section').slideUp(200);
 				$('#tpd-supp-manage-section').slideDown(250);
+
+				// Reset sub-tab to About
+				$('.tpd-editor-tabs-bar .tpd-tab-btn[data-target="set-about"]').trigger('click');
+
 				$('html, body').animate({ scrollTop: $('#tpd-supp-manage-section').offset().top - 30 }, 400);
 				showToast('Creating new listing — fill in your company details below.');
 			}
@@ -977,37 +1173,136 @@
 					if (res.success && res.data) {
 						var d = res.data;
 						var $f = $('#tpd-supplier-listing-editor-form');
+
+						// Basic Info (Tab 1: About)
 						$f.find('input[name="listing_id"]').val(d.listing_id);
 						$f.find('input[name="company_name"]').val(d.company_name);
 						$f.find('input[name="tagline"]').val(d.tagline);
 						$f.find('input[name="phone"]').val(d.phone);
 						$f.find('input[name="booking_url"]').val(d.booking_url);
 						$f.find('input[name="headquarters"]').val(d.headquarters);
-						$f.find('select[name="rewards"]').val(d.rewards);
-						$f.find('select[name="ustoa"]').val(d.ustoa);
-						$f.find('select[name="asta"]').val(d.asta);
 						$f.find('textarea[name="description"]').val(d.description);
 						$f.find('input[name="logo_url"]').val(d.logo_url);
 						$f.find('input[name="banner_url"]').val(d.banner_url);
-						$f.find('input[name="video_url"]').val(d.video_url);
-						$f.find('input[name="promo_title"]').val(d.promo_title);
-						$f.find('textarea[name="promo_desc"]').val(d.promo_desc);
 
-						// Update previews
+						// Tab 2: Associations & Conferences
+						$f.find('select[name="ustoa"]').val(d.ustoa || 'No');
+						$f.find('select[name="asta"]').val(d.asta || 'No');
+						$f.find('select[name="clia"]').val(d.clia || 'No');
+						$f.find('input[name="associations"]').val(d.associations || '');
+						$f.find('select[name="rewards"]').val(d.rewards || 'No');
+						$f.find('input[name="promo_title"]').val(d.promo_title || '');
+						$f.find('textarea[name="promo_desc"]').val(d.promo_desc || d.rewards_desc || '');
+
+						// Tab 6: Videos
+						$f.find('input[name="video_url"]').val(d.video_url || '');
+
+						// Previews
 						if (d.logo_url) {
-							$('#tpd-logo-preview-img').attr('src', d.logo_url).show();
-							$('#tpd-logo-placeholder').hide();
+							$('#tpd-supp-logo-preview').attr('src', d.logo_url).show();
+							$('#tpd-supp-logo-placeholder').hide();
+							$('#tpd-supp-remove-logo-btn').show();
 						} else {
-							$('#tpd-logo-preview-img').hide();
-							$('#tpd-logo-placeholder').show();
+							$('#tpd-supp-logo-preview').hide();
+							$('#tpd-supp-logo-placeholder').show();
+							$('#tpd-supp-remove-logo-btn').hide();
 						}
 						if (d.banner_url) {
-							$('#tpd-banner-preview-img').attr('src', d.banner_url).show();
-							$('#tpd-banner-placeholder').hide();
-						} else {
-							$('#tpd-banner-preview-img').hide();
-							$('#tpd-banner-placeholder').show();
+							$('#tpd-supp-banner-preview').attr('src', d.banner_url).show();
 						}
+
+						// Rebuild Conferences
+						var $confContainer = $('#tpd-conferences-container');
+						$confContainer.empty();
+						if (d.conferences && d.conferences.length) {
+							$.each(d.conferences, function(i, c) {
+								var rowHtml = '<div class="tpd-repeater-row tpd-conf-row" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; display:grid; grid-template-columns: 2fr 1.5fr 2fr 1fr auto; gap:10px; align-items:center;">' +
+									'<input type="text" class="tpd-input tpd-input-sm conf-name" placeholder="Conference / Event Name" value="' + (c.name || '') + '">' +
+									'<input type="text" class="tpd-input tpd-input-sm conf-date" placeholder="Date" value="' + (c.date || '') + '">' +
+									'<input type="text" class="tpd-input tpd-input-sm conf-location" placeholder="Location / Booth #" value="' + (c.location || '') + '">' +
+									'<input type="url" class="tpd-input tpd-input-sm conf-url" placeholder="Info Link https://" value="' + (c.url || '') + '">' +
+									'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-remove-repeater-row" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;" title="Remove conference"><i class="fa-solid fa-trash-can"></i></button>' +
+								'</div>';
+								$confContainer.append(rowHtml);
+							});
+						}
+
+						// Rebuild Resources
+						var $resContainer = $('#tpd-resources-container');
+						$resContainer.empty();
+						if (d.resources && d.resources.length) {
+							$.each(d.resources, function(i, r) {
+								var rowHtml = '<div class="tpd-repeater-row tpd-res-row" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:14px; display:grid; grid-template-columns: 2fr 1.5fr 2fr 2fr auto; gap:10px; align-items:center;">' +
+									'<input type="text" class="tpd-input tpd-input-sm res-title" placeholder="Resource Title" value="' + (r.title || '') + '">' +
+									'<select class="tpd-select tpd-input-sm res-category">' +
+										'<option value="Brochure"' + (r.category === 'Brochure' ? ' selected' : '') + '>Brochure</option>' +
+										'<option value="Sales Guide"' + (r.category === 'Sales Guide' ? ' selected' : '') + '>Sales Guide</option>' +
+										'<option value="Deck Plan"' + (r.category === 'Deck Plan' ? ' selected' : '') + '>Deck Plan / Factsheet</option>' +
+										'<option value="Commission Sheet"' + (r.category === 'Commission Sheet' ? ' selected' : '') + '>Commission Sheet</option>' +
+										'<option value="Advisor Flyer"' + (r.category === 'Advisor Flyer' ? ' selected' : '') + '>Advisor Flyer</option>' +
+										'<option value="Webinar PDF"' + (r.category === 'Webinar PDF' ? ' selected' : '') + '>Webinar PDF</option>' +
+									'</select>' +
+									'<input type="url" class="tpd-input tpd-input-sm res-url" placeholder="File URL https://" value="' + (r.file_url || '') + '">' +
+									'<input type="text" class="tpd-input tpd-input-sm res-desc" placeholder="Brief note for advisors" value="' + (r.description || '') + '">' +
+									'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-remove-repeater-row" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;" title="Remove resource"><i class="fa-solid fa-trash-can"></i></button>' +
+								'</div>';
+								$resContainer.append(rowHtml);
+							});
+						}
+
+						// Rebuild FAQs
+						var $faqContainer = $('#tpd-faqs-container');
+						$faqContainer.empty();
+						if (d.faqs && d.faqs.length) {
+							$.each(d.faqs, function(i, f) {
+								var rowHtml = '<div class="tpd-repeater-row tpd-faq-row" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:14px;">' +
+									'<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">' +
+										'<label style="font-weight:700; font-size:13px; color:#1e293b;"><i class="fa-solid fa-circle-question text-blue"></i> Question:</label>' +
+										'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-remove-repeater-row" style="background:#fee2e2; color:#dc2626; border:none; padding:4px 8px; border-radius:6px; cursor:pointer;" title="Remove FAQ"><i class="fa-solid fa-trash-can"></i> Remove</button>' +
+									'</div>' +
+									'<input type="text" class="tpd-input tpd-input-sm faq-question mb-2" placeholder="e.g. Question" value="' + (f.question || '') + '" style="width:100%;">' +
+									'<label style="font-weight:700; font-size:12.5px; color:#475569; display:block; margin-bottom:4px;">Answer:</label>' +
+									'<textarea class="tpd-textarea faq-answer" rows="2" placeholder="e.g. Answer" style="width:100%; font-size:12.5px;">' + (f.answer || '') + '</textarea>' +
+								'</div>';
+								$faqContainer.append(rowHtml);
+							});
+						}
+
+						// Rebuild Videos
+						var $vidContainer = $('#tpd-videos-container');
+						$vidContainer.empty();
+						if (d.videos && d.videos.length) {
+							$.each(d.videos, function(i, v) {
+								var rowHtml = '<div class="tpd-repeater-row tpd-vid-row" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; display:grid; grid-template-columns: 2fr 3fr 2fr auto; gap:10px; align-items:center;">' +
+									'<input type="text" class="tpd-input tpd-input-sm vid-title" placeholder="Video Title" value="' + (v.title || '') + '">' +
+									'<input type="url" class="tpd-input tpd-input-sm vid-url" placeholder="YouTube or Vimeo URL" value="' + (v.video_url || '') + '">' +
+									'<input type="text" class="tpd-input tpd-input-sm vid-desc" placeholder="Brief note / duration" value="' + (v.description || '') + '">' +
+									'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-remove-repeater-row" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;" title="Remove video"><i class="fa-solid fa-trash-can"></i></button>' +
+								'</div>';
+								$vidContainer.append(rowHtml);
+							});
+						}
+
+						// Rebuild Photo Gallery
+						var $galleryGrid = $('#tpd-supp-gallery-grid');
+						$galleryGrid.empty();
+						if (d.gallery && d.gallery.length) {
+							$('#tpd-supp-gallery-empty').hide();
+							$.each(d.gallery, function(i, gUrl) {
+								var itemHtml = '<div class="tpd-gallery-item" data-url="' + gUrl + '">' +
+									'<img src="' + gUrl + '" class="tpd-gallery-thumb" alt="Showcase Photo">' +
+									'<input type="hidden" name="gallery_images[]" value="' + gUrl + '">' +
+									'<button type="button" class="tpd-gallery-remove-btn tpd-remove-gallery-item-btn" title="Remove photo">' +
+										'<i class="fa-solid fa-xmark"></i>' +
+									'</button>' +
+								'</div>';
+								$galleryGrid.append(itemHtml);
+							});
+						} else {
+							$('#tpd-supp-gallery-empty').show();
+						}
+
+						syncAllSupplierRepeaters();
 
 						// Update headings
 						$('#tpd-listing-editor-heading').html('<i class="fa-solid fa-sliders"></i> Manage Listing & Showcase (' + (d.company_name || 'Listing') + ')');
@@ -1021,6 +1316,10 @@
 
 						$('#tpd-supp-claim-section').slideUp(200);
 						$('#tpd-supp-manage-section').slideDown(250);
+
+						// Switch to Tab 1: About by default
+						$('.tpd-editor-tabs-bar .tpd-tab-btn[data-target="set-about"]').trigger('click');
+
 						$('html, body').animate({ scrollTop: $('#tpd-supp-manage-section').offset().top - 30 }, 400);
 
 						showToast('Loaded "' + (d.company_name || 'Listing') + '" into editor.');

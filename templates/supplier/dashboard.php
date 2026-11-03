@@ -59,16 +59,30 @@ $tagline        = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_tag
 $booking_url    = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_booking_portal_url', true ) : '';
 $headquarters   = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_headquarters', true ) : '' ) ?: $country;
 $rewards        = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_agent_rewards', true ) : '' ) ?: 'Yes';
+$rewards_desc   = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_agent_rewards_desc', true ) : '';
 $ustoa          = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_member_ustoa', true ) : '' ) ?: 'Yes';
 $asta           = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_member_asta', true ) : '' ) ?: 'Yes';
+$clia           = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_member_clia', true ) : '' ) ?: 'No';
+$associations   = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_associations', true ) : '';
 $logo_url       = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_logo_url', true ) : '' ) ?: get_user_meta( $current_user_id, 'tpd_logo_url', true );
 $banner_url     = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_banner_url', true ) : '' ) ?: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&auto=format&fit=crop&q=80';
 $gallery_images = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Profile_Editor::get_user_gallery( $current_user_id, $supplier_post_id ) : array();
-$video_url    = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_main_video_url', true ) : '';
-$promo_title  = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_promo_title', true ) : '';
-$promo_desc   = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_promo_desc', true ) : '';
-$description  = $supplier_post_id ? get_post_field( 'post_content', $supplier_post_id ) : '';
-$public_url   = $supplier_post_id ? get_permalink( $supplier_post_id ) : home_url( '/suppliers/' );
+$video_url      = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_main_video_url', true ) : '';
+$promo_title    = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_promo_title', true ) : '';
+$promo_desc     = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_promo_desc', true ) : '';
+$description    = $supplier_post_id ? get_post_field( 'post_content', $supplier_post_id ) : '';
+$public_url     = $supplier_post_id ? get_permalink( $supplier_post_id ) : home_url( '/suppliers/' );
+
+// 6-Tab Membership Data
+$is_supplier_enhanced = class_exists( 'TPD_Tool_Tiers' ) ? TPD_Tool_Tiers::is_enhanced_supplier( $current_user_id ) : false;
+$conferences          = $supplier_post_id ? get_post_meta( $supplier_post_id, '_tpd_supplier_conferences', true ) : array();
+$conferences          = is_array( $conferences ) ? $conferences : array();
+$resources            = $supplier_post_id ? get_post_meta( $supplier_post_id, '_tpd_supplier_resources', true ) : array();
+$resources            = is_array( $resources ) ? $resources : array();
+$supplier_faqs        = $supplier_post_id ? get_post_meta( $supplier_post_id, '_tpd_supplier_faqs', true ) : array();
+$supplier_faqs        = is_array( $supplier_faqs ) ? $supplier_faqs : array();
+$supplier_videos      = $supplier_post_id ? get_post_meta( $supplier_post_id, '_tpd_supplier_videos', true ) : array();
+$supplier_videos      = is_array( $supplier_videos ) ? $supplier_videos : array();
 
 // Virtual Office Team Members
 $team_members = $supplier_post_id ? get_post_meta( $supplier_post_id, '_tpd_team_members', true ) : array();
@@ -625,22 +639,40 @@ $all_directory_listings = get_posts( array(
 							</div>
 						</div>
 
-						<!-- Editor Sub-Tabs -->
+						<!-- Editor Sub-Tabs (Unified Membership Structure) -->
 						<div class="tpd-editor-tabs-bar" style="display:flex; gap:8px; border-bottom:2px solid #e2e8f0; margin-bottom:24px; overflow-x:auto;">
-							<button type="button" class="tpd-tab-btn active" data-target="set-basic" style="padding:10px 16px; border:none; background:none; font-weight:700; color:#0b1526; border-bottom:3px solid #2563eb; cursor:pointer;">
-								<i class="fa-solid fa-info-circle"></i> Basic Info & Custom Fields
+							<button type="button" class="tpd-tab-btn active" data-target="set-about" style="padding:10px 16px; border:none; background:none; font-weight:700; color:#0b1526; border-bottom:3px solid #2563eb; cursor:pointer;">
+								<i class="fa-solid fa-info-circle"></i> <?php esc_html_e( 'About', 'tpd-tool' ); ?>
 							</button>
-							<button type="button" class="tpd-tab-btn" data-target="set-media" style="padding:10px 16px; border:none; background:none; font-weight:600; color:#64748b; cursor:pointer;">
-								<i class="fa-solid fa-images"></i> Images & Media
+							<button type="button" class="tpd-tab-btn" data-target="set-associations" style="padding:10px 16px; border:none; background:none; font-weight:600; color:#64748b; cursor:pointer;">
+								<i class="fa-solid fa-award"></i> <?php esc_html_e( 'Associations & Conferences', 'tpd-tool' ); ?>
+								<?php if ( ! $is_supplier_enhanced ) : ?>
+									<span style="font-size:10px; font-weight:800; background:#fef3c7; color:#b45309; padding:2px 6px; border-radius:4px; margin-left:6px;"><i class="fa-solid fa-crown text-gold"></i> <?php esc_html_e( 'ENHANCED', 'tpd-tool' ); ?></span>
+								<?php endif; ?>
 							</button>
 							<button type="button" class="tpd-tab-btn" data-target="set-resources" style="padding:10px 16px; border:none; background:none; font-weight:600; color:#64748b; cursor:pointer;">
-								<i class="fa-solid fa-folder-open"></i> Advisor Resources
+								<i class="fa-solid fa-folder-open"></i> <?php esc_html_e( 'Resources & Brochures', 'tpd-tool' ); ?>
+								<?php if ( ! $is_supplier_enhanced ) : ?>
+									<span style="font-size:10px; font-weight:800; background:#fef3c7; color:#b45309; padding:2px 6px; border-radius:4px; margin-left:6px;"><i class="fa-solid fa-crown text-gold"></i> <?php esc_html_e( 'ENHANCED', 'tpd-tool' ); ?></span>
+								<?php endif; ?>
 							</button>
-							<button type="button" class="tpd-tab-btn" data-target="set-team" style="padding:10px 16px; border:none; background:none; font-weight:600; color:#64748b; cursor:pointer;">
-								<i class="fa-solid fa-users"></i> Virtual Office Team
+							<button type="button" class="tpd-tab-btn" data-target="set-faqs" style="padding:10px 16px; border:none; background:none; font-weight:600; color:#64748b; cursor:pointer;">
+								<i class="fa-solid fa-circle-question"></i> <?php esc_html_e( 'FAQs', 'tpd-tool' ); ?>
+								<?php if ( ! $is_supplier_enhanced ) : ?>
+									<span style="font-size:10px; font-weight:800; background:#fef3c7; color:#b45309; padding:2px 6px; border-radius:4px; margin-left:6px;"><i class="fa-solid fa-crown text-gold"></i> <?php esc_html_e( 'ENHANCED', 'tpd-tool' ); ?></span>
+								<?php endif; ?>
 							</button>
-							<button type="button" class="tpd-tab-btn" data-target="set-promos" style="padding:10px 16px; border:none; background:none; font-weight:600; color:#64748b; cursor:pointer;">
-								<i class="fa-solid fa-bullhorn"></i> Promotions & Offers
+							<button type="button" class="tpd-tab-btn" data-target="set-gallery" style="padding:10px 16px; border:none; background:none; font-weight:600; color:#64748b; cursor:pointer;">
+								<i class="fa-solid fa-images"></i> <?php esc_html_e( 'Photo Gallery', 'tpd-tool' ); ?>
+								<?php if ( ! $is_supplier_enhanced ) : ?>
+									<span style="font-size:10px; font-weight:800; background:#fef3c7; color:#b45309; padding:2px 6px; border-radius:4px; margin-left:6px;"><i class="fa-solid fa-crown text-gold"></i> <?php esc_html_e( 'ENHANCED', 'tpd-tool' ); ?></span>
+								<?php endif; ?>
+							</button>
+							<button type="button" class="tpd-tab-btn" data-target="set-videos" style="padding:10px 16px; border:none; background:none; font-weight:600; color:#64748b; cursor:pointer;">
+								<i class="fa-solid fa-video"></i> <?php esc_html_e( 'Videos', 'tpd-tool' ); ?>
+								<?php if ( ! $is_supplier_enhanced ) : ?>
+									<span style="font-size:10px; font-weight:800; background:#fef3c7; color:#b45309; padding:2px 6px; border-radius:4px; margin-left:6px;"><i class="fa-solid fa-crown text-gold"></i> <?php esc_html_e( 'ENHANCED', 'tpd-tool' ); ?></span>
+								<?php endif; ?>
 							</button>
 						</div>
 
@@ -649,8 +681,8 @@ $all_directory_listings = get_posts( array(
 							<input type="hidden" name="listing_id" value="<?php echo esc_attr( $supplier_post_id ); ?>">
 							<input type="hidden" name="nonce" value="<?php echo esc_attr( wp_create_nonce( 'tpd_nonce' ) ); ?>">
 
-							<!-- Sub-Tab 1: Basic Info & Dynamic ACF/Custom Fields -->
-							<div id="set-basic" class="tpd-editor-panel active">
+							<!-- TAB 1: ABOUT (Basic & Free: Accessible to all) -->
+							<div id="set-about" class="tpd-editor-panel active">
 								<div class="tpd-form-grid-2">
 									<div class="tpd-form-group">
 										<label><?php esc_html_e( 'Supplier / Company Display Name *', 'tpd-tool' ); ?></label>
@@ -662,7 +694,7 @@ $all_directory_listings = get_posts( array(
 									</div>
 								</div>
 
-								<div class="tpd-form-grid-3">
+								<div class="tpd-form-grid-3 mt-3">
 									<div class="tpd-form-group">
 										<label><?php esc_html_e( 'Advisor Booking / Support Phone *', 'tpd-tool' ); ?></label>
 										<input type="tel" name="phone" value="<?php echo esc_attr( $rep_phone ); ?>" class="tpd-input">
@@ -672,52 +704,13 @@ $all_directory_listings = get_posts( array(
 										<input type="url" name="booking_url" value="<?php echo esc_attr( $booking_url ); ?>" placeholder="https://" class="tpd-input">
 									</div>
 									<div class="tpd-form-group">
-										<label><?php esc_html_e( 'Headquarters / Country', 'tpd-tool' ); ?></label>
+										<label><?php esc_html_e( 'Headquarters Location', 'tpd-tool' ); ?></label>
 										<input type="text" name="headquarters" value="<?php echo esc_attr( $headquarters ); ?>" class="tpd-input">
 									</div>
 								</div>
 
-								<div class="tpd-form-grid-3 mt-3">
-									<div class="tpd-form-group">
-										<label><?php esc_html_e( 'Agent Rewards Program?', 'tpd-tool' ); ?></label>
-										<select name="rewards" class="tpd-select">
-											<option value="Yes" <?php selected( $rewards, 'Yes' ); ?>>Yes — Active Rewards</option>
-											<option value="No" <?php selected( $rewards, 'No' ); ?>>No</option>
-										</select>
-									</div>
-									<div class="tpd-form-group">
-										<label><?php esc_html_e( 'Member of USTOA?', 'tpd-tool' ); ?></label>
-										<select name="ustoa" class="tpd-select">
-											<option value="Yes" <?php selected( $ustoa, 'Yes' ); ?>>Yes — Active Member</option>
-											<option value="No" <?php selected( $ustoa, 'No' ); ?>>No</option>
-										</select>
-									</div>
-									<div class="tpd-form-group">
-										<label><?php esc_html_e( 'Member of ASTA?', 'tpd-tool' ); ?></label>
-										<select name="asta" class="tpd-select">
-											<option value="Yes" <?php selected( $asta, 'Yes' ); ?>>Yes — Active Member</option>
-											<option value="No" <?php selected( $asta, 'No' ); ?>>No</option>
-										</select>
-									</div>
-								</div>
-
-								<div class="tpd-form-group mt-3">
-									<label><?php esc_html_e( 'Company Overview & Selling Points for Advisors', 'tpd-tool' ); ?></label>
-									<textarea name="description" rows="4" class="tpd-textarea" placeholder="<?php esc_attr_e( 'Describe your brand, fleet/properties, advisor commission structure, and key selling points...', 'tpd-tool' ); ?>"><?php echo esc_textarea( $description ); ?></textarea>
-								</div>
-
-								<!-- Dynamic ACF Field Groups & Admin Custom Fields Bridge -->
-								<?php
-								if ( class_exists( 'TPD_Tool_CPT' ) ) {
-									TPD_Tool_CPT::render_dynamic_fields_html( 'supplier_listing', $supplier_post_id, $current_user_id, 'dashboard' );
-								}
-								?>
-							</div>
-
-							<!-- Sub-Tab 2: Images & Media -->
-							<div id="set-media" class="tpd-editor-panel" style="display:none;">
 								<!-- Brand Logo & Header Banner Section -->
-								<div class="tpd-form-grid-2" style="margin-bottom:24px;">
+								<div class="tpd-form-grid-2 mt-4" style="margin-bottom:20px;">
 									<!-- Card 1: Company Brand Logo -->
 									<div class="tpd-card-box" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:18px;">
 										<label style="font-weight:700; font-size:13.5px; display:block; margin-bottom:4px;"><?php esc_html_e( 'Company Brand Logo *', 'tpd-tool' ); ?></label>
@@ -763,117 +756,278 @@ $all_directory_listings = get_posts( array(
 									</div>
 								</div>
 
-								<!-- Showcase Video URL -->
-								<div class="tpd-form-group mb-4">
-									<label style="font-weight:700; font-size:13.5px; display:block; margin-bottom:4px;"><?php esc_html_e( 'Main Showcase Video (YouTube or Vimeo URL)', 'tpd-tool' ); ?></label>
-									<input type="url" name="video_url" value="<?php echo esc_attr( $video_url ); ?>" placeholder="https://www.youtube.com/watch?v=..." class="tpd-input">
+								<div class="tpd-form-group mt-3">
+									<label><?php esc_html_e( 'About Us & Company Overview for Travel Advisors', 'tpd-tool' ); ?></label>
+									<p style="margin:0 0 6px; font-size:12px; color:#64748b;"><?php esc_html_e( 'Describe your company history, fleet, properties, destinations, advisor commission structure, and key value propositions.', 'tpd-tool' ); ?></p>
+									<textarea name="description" rows="5" class="tpd-textarea" placeholder="<?php esc_attr_e( 'Provide your company overview and selling points...', 'tpd-tool' ); ?>"><?php echo esc_textarea( $description ); ?></textarea>
 								</div>
 
-								<!-- Supplier Showcase Photo Gallery -->
-								<div class="tpd-card-box" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.02);">
-									<div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
-										<div>
-											<h4 style="margin:0 0 4px; font-size:15px; font-weight:800; color:#0f172a;"><?php esc_html_e( 'Showcase Photo Gallery', 'tpd-tool' ); ?></h4>
-											<p style="margin:0; font-size:12.5px; color:#64748b;"><?php esc_html_e( 'Upload high-resolution property, cabin, dining, excursion, and amenity photos to present to travel advisors.', 'tpd-tool' ); ?></p>
+								<!-- Dynamic ACF Field Groups & Admin Custom Fields Bridge -->
+								<?php
+								if ( class_exists( 'TPD_Tool_CPT' ) ) {
+									TPD_Tool_CPT::render_dynamic_fields_html( 'supplier_listing', $supplier_post_id, $current_user_id, 'dashboard' );
+								}
+								?>
+							</div>
+
+							<!-- TAB 2: ASSOCIATIONS & CONFERENCES (Enhanced / Paid Listing) -->
+							<div id="set-associations" class="tpd-editor-panel" style="display:none;">
+								<?php if ( ! $is_supplier_enhanced ) : ?>
+									<?php echo TPD_Tool_Tiers::render_enhanced_tab_locked( __( 'Associations & Conferences Showcase', 'tpd-tool' ), __( 'Display your industry accreditations (USTOA, ASTA, CLIA, Consortia affiliations) and promote upcoming industry trade conferences attended to thousands of travel advisors.', 'tpd-tool' ), 'fa-award' ); ?>
+								<?php else : ?>
+									<!-- Industry Accreditations -->
+									<div class="tpd-card-box mb-4" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:18px;">
+										<h4 style="margin:0 0 12px; font-size:15px; font-weight:800; color:#0f172a;"><i class="fa-solid fa-certificate text-blue"></i> <?php esc_html_e( 'Industry Association Memberships', 'tpd-tool' ); ?></h4>
+										<div class="tpd-form-grid-3">
+											<div class="tpd-form-group">
+												<label><?php esc_html_e( 'Member of USTOA?', 'tpd-tool' ); ?></label>
+												<select name="ustoa" class="tpd-select">
+													<option value="Yes" <?php selected( $ustoa, 'Yes' ); ?>>Yes — Active USTOA Member</option>
+													<option value="No" <?php selected( $ustoa, 'No' ); ?>>No</option>
+												</select>
+											</div>
+											<div class="tpd-form-group">
+												<label><?php esc_html_e( 'Member of ASTA?', 'tpd-tool' ); ?></label>
+												<select name="asta" class="tpd-select">
+													<option value="Yes" <?php selected( $asta, 'Yes' ); ?>>Yes — Active ASTA Member</option>
+													<option value="No" <?php selected( $asta, 'No' ); ?>>No</option>
+												</select>
+											</div>
+											<div class="tpd-form-group">
+												<label><?php esc_html_e( 'Member of CLIA?', 'tpd-tool' ); ?></label>
+												<select name="clia" class="tpd-select">
+													<option value="Yes" <?php selected( $clia, 'Yes' ); ?>>Yes — Active CLIA Member</option>
+													<option value="No" <?php selected( $clia, 'No' ); ?>>No</option>
+												</select>
+											</div>
 										</div>
-										<div>
-											<input type="file" id="tpd-file-supp-gallery" accept="image/*" multiple style="display:none;">
-											<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-primary" onclick="document.getElementById('tpd-file-supp-gallery').click();" style="display:inline-flex; align-items:center; gap:6px;">
-												<i class="fa-solid fa-cloud-arrow-up"></i> <?php esc_html_e( '+ Add Photos to Showcase Gallery', 'tpd-tool' ); ?>
+										<div class="tpd-form-group mt-3">
+											<label><?php esc_html_e( 'Consortia, Networks & Other Affiliations', 'tpd-tool' ); ?></label>
+											<input type="text" name="associations" value="<?php echo esc_attr( $associations ); ?>" placeholder="<?php esc_attr_e( 'e.g. Virtuoso, Signature Travel Network, Ensemble, Travel Leaders Network, PATH', 'tpd-tool' ); ?>" class="tpd-input">
+											<span style="font-size:11.5px; color:#64748b;"><?php esc_html_e( 'Comma-separated list of recognized travel consortia and trade bodies.', 'tpd-tool' ); ?></span>
+										</div>
+									</div>
+
+									<!-- Advisor Rewards & Incentives -->
+									<div class="tpd-card-box mb-4" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:18px;">
+										<h4 style="margin:0 0 12px; font-size:15px; font-weight:800; color:#0f172a;"><i class="fa-solid fa-gift text-gold"></i> <?php esc_html_e( 'Travel Advisor Rewards & Incentive Program', 'tpd-tool' ); ?></h4>
+										<div class="tpd-form-grid-2">
+											<div class="tpd-form-group">
+												<label><?php esc_html_e( 'Active Agent Rewards Program?', 'tpd-tool' ); ?></label>
+												<select name="rewards" class="tpd-select">
+													<option value="Yes" <?php selected( $rewards, 'Yes' ); ?>>Yes — Active Rewards / Incentive</option>
+													<option value="No" <?php selected( $rewards, 'No' ); ?>>No</option>
+												</select>
+											</div>
+											<div class="tpd-form-group">
+												<label><?php esc_html_e( 'Incentive Headline / Promotion Title', 'tpd-tool' ); ?></label>
+												<input type="text" name="promo_title" value="<?php echo esc_attr( $promo_title ); ?>" placeholder="<?php esc_attr_e( 'e.g. Earn 2% Bonus Commission on Q3 Bookings', 'tpd-tool' ); ?>" class="tpd-input">
+											</div>
+										</div>
+										<div class="tpd-form-group mt-2">
+											<label><?php esc_html_e( 'Rewards Details, Booking Code & Terms', 'tpd-tool' ); ?></label>
+											<textarea name="promo_desc" rows="2" class="tpd-textarea" placeholder="<?php esc_attr_e( 'Explain how travel advisors register client bookings, promo codes, and bonus commission payout schedule...', 'tpd-tool' ); ?>"><?php echo esc_textarea( $promo_desc ); ?></textarea>
+										</div>
+									</div>
+
+									<!-- Conferences & Events Attended -->
+									<div class="tpd-card-box" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:20px;">
+										<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+											<div>
+												<h4 style="margin:0 0 4px; font-size:15px; font-weight:800; color:#0f172a;"><i class="fa-solid fa-calendar-days text-purple"></i> <?php esc_html_e( 'Upcoming Conferences & Trade Events Attended', 'tpd-tool' ); ?></h4>
+												<p style="margin:0; font-size:12.5px; color:#64748b;"><?php esc_html_e( 'Let travel advisors know where they can meet your sales directors and BDMs in person.', 'tpd-tool' ); ?></p>
+											</div>
+											<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-primary" id="tpd-btn-add-conference">
+												<i class="fa-solid fa-plus"></i> <?php esc_html_e( 'Add Conference', 'tpd-tool' ); ?>
 											</button>
 										</div>
+
+										<div id="tpd-conferences-container" style="display:flex; flex-direction:column; gap:12px;">
+											<?php if ( ! empty( $conferences ) ) : ?>
+												<?php foreach ( $conferences as $idx => $conf ) : ?>
+													<div class="tpd-repeater-row tpd-conf-row" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; display:grid; grid-template-columns: 2fr 1.5fr 2fr 1fr auto; gap:10px; align-items:center;">
+														<input type="text" class="tpd-input tpd-input-sm conf-name" placeholder="Conference / Event Name" value="<?php echo esc_attr( isset( $conf['name'] ) ? $conf['name'] : '' ); ?>">
+														<input type="text" class="tpd-input tpd-input-sm conf-date" placeholder="Date (e.g. Oct 14-17, 2026)" value="<?php echo esc_attr( isset( $conf['date'] ) ? $conf['date'] : '' ); ?>">
+														<input type="text" class="tpd-input tpd-input-sm conf-location" placeholder="Location / Booth #" value="<?php echo esc_attr( isset( $conf['location'] ) ? $conf['location'] : '' ); ?>">
+														<input type="url" class="tpd-input tpd-input-sm conf-url" placeholder="Info Link https://" value="<?php echo esc_attr( isset( $conf['url'] ) ? $conf['url'] : '' ); ?>">
+														<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-remove-repeater-row" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;" title="Remove conference"><i class="fa-solid fa-trash-can"></i></button>
+													</div>
+												<?php endforeach; ?>
+											<?php endif; ?>
+										</div>
+										<input type="hidden" name="conferences_json" id="tpd-conferences-json" value="<?php echo esc_attr( wp_json_encode( $conferences ) ); ?>">
+									</div>
+								<?php endif; ?>
+							</div>
+
+							<!-- TAB 3: RESOURCES & BROCHURES (Enhanced / Paid Listing) -->
+							<div id="set-resources" class="tpd-editor-panel" style="display:none;">
+								<?php if ( ! $is_supplier_enhanced ) : ?>
+									<?php echo TPD_Tool_Tiers::render_enhanced_tab_locked( __( 'Resources & Brochures Library', 'tpd-tool' ), __( 'Upload and distribute digital brochures, sales guides, deck plans, commission schedules, and advisor marketing collateral directly on your showcase.', 'tpd-tool' ), 'fa-folder-open' ); ?>
+								<?php else : ?>
+									<div class="tpd-card-box mb-4" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:18px;">
+										<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+											<div>
+												<h4 style="margin:0 0 4px; font-size:15px; font-weight:800; color:#0f172a;"><i class="fa-solid fa-file-pdf text-red"></i> <?php esc_html_e( 'Advisor Document & Digital Brochure Library', 'tpd-tool' ); ?></h4>
+												<p style="margin:0; font-size:12.5px; color:#64748b;"><?php esc_html_e( 'Upload downloadable PDF marketing guides, deck plans, itineraries, and sales tools for travel advisors.', 'tpd-tool' ); ?></p>
+											</div>
+											<div style="display:flex; gap:8px;">
+												<input type="file" id="tpd-file-supp-resource-upload" accept=".pdf,.doc,.docx" style="display:none;">
+												<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="document.getElementById('tpd-file-supp-resource-upload').click();">
+													<i class="fa-solid fa-cloud-arrow-up"></i> <?php esc_html_e( 'Upload PDF', 'tpd-tool' ); ?>
+												</button>
+												<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-primary" id="tpd-btn-add-resource">
+													<i class="fa-solid fa-plus"></i> <?php esc_html_e( 'Add Resource Item', 'tpd-tool' ); ?>
+												</button>
+											</div>
+										</div>
 									</div>
 
-									<div id="tpd-supp-gallery-empty" style="text-align:center; padding:28px 16px; background:#f8fafc; border:2px dashed #cbd5e1; border-radius:10px; margin-bottom:16px; <?php echo ! empty( $gallery_images ) ? 'display:none;' : ''; ?>">
-										<i class="fa-regular fa-images" style="font-size:32px; color:#94a3b8; margin-bottom:8px; display:block;"></i>
-										<h5 style="margin:0 0 4px; font-size:13.5px; font-weight:700; color:#334155;"><?php esc_html_e( 'No Photos in Showcase Gallery Yet', 'tpd-tool' ); ?></h5>
-										<p style="margin:0 0 12px; font-size:12px; color:#64748b;"><?php esc_html_e( 'Upload photos of your offerings to attract and educate registered travel advisors.', 'tpd-tool' ); ?></p>
-										<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="document.getElementById('tpd-file-supp-gallery').click();">
-											<i class="fa-solid fa-plus"></i> <?php esc_html_e( 'Upload Photos', 'tpd-tool' ); ?>
-										</button>
-									</div>
-
-									<div id="tpd-supp-gallery-grid" class="tpd-gallery-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap:12px;">
-										<?php if ( ! empty( $gallery_images ) ) : ?>
-											<?php foreach ( $gallery_images as $g_url ) : ?>
-												<div class="tpd-gallery-item" data-url="<?php echo esc_url( $g_url ); ?>">
-													<img src="<?php echo esc_url( $g_url ); ?>" class="tpd-gallery-thumb" alt="Showcase Photo">
-													<input type="hidden" name="gallery_images[]" value="<?php echo esc_url( $g_url ); ?>">
-													<button type="button" class="tpd-gallery-remove-btn tpd-remove-gallery-item-btn" title="<?php esc_attr_e( 'Remove photo', 'tpd-tool' ); ?>">
-														<i class="fa-solid fa-xmark"></i>
-													</button>
+									<div id="tpd-resources-container" style="display:flex; flex-direction:column; gap:12px;">
+										<?php if ( ! empty( $resources ) ) : ?>
+											<?php foreach ( $resources as $res ) : ?>
+												<div class="tpd-repeater-row tpd-res-row" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:14px; display:grid; grid-template-columns: 2fr 1.5fr 2fr 2fr auto; gap:10px; align-items:center;">
+													<input type="text" class="tpd-input tpd-input-sm res-title" placeholder="Resource Title (e.g. 2026 Fleet Brochure)" value="<?php echo esc_attr( isset( $res['title'] ) ? $res['title'] : '' ); ?>">
+													<select class="tpd-select tpd-input-sm res-category">
+														<option value="Brochure" <?php selected( isset( $res['category'] ) ? $res['category'] : '', 'Brochure' ); ?>>Brochure</option>
+														<option value="Sales Guide" <?php selected( isset( $res['category'] ) ? $res['category'] : '', 'Sales Guide' ); ?>>Sales Guide</option>
+														<option value="Deck Plan" <?php selected( isset( $res['category'] ) ? $res['category'] : '', 'Deck Plan' ); ?>>Deck Plan / Factsheet</option>
+														<option value="Commission Sheet" <?php selected( isset( $res['category'] ) ? $res['category'] : '', 'Commission Sheet' ); ?>>Commission Sheet</option>
+														<option value="Advisor Flyer" <?php selected( isset( $res['category'] ) ? $res['category'] : '', 'Advisor Flyer' ); ?>>Advisor Flyer</option>
+														<option value="Webinar PDF" <?php selected( isset( $res['category'] ) ? $res['category'] : '', 'Webinar PDF' ); ?>>Webinar PDF</option>
+													</select>
+													<input type="url" class="tpd-input tpd-input-sm res-url" placeholder="File URL https://" value="<?php echo esc_attr( isset( $res['file_url'] ) ? $res['file_url'] : '' ); ?>">
+													<input type="text" class="tpd-input tpd-input-sm res-desc" placeholder="Brief note for advisors" value="<?php echo esc_attr( isset( $res['description'] ) ? $res['description'] : '' ); ?>">
+													<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-remove-repeater-row" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;" title="Remove resource"><i class="fa-solid fa-trash-can"></i></button>
 												</div>
 											<?php endforeach; ?>
 										<?php endif; ?>
 									</div>
-								</div>
+									<input type="hidden" name="resources_json" id="tpd-resources-json" value="<?php echo esc_attr( wp_json_encode( $resources ) ); ?>">
+								<?php endif; ?>
 							</div>
 
-							<!-- Sub-Tab 3: Advisor Resources -->
-							<div id="set-resources" class="tpd-editor-panel" style="display:none;">
-								<div class="tpd-card-box mb-3" style="background:#f8fafc; padding:16px;">
-									<p style="margin:0 0 10px; font-size:13px; font-weight:600;"><?php esc_html_e( 'Upload PDF Brochure, Deck Plan, or Commission Sheet:', 'tpd-tool' ); ?></p>
-									<input type="file" id="tpd-file-supp-pdf" accept=".pdf" style="display:none;">
-									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-primary" onclick="document.getElementById('tpd-file-supp-pdf').click();">
-										<i class="fa-solid fa-cloud-arrow-up"></i> <?php esc_html_e( 'Upload PDF Document', 'tpd-tool' ); ?>
-									</button>
-								</div>
-							</div>
-
-							<!-- Sub-Tab 4: Team Management -->
-							<div id="set-team" class="tpd-editor-panel" style="display:none;">
-								<div class="tpd-ss-header mb-3">
-									<h4 style="margin:0;"><i class="fa-solid fa-user-plus"></i> <?php esc_html_e( 'Virtual Office Team Contacts', 'tpd-tool' ); ?></h4>
-									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-primary" onclick="jQuery('#tpd-add-rep-modal').slideDown();">
-										<i class="fa-solid fa-plus"></i> <?php esc_html_e( 'Add Team Member', 'tpd-tool' ); ?>
-									</button>
-								</div>
-
-								<div id="tpd-add-rep-modal" class="tpd-card-box mb-3" style="display:none; background:#f0fdf4; border:1px solid #86efac; padding:16px;">
-									<h5 style="margin:0 0 12px; color:#166534;"><?php esc_html_e( 'Add Representative to Virtual Office', 'tpd-tool' ); ?></h5>
-									<div class="tpd-form-grid-2">
-										<input type="text" id="tpd_rep_name" placeholder="Full Name" class="tpd-input tpd-input-sm">
-										<input type="text" id="tpd_rep_title" placeholder="Position / Title" class="tpd-input tpd-input-sm">
-									</div>
-									<div class="tpd-form-grid-2 mt-2">
-										<input type="email" id="tpd_rep_email" placeholder="Direct Email" class="tpd-input tpd-input-sm">
-										<input type="tel" id="tpd_rep_phone" placeholder="Direct Phone" class="tpd-input tpd-input-sm">
-									</div>
-									<div class="mt-3" style="text-align:right;">
-										<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="jQuery('#tpd-add-rep-modal').slideUp();">Cancel</button>
-										<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-primary" id="tpd-btn-save-rep">Save Team Member</button>
-									</div>
-								</div>
-
-								<div id="tpd-team-members-list">
-									<?php foreach ( $team_members as $tm ) : ?>
-										<div class="tpd-team-card" style="display:flex; align-items:center; gap:12px; padding:12px; background:#fff; border:1px solid #e2e8f0; border-radius:10px; margin-bottom:10px;">
-											<div style="width:40px; height:40px; border-radius:50%; background:#2563eb; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700;">
-												<?php echo esc_html( strtoupper( substr( $tm['name'], 0, 1 ) ) ); ?>
+							<!-- TAB 4: FAQS (Enhanced / Paid Listing) -->
+							<div id="set-faqs" class="tpd-editor-panel" style="display:none;">
+								<?php if ( ! $is_supplier_enhanced ) : ?>
+									<?php echo TPD_Tool_Tiers::render_enhanced_tab_locked( __( 'Supplier FAQs for Travel Advisors', 'tpd-tool' ), __( 'Provide answers to advisors\' top questions regarding booking procedures, commission payment cycles, deposit deadlines, FAM trips, and client protections.', 'tpd-tool' ), 'fa-circle-question' ); ?>
+								<?php else : ?>
+									<div class="tpd-card-box mb-4" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:18px;">
+										<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+											<div>
+												<h4 style="margin:0 0 4px; font-size:15px; font-weight:800; color:#0f172a;"><i class="fa-solid fa-circle-question text-teal"></i> <?php esc_html_e( 'Frequently Asked Questions for Travel Advisors', 'tpd-tool' ); ?></h4>
+												<p style="margin:0; font-size:12.5px; color:#64748b;"><?php esc_html_e( 'Build a custom FAQ knowledgebase answering advisors\' most common questions before they book.', 'tpd-tool' ); ?></p>
 											</div>
-											<div style="flex:1;">
-												<h5 style="margin:0; font-size:13.5px; font-weight:700;"><?php echo esc_html( $tm['name'] ); ?></h5>
-												<p style="margin:0; font-size:12px; color:#64748b;">
-													<?php echo esc_html( $tm['title'] ); ?> · <?php echo esc_html( $tm['email'] ); ?>
-													<?php if ( ! empty( $tm['phone'] ) ) : ?> · <?php echo esc_html( $tm['phone'] ); ?><?php endif; ?>
-												</p>
-											</div>
-											<span class="text-green" style="font-size:12px; font-weight:700;"><i class="fa-solid fa-circle"></i> Active</span>
+											<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-primary" id="tpd-btn-add-faq">
+												<i class="fa-solid fa-plus"></i> <?php esc_html_e( 'Add FAQ Item', 'tpd-tool' ); ?>
+											</button>
 										</div>
-									<?php endforeach; ?>
-								</div>
+									</div>
+
+									<div id="tpd-faqs-container" style="display:flex; flex-direction:column; gap:14px;">
+										<?php if ( ! empty( $supplier_faqs ) ) : ?>
+											<?php foreach ( $supplier_faqs as $f_item ) : ?>
+												<div class="tpd-repeater-row tpd-faq-row" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:14px;">
+													<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+														<label style="font-weight:700; font-size:13px; color:#1e293b;"><i class="fa-solid fa-circle-question text-blue"></i> <?php esc_html_e( 'Question:', 'tpd-tool' ); ?></label>
+														<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-remove-repeater-row" style="background:#fee2e2; color:#dc2626; border:none; padding:4px 8px; border-radius:6px; cursor:pointer;" title="Remove FAQ"><i class="fa-solid fa-trash-can"></i> Remove</button>
+													</div>
+													<input type="text" class="tpd-input tpd-input-sm faq-question mb-2" placeholder="e.g. What is your advisor commission payment schedule?" value="<?php echo esc_attr( isset( $f_item['question'] ) ? $f_item['question'] : '' ); ?>" style="width:100%;">
+													<label style="font-weight:700; font-size:12.5px; color:#475569; display:block; margin-bottom:4px;"><?php esc_html_e( 'Answer:', 'tpd-tool' ); ?></label>
+													<textarea class="tpd-textarea faq-answer" rows="2" placeholder="e.g. Commissions are paid bi-weekly upon receipt of final client payment..." style="width:100%; font-size:12.5px;"><?php echo esc_textarea( isset( $f_item['answer'] ) ? $f_item['answer'] : '' ); ?></textarea>
+												</div>
+											<?php endforeach; ?>
+										<?php endif; ?>
+									</div>
+									<input type="hidden" name="faqs_json" id="tpd-faqs-json" value="<?php echo esc_attr( wp_json_encode( $supplier_faqs ) ); ?>">
+								<?php endif; ?>
 							</div>
 
-							<!-- Sub-Tab 5: Promotions & Offers -->
-							<div id="set-promos" class="tpd-editor-panel" style="display:none;">
-								<div class="tpd-form-group">
-									<label><?php esc_html_e( 'Featured Advisor Incentive / Promotion Title', 'tpd-tool' ); ?></label>
-									<input type="text" name="promo_title" value="<?php echo esc_attr( $promo_title ); ?>" placeholder="e.g. Earn 2% Bonus Commission on Q3 Bookings" class="tpd-input">
-								</div>
-								<div class="tpd-form-group mt-2">
-									<label><?php esc_html_e( 'Promotion Details & Booking Code', 'tpd-tool' ); ?></label>
-									<textarea name="promo_desc" rows="3" class="tpd-textarea"><?php echo esc_textarea( $promo_desc ); ?></textarea>
-								</div>
+							<!-- TAB 5: PHOTO GALLERY (Enhanced / Paid Listing) -->
+							<div id="set-gallery" class="tpd-editor-panel" style="display:none;">
+								<?php if ( ! $is_supplier_enhanced ) : ?>
+									<?php echo TPD_Tool_Tiers::render_enhanced_tab_locked( __( 'Showcase Photo Gallery', 'tpd-tool' ), __( 'Display high-resolution property, fleet, cabin, suite, dining, excursion, and amenity photos to inspire travel advisors and their clients.', 'tpd-tool' ), 'fa-images' ); ?>
+								<?php else : ?>
+									<div class="tpd-card-box" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:20px;">
+										<div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+											<div>
+												<h4 style="margin:0 0 4px; font-size:15px; font-weight:800; color:#0f172a;"><i class="fa-regular fa-images text-blue"></i> <?php esc_html_e( 'Showcase Photo Gallery', 'tpd-tool' ); ?></h4>
+												<p style="margin:0; font-size:12.5px; color:#64748b;"><?php esc_html_e( 'Upload high-resolution property, cabin, dining, excursion, and amenity photos to present to travel advisors.', 'tpd-tool' ); ?></p>
+											</div>
+											<div>
+												<input type="file" id="tpd-file-supp-gallery" accept="image/*" multiple style="display:none;">
+												<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-primary" onclick="document.getElementById('tpd-file-supp-gallery').click();" style="display:inline-flex; align-items:center; gap:6px;">
+													<i class="fa-solid fa-cloud-arrow-up"></i> <?php esc_html_e( '+ Add Photos to Showcase Gallery', 'tpd-tool' ); ?>
+												</button>
+											</div>
+										</div>
+
+										<div id="tpd-supp-gallery-empty" style="text-align:center; padding:28px 16px; background:#f8fafc; border:2px dashed #cbd5e1; border-radius:10px; margin-bottom:16px; <?php echo ! empty( $gallery_images ) ? 'display:none;' : ''; ?>">
+											<i class="fa-regular fa-images" style="font-size:32px; color:#94a3b8; margin-bottom:8px; display:block;"></i>
+											<h5 style="margin:0 0 4px; font-size:13.5px; font-weight:700; color:#334155;"><?php esc_html_e( 'No Photos in Showcase Gallery Yet', 'tpd-tool' ); ?></h5>
+											<p style="margin:0 0 12px; font-size:12px; color:#64748b;"><?php esc_html_e( 'Upload photos of your offerings to attract and educate registered travel advisors.', 'tpd-tool' ); ?></p>
+											<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="document.getElementById('tpd-file-supp-gallery').click();">
+												<i class="fa-solid fa-plus"></i> <?php esc_html_e( 'Upload Photos', 'tpd-tool' ); ?>
+											</button>
+										</div>
+
+										<div id="tpd-supp-gallery-grid" class="tpd-gallery-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap:12px;">
+											<?php if ( ! empty( $gallery_images ) ) : ?>
+												<?php foreach ( $gallery_images as $g_url ) : ?>
+													<div class="tpd-gallery-item" data-url="<?php echo esc_url( $g_url ); ?>">
+														<img src="<?php echo esc_url( $g_url ); ?>" class="tpd-gallery-thumb" alt="Showcase Photo">
+														<input type="hidden" name="gallery_images[]" value="<?php echo esc_url( $g_url ); ?>">
+														<button type="button" class="tpd-gallery-remove-btn tpd-remove-gallery-item-btn" title="<?php esc_attr_e( 'Remove photo', 'tpd-tool' ); ?>">
+															<i class="fa-solid fa-xmark"></i>
+														</button>
+													</div>
+												<?php endforeach; ?>
+											<?php endif; ?>
+										</div>
+										<input type="hidden" name="gallery_images_json" id="tpd-gallery-images-json" value="<?php echo esc_attr( wp_json_encode( $gallery_images ) ); ?>">
+									</div>
+								<?php endif; ?>
+							</div>
+
+							<!-- TAB 6: VIDEOS (Enhanced / Paid Listing) -->
+							<div id="set-videos" class="tpd-editor-panel" style="display:none;">
+								<?php if ( ! $is_supplier_enhanced ) : ?>
+									<?php echo TPD_Tool_Tiers::render_enhanced_tab_locked( __( 'Showcase Videos & Webinars', 'tpd-tool' ), __( 'Embed your brand video showcase, cabin walkthroughs, and recorded product training webinars for travel advisors to watch on demand.', 'tpd-tool' ), 'fa-video' ); ?>
+								<?php else : ?>
+									<!-- Main Showcase Video -->
+									<div class="tpd-card-box mb-4" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:18px;">
+										<h4 style="margin:0 0 4px; font-size:15px; font-weight:800; color:#0f172a;"><i class="fa-solid fa-circle-play text-red"></i> <?php esc_html_e( 'Main Showcase Video (YouTube or Vimeo URL)', 'tpd-tool' ); ?></h4>
+										<p style="margin:0 0 12px; font-size:12px; color:#64748b;"><?php esc_html_e( 'Primary promotional video featured prominently at the top of your public showcase profile.', 'tpd-tool' ); ?></p>
+										<input type="url" name="video_url" value="<?php echo esc_attr( $video_url ); ?>" placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/..." class="tpd-input">
+									</div>
+
+									<!-- Multi-Video & Webinar Showcase Repeater -->
+									<div class="tpd-card-box" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:20px;">
+										<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+											<div>
+												<h4 style="margin:0 0 4px; font-size:15px; font-weight:800; color:#0f172a;"><i class="fa-solid fa-film text-purple"></i> <?php esc_html_e( 'Additional Videos, Property Tours & Recorded Webinars', 'tpd-tool' ); ?></h4>
+												<p style="margin:0; font-size:12.5px; color:#64748b;"><?php esc_html_e( 'Add on-demand training webinars, ship/cabin walkthroughs, and destination overview videos.', 'tpd-tool' ); ?></p>
+											</div>
+											<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-primary" id="tpd-btn-add-video">
+												<i class="fa-solid fa-plus"></i> <?php esc_html_e( 'Add Video', 'tpd-tool' ); ?>
+											</button>
+										</div>
+
+										<div id="tpd-videos-container" style="display:flex; flex-direction:column; gap:12px;">
+											<?php if ( ! empty( $supplier_videos ) ) : ?>
+												<?php foreach ( $supplier_videos as $vid ) : ?>
+													<div class="tpd-repeater-row tpd-vid-row" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; display:grid; grid-template-columns: 2fr 3fr 2fr auto; gap:10px; align-items:center;">
+														<input type="text" class="tpd-input tpd-input-sm vid-title" placeholder="Video Title (e.g. 2026 Fleet Walkthrough)" value="<?php echo esc_attr( isset( $vid['title'] ) ? $vid['title'] : '' ); ?>">
+														<input type="url" class="tpd-input tpd-input-sm vid-url" placeholder="YouTube or Vimeo URL" value="<?php echo esc_attr( isset( $vid['video_url'] ) ? $vid['video_url'] : '' ); ?>">
+														<input type="text" class="tpd-input tpd-input-sm vid-desc" placeholder="Brief note / duration" value="<?php echo esc_attr( isset( $vid['description'] ) ? $vid['description'] : '' ); ?>">
+														<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-remove-repeater-row" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;" title="Remove video"><i class="fa-solid fa-trash-can"></i></button>
+													</div>
+												<?php endforeach; ?>
+											<?php endif; ?>
+										</div>
+										<input type="hidden" name="videos_json" id="tpd-videos-json" value="<?php echo esc_attr( wp_json_encode( $supplier_videos ) ); ?>">
+									</div>
+								<?php endif; ?>
 							</div>
 
 							<div id="tpd-supplier-listing-status" class="tpd-reg-status" style="display:none; margin-top:20px;"></div>

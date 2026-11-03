@@ -95,6 +95,36 @@ class TPD_Tool_Tiers {
 					'description' => __( 'Featured card status on the advisor dashboard and directory search.', 'tpd-tool' ),
 					'icon'        => 'fa-star',
 				),
+				'supplier_listing_about' => array(
+					'label'       => __( 'Basic Company Profile & About Us', 'tpd-tool' ),
+					'description' => __( 'Standard company profile, tagline, headquarters, and direct booking portal link.', 'tpd-tool' ),
+					'icon'        => 'fa-info-circle',
+				),
+				'supplier_listing_associations' => array(
+					'label'       => __( 'Associations & Conferences Showcase', 'tpd-tool' ),
+					'description' => __( 'Display USTOA, ASTA, CLIA, consortia credentials, and upcoming conferences attended.', 'tpd-tool' ),
+					'icon'        => 'fa-award',
+				),
+				'supplier_listing_resources' => array(
+					'label'       => __( 'Resources & Brochures Library', 'tpd-tool' ),
+					'description' => __( 'Upload digital sales guides, deck plans, commission sheets, and advisor PDF brochures.', 'tpd-tool' ),
+					'icon'        => 'fa-folder-open',
+				),
+				'supplier_listing_faqs' => array(
+					'label'       => __( 'Supplier FAQs for Travel Advisors', 'tpd-tool' ),
+					'description' => __( 'Custom Q&A knowledgebase for booking procedures, commission policies, and FAMs.', 'tpd-tool' ),
+					'icon'        => 'fa-circle-question',
+				),
+				'supplier_listing_gallery' => array(
+					'label'       => __( 'Showcase Photo Gallery', 'tpd-tool' ),
+					'description' => __( 'Multi-image high-resolution photo gallery of fleet, properties, and amenities.', 'tpd-tool' ),
+					'icon'        => 'fa-images',
+				),
+				'supplier_listing_videos' => array(
+					'label'       => __( 'Showcase Videos & Webinar Showcase', 'tpd-tool' ),
+					'description' => __( 'Main video showcase and library of recorded product training webinars.', 'tpd-tool' ),
+					'icon'        => 'fa-video',
+				),
 			),
 		);
 	}
@@ -114,65 +144,78 @@ class TPD_Tool_Tiers {
 					'advisor_events'          => 1,
 					'advisor_basic_profile'   => 1,
 					// Basic Supplier (Free): Basic listing & logo
-					'supplier_basic_info'     => 1,
+					'supplier_basic_info'          => 1,
+					'supplier_listing_about'       => 1,
 				),
 				'standard' => array(
 					// Standard Advisor ($9.99/mo): All basic + Cruise comparison, Discovery call, Enhanced profile
-					'advisor_chat'            => 1,
-					'advisor_saved_suppliers' => 1,
-					'advisor_meetings'        => 1,
-					'advisor_events'          => 1,
-					'advisor_basic_profile'   => 1,
-					'advisor_analytics_deep'  => 1,
-					'advisor_inquiries'       => 1,
-					'advisor_cruise_comp'     => 1,
-					'advisor_discovery_call'  => 1,
-					'advisor_enhanced_profile'=> 1,
-					'advisor_travel_blog'     => 1,
+					'advisor_chat'                 => 1,
+					'advisor_saved_suppliers'      => 1,
+					'advisor_meetings'             => 1,
+					'advisor_events'               => 1,
+					'advisor_basic_profile'        => 1,
+					'advisor_analytics_deep'       => 1,
+					'advisor_inquiries'            => 1,
+					'advisor_cruise_comp'          => 1,
+					'advisor_discovery_call'       => 1,
+					'advisor_enhanced_profile'     => 1,
+					'advisor_travel_blog'          => 1,
 
 					// Standard Supplier: Custom banner, 1 gallery, 1 video, 5 PDFs, team members, 1 news
-					'supplier_basic_info'     => 1,
-					'supplier_custom_banner'  => 1,
-					'supplier_gallery'        => 1,
-					'supplier_resources_5'    => 1,
-					'supplier_team_mgmt'      => 1,
-					'supplier_news_events'    => 1,
-					'supplier_promos'         => 1,
-					'supplier_chat'           => 1,
-					'supplier_meetings'       => 1,
+					'supplier_basic_info'          => 1,
+					'supplier_custom_banner'       => 1,
+					'supplier_gallery'             => 1,
+					'supplier_resources_5'         => 1,
+					'supplier_team_mgmt'           => 1,
+					'supplier_news_events'         => 1,
+					'supplier_promos'              => 1,
+					'supplier_chat'                => 1,
+					'supplier_meetings'            => 1,
+					'supplier_listing_about'       => 1,
+					'supplier_listing_associations'=> 1,
+					'supplier_listing_resources'   => 1,
+					'supplier_listing_faqs'        => 1,
+					'supplier_listing_gallery'     => 1,
+					'supplier_listing_videos'      => 1,
 				),
 				'premium' => array(
 					// Premium Advisor ($19.99/mo): Everything unlocked + 10 specialties, albums, custom inquiry
-					'advisor_chat'            => 1,
-					'advisor_saved_suppliers' => 1,
-					'advisor_meetings'        => 1,
-					'advisor_events'          => 1,
-					'advisor_basic_profile'   => 1,
-					'advisor_analytics_deep'  => 1,
-					'advisor_inquiries'       => 1,
-					'advisor_cruise_comp'     => 1,
-					'advisor_discovery_call'  => 1,
-					'advisor_enhanced_profile'=> 1,
-					'advisor_travel_blog'     => 1,
-					'advisor_premium_albums'  => 1,
-					'advisor_custom_inquiry'  => 1,
-					'advisor_dispute_reviews' => 1,
+					'advisor_chat'                 => 1,
+					'advisor_saved_suppliers'      => 1,
+					'advisor_meetings'             => 1,
+					'advisor_events'               => 1,
+					'advisor_basic_profile'        => 1,
+					'advisor_analytics_deep'       => 1,
+					'advisor_inquiries'            => 1,
+					'advisor_cruise_comp'          => 1,
+					'advisor_discovery_call'       => 1,
+					'advisor_enhanced_profile'     => 1,
+					'advisor_travel_blog'          => 1,
+					'advisor_premium_albums'       => 1,
+					'advisor_custom_inquiry'       => 1,
+					'advisor_dispute_reviews'      => 1,
 
 					// Premium Supplier: 3 galleries, 10 videos, 20 PDFs, social packs, 5 events, 8 associations, priority
-					'supplier_basic_info'     => 1,
-					'supplier_custom_banner'  => 1,
-					'supplier_gallery'        => 1,
-					'supplier_resources_5'    => 1,
-					'supplier_resources_20'   => 1,
-					'supplier_team_mgmt'      => 1,
-					'supplier_news_events'    => 1,
-					'supplier_promos'         => 1,
-					'supplier_chat'           => 1,
-					'supplier_meetings'       => 1,
-					'supplier_social_packs'   => 1,
-					'supplier_videos_tab'     => 1,
-					'supplier_analytics_deep' => 1,
-					'supplier_featured'       => 1,
+					'supplier_basic_info'          => 1,
+					'supplier_custom_banner'       => 1,
+					'supplier_gallery'             => 1,
+					'supplier_resources_5'         => 1,
+					'supplier_resources_20'        => 1,
+					'supplier_team_mgmt'           => 1,
+					'supplier_news_events'         => 1,
+					'supplier_promos'              => 1,
+					'supplier_chat'                => 1,
+					'supplier_meetings'            => 1,
+					'supplier_social_packs'        => 1,
+					'supplier_videos_tab'          => 1,
+					'supplier_analytics_deep'      => 1,
+					'supplier_featured'            => 1,
+					'supplier_listing_about'       => 1,
+					'supplier_listing_associations'=> 1,
+					'supplier_listing_resources'   => 1,
+					'supplier_listing_faqs'        => 1,
+					'supplier_listing_gallery'     => 1,
+					'supplier_listing_videos'      => 1,
 				),
 			);
 			// Also maintain backward-compatible aliases for free and paid
@@ -266,6 +309,42 @@ class TPD_Tool_Tiers {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Check if a Supplier User is on an Enhanced / Paid Tier (Standard or Premium)
+	 */
+	public static function is_enhanced_supplier( $user_id = null ) {
+		if ( ! $user_id ) {
+			$user_id = get_current_user_id();
+		}
+		if ( ! $user_id ) {
+			return false;
+		}
+		if ( user_can( $user_id, 'manage_options' ) ) {
+			return true;
+		}
+		$tier = self::get_user_tier( $user_id );
+		return ( 'basic' !== $tier && 'free' !== $tier );
+	}
+
+	/**
+	 * Check if a Supplier Listing post is an Enhanced / Paid Listing
+	 */
+	public static function is_listing_enhanced( $listing_id ) {
+		$post = get_post( $listing_id );
+		if ( ! $post ) {
+			return false;
+		}
+		$post_tier = get_post_meta( $listing_id, 'tpd_user_tier', true );
+		if ( ! empty( $post_tier ) ) {
+			return ( 'basic' !== $post_tier && 'free' !== $post_tier );
+		}
+		$user_id = (int) get_post_meta( $listing_id, 'tpd_assigned_user', true );
+		if ( ! $user_id ) {
+			$user_id = (int) $post->post_author;
+		}
+		return self::is_enhanced_supplier( $user_id );
 	}
 
 	/**
@@ -430,6 +509,33 @@ class TPD_Tool_Tiers {
 		<?php
 		return ob_get_clean();
 	}
+
+	/**
+	 * Render Sleek Enhanced Listing Tab Locked Teaser
+	 */
+	public static function render_enhanced_tab_locked( $tab_title, $description = '', $icon = 'fa-crown' ) {
+		ob_start();
+		?>
+		<div class="tpd-enhanced-tab-locked-box" style="padding:40px 24px; text-align:center; background:linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%); border:2px dashed #cbd5e1; border-radius:14px; margin:16px 0;">
+			<div style="width:58px; height:58px; border-radius:50%; background:#fef3c7; color:#b45309; display:inline-flex; align-items:center; justify-content:center; font-size:24px; margin-bottom:16px; box-shadow:0 4px 12px rgba(234,179,8,0.2);">
+				<i class="fa-solid <?php echo esc_attr( $icon ); ?>"></i>
+			</div>
+			<div style="display:inline-block; padding:4px 12px; background:#e0f2fe; color:#0284c7; border-radius:999px; font-size:11.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;">
+				<i class="fa-solid fa-lock"></i> <?php esc_html_e( 'Enhanced Listing Feature', 'tpd-tool' ); ?>
+			</div>
+			<h3 style="margin:0 0 8px; font-size:19px; font-weight:800; color:#0f172a;"><?php echo esc_html( $tab_title ); ?></h3>
+			<p style="margin:0 auto 24px; max-width:560px; font-size:13.5px; color:#475569; line-height:1.6;">
+				<?php echo esc_html( $description ?: 'This section is available on Enhanced / Paid Supplier Listings. Upgrade your membership plan to unlock this tab and showcase this content to travel advisors.' ); ?>
+			</p>
+			<div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
+				<button type="button" class="tpd-btn tpd-btn-gold tpd-btn-trigger-plan-tab" style="background:#eab308; color:#0f172a; font-weight:800; padding:11px 24px; border:none; border-radius:8px; cursor:pointer; box-shadow:0 4px 14px rgba(234,179,8,0.35);">
+					<i class="fa-solid fa-crown"></i> <?php esc_html_e( 'Upgrade to Enhanced Listing', 'tpd-tool' ); ?> &rarr;
+				</button>
+			</div>
+		</div>
+		<?php
+		return ob_get_clean();
+	}
 }
 
 TPD_Tool_Tiers::init();
@@ -441,4 +547,12 @@ function tpd_get_user_tier( $user_id = null ) {
 
 function tpd_can_user( $feature_slug, $user_id = null ) {
 	return TPD_Tool_Tiers::can_user( $feature_slug, $user_id );
+}
+
+function tpd_is_enhanced_supplier( $user_id = null ) {
+	return TPD_Tool_Tiers::is_enhanced_supplier( $user_id );
+}
+
+function tpd_is_listing_enhanced( $listing_id ) {
+	return TPD_Tool_Tiers::is_listing_enhanced( $listing_id );
 }
