@@ -1654,15 +1654,25 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 							</div>
 
 							<!-- Shortcode 6 -->
+							<?php
+							$hub_sup = get_posts( array(
+								'post_type'      => 'supplier_listing',
+								'post_status'    => 'publish',
+								'posts_per_page' => 1,
+							) );
+							$hub_sup_id   = ! empty( $hub_sup ) ? $hub_sup[0]->ID : 0;
+							$hub_sup_slug = ! empty( $hub_sup ) ? $hub_sup[0]->post_name : 'amawaterways';
+							$hub_sc_code  = $hub_sup_id ? '[tpd_supplier_profile id="' . $hub_sup_id . '"]' : '[tpd_supplier_profile]';
+							?>
 							<div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
 								<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
 									<strong style="font-size:13.5px; color:#0f172a;">Supplier Public Profile & Showcase</strong>
 									<span style="font-size:10px; font-weight:800; background:#fce7f3; color:#be185d; padding:2px 6px; border-radius:4px;">PROFILE</span>
 								</div>
-								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Full public-facing supplier showcase template with 6 interactive tabs for enhanced members or basic profile for free tier. Elementor compatible.</p>
+								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Full public-facing supplier showcase template with 6 interactive tabs for enhanced members or basic profile for free tier. Supports <code>id</code>, <code>slug</code>, or empty to auto-resolve.</p>
 								<div style="display:flex; align-items:center; gap:8px;">
-									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_supplier_profile id="123"]</code>
-									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_supplier_profile id=\'123\']'); alert('Copied [tpd_supplier_profile] to clipboard!');">
+									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;"><?php echo esc_html( $hub_sc_code ); ?></code>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('<?php echo esc_js( $hub_sc_code ); ?>'); alert('Copied <?php echo esc_js( $hub_sc_code ); ?> to clipboard!');">
 										<i class="fa-regular fa-copy"></i>
 									</button>
 								</div>

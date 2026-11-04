@@ -126,51 +126,155 @@ class TPD_Tool_Shortcodes {
 
 	/**
 	 * Render Public Supplier Profile Showcase (6 Tabs for Enhanced, Basic for Free)
-	 * Usage: [tpd_supplier_profile id="123"] or [tpd_supplier_showcase id="123"]
+	 * Usage:
+	 *   [tpd_supplier_profile id="123"]
+	 *   [tpd_supplier_profile slug="amawaterways"]
+	 *   [tpd_supplier_profile user_id="2"]
+	 *   [tpd_supplier_profile] (auto-resolves current post, logged-in supplier, or sample listing)
 	 */
 	public static function render_supplier_profile( $atts ) {
 		$atts = shortcode_atts(
 			array(
-				'id' => 0,
+				'id'       => '',
+				'slug'     => '',
+				'user_id'  => '',
+				'fallback' => 'yes',
 			),
 			$atts,
 			'tpd_supplier_profile'
 		);
 
-		$listing_id = absint( $atts['id'] );
+		$raw_id     = trim( (string) $atts['id'] );
+		$slug       = trim( (string) $atts['slug'] );
+		$user_id    = absint( $atts['user_id'] );
+		$allow_fb   = ! in_array( strtolower( (string) $atts['fallback'] ), array( 'no', '0', 'false' ), true );
 
-		// If no ID specified, try current post if it's supplier_listing, or find listing for current logged-in user
-		if ( ! $listing_id ) {
-			$post_id = get_the_ID();
-			if ( $post_id && 'supplier_listing' === get_post_type( $post_id ) ) {
-				$listing_id = $post_id;
+		$target_post   = null;
+		$notice_banner = '';
+
+		// 1. Resolve by Slug if specified (or if 'id' contains a slug string)
+		$lookup_slug = $slug ?: ( ! empty( $raw_id ) && ! is_numeric( $raw_id ) ? $raw_id : '' );
+		if ( $lookup_slug ) {
+			$by_slug = get_posts( array(
+				'post_type'      => 'supplier_listing',
+				'name'           => sanitize_title( $lookup_slug ),
+				'post_status'    => array( 'publish', 'draft', 'pending' ),
+				'posts_per_page' => 1,
+			) );
+			if ( ! empty( $by_slug ) ) {
+				$target_post = $by_slug[0];
+			}
+		}
+
+		// 2. Resolve by numeric Post ID if provided
+		if ( ! $target_post && is_numeric( $raw_id ) && (int) $raw_id > 0 ) {
+			$candidate_id = absint( $raw_id );
+			$p = get_post( $candidate_id );
+			if ( $p && 'supplier_listing' === $p->post_type ) {
+				$target_post = $p;
 			} else {
-				$user_id = get_current_user_id();
-				if ( $user_id ) {
-					$user_listings = get_posts( array(
+				// Maybe $candidate_id was a Supplier User ID?
+				$by_user = get_posts( array(
+					'post_type'      => 'supplier_listing',
+					'author'         => $candidate_id,
+					'post_status'    => array( 'publish', 'draft' ),
+					'posts_per_page' => 1,
+				) );
+				if ( ! empty( $by_user ) ) {
+					$target_post = $by_user[0];
+				} else {
+					$by_meta = get_posts( array(
 						'post_type'      => 'supplier_listing',
+						'meta_key'       => 'tpd_assigned_user',
+						'meta_value'     => $candidate_id,
 						'post_status'    => array( 'publish', 'draft' ),
-						'author'         => $user_id,
 						'posts_per_page' => 1,
-						'fields'         => 'ids',
 					) );
-					if ( ! empty( $user_listings ) ) {
-						$listing_id = (int) $user_listings[0];
+					if ( ! empty( $by_meta ) ) {
+						$target_post = $by_meta[0];
 					}
 				}
 			}
 		}
 
-		if ( ! $listing_id ) {
-			return '<div class="tpd-alert tpd-alert-info" style="padding:16px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; color:#1e40af; font-size:14px;"><i class="fa-solid fa-circle-info"></i> ' . esc_html__( 'No supplier listing found to display.', 'tpd-tool' ) . '</div>';
+		// 3. Resolve by user_id attribute if passed explicitly
+		if ( ! $target_post && $user_id > 0 ) {
+			$by_user = get_posts( array(
+				'post_type'      => 'supplier_listing',
+				'author'         => $user_id,
+				'post_status'    => array( 'publish', 'draft' ),
+				'posts_per_page' => 1,
+			) );
+			if ( ! empty( $by_user ) ) {
+				$target_post = $by_user[0];
+			}
 		}
+
+		// 4. Resolve from current queried post (if viewed on a supplier_listing single page)
+		if ( ! $target_post ) {
+			$cur_post_id = get_the_ID();
+			if ( $cur_post_id && 'supplier_listing' === get_post_type( $cur_post_id ) ) {
+				$target_post = get_post( $cur_post_id );
+			}
+		}
+
+		// 5. Resolve for logged-in user if they are a supplier
+		if ( ! $target_post && is_user_logged_in() ) {
+			$my_listings = get_posts( array(
+				'post_type'      => 'supplier_listing',
+				'author'         => get_current_user_id(),
+				'post_status'    => array( 'publish', 'draft' ),
+				'posts_per_page' => 1,
+			) );
+			if ( ! empty( $my_listings ) ) {
+				$target_post = $my_listings[0];
+			}
+		}
+
+		// 6. Fallback: If no match found (e.g. user entered a test ID like "123" that doesn't exist)
+		if ( ! $target_post && $allow_fb ) {
+			$sample = get_posts( array(
+				'post_type'      => 'supplier_listing',
+				'post_status'    => 'publish',
+				'posts_per_page' => 1,
+				'orderby'        => 'date',
+				'order'          => 'DESC',
+			) );
+			if ( ! empty( $sample ) ) {
+				$target_post = $sample[0];
+				if ( ! empty( $raw_id ) ) {
+					// Retrieve available listings to show user helpful info
+					$all_avail = get_posts( array(
+						'post_type'      => 'supplier_listing',
+						'post_status'    => 'publish',
+						'posts_per_page' => 5,
+					) );
+					$avail_hints = array();
+					foreach ( $all_avail as $av ) {
+						$avail_hints[] = sprintf( '<code>[tpd_supplier_profile id="%d"]</code> (%s)', $av->ID, esc_html( $av->post_title ) );
+					}
+					$notice_banner = '<div class="tpd-alert" style="margin:16px auto; max-width:1200px; padding:14px 20px; background:#fffbeb; border:1px solid #fde68a; border-radius:10px; color:#92400e; font-size:13px; line-height:1.6; font-family:\'Plus Jakarta Sans\',sans-serif;">' .
+						'<strong><i class="fa-solid fa-circle-info"></i> Notice:</strong> Supplier listing with ID <code>#' . esc_html( $raw_id ) . '</code> was not found. ' .
+						'Displaying preview for <strong>' . esc_html( $target_post->post_title ) . ' (ID: ' . $target_post->ID . ')</strong>.<br>' .
+						( ! empty( $avail_hints ) ? '<span style="font-size:12px; color:#b45309;">Available listings: ' . implode( ', ', $avail_hints ) . '</span>' : '' ) .
+						'</div>';
+				}
+			}
+		}
+
+		if ( ! $target_post ) {
+			return '<div class="tpd-alert tpd-alert-info" style="margin:20px auto; max-width:800px; padding:20px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; color:#1e40af; font-size:14px; text-align:center; font-family:\'Plus Jakarta Sans\',sans-serif;">' .
+				'<i class="fa-solid fa-circle-info" style="font-size:24px; margin-bottom:8px; display:block;"></i>' .
+				'<strong>' . esc_html__( 'No Supplier Listing Found', 'tpd-tool' ) . '</strong><br>' .
+				'<span style="color:#64748b; font-size:13px;">' . esc_html__( 'Please create a supplier listing in the Supplier Dashboard or verify the listing ID / slug in the shortcode.', 'tpd-tool' ) . '</span>' .
+				'</div>';
+		}
+
+		$listing_id = $target_post->ID;
 
 		global $post;
 		$orig_post = $post;
-		$post = get_post( $listing_id );
-		if ( ! $post ) {
-			return '';
-		}
+		$post = $target_post;
 		setup_postdata( $post );
 
 		if ( ! defined( 'TPD_EMBEDDED_PROFILE' ) ) {
@@ -178,6 +282,9 @@ class TPD_Tool_Shortcodes {
 		}
 
 		ob_start();
+		if ( ! empty( $notice_banner ) ) {
+			echo $notice_banner;
+		}
 		$template = TPD_TOOL_DIR . 'templates/supplier/single-supplier.php';
 		if ( file_exists( $template ) ) {
 			include $template;

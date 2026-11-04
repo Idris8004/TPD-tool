@@ -26,10 +26,11 @@ if ( $is_standalone_template ) {
 	get_header();
 }
 
-$post_id = get_the_ID();
+$post_id = ! empty( $listing_id ) ? absint( $listing_id ) : ( get_the_ID() ?: ( ! empty( $GLOBALS['post']->ID ) ? $GLOBALS['post']->ID : 0 ) );
 
 // Core Brand Identity & Basic Fields
-$company_name = get_the_title( $post_id );
+$company_name = get_post_meta( $post_id, 'tpd_company_name', true ) ?: get_the_title( $post_id );
+$company_name = $company_name ?: __( 'Supplier Partner Showcase', 'tpd-tool' );
 $tagline      = get_post_meta( $post_id, 'tpd_tagline', true ) ?: '';
 $phone        = get_post_meta( $post_id, 'tpd_primary_rep_phone', true ) ?: '';
 $booking_url  = get_post_meta( $post_id, 'tpd_booking_portal_url', true ) ?: '';
@@ -64,15 +65,17 @@ $videos       = get_post_meta( $post_id, '_tpd_supplier_videos', true );
 $videos       = is_array( $videos ) ? array_filter( $videos ) : array();
 
 // Helper to convert YouTube / Vimeo URLs to embeds
-function tpd_get_video_embed_url( $url ) {
-	if ( empty( $url ) ) return '';
-	if ( preg_match( '/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i', $url, $matches ) ) {
-		return 'https://www.youtube.com/embed/' . $matches[1] . '?rel=0&modestbranding=1';
+if ( ! function_exists( 'tpd_get_video_embed_url' ) ) {
+	function tpd_get_video_embed_url( $url ) {
+		if ( empty( $url ) ) return '';
+		if ( preg_match( '/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i', $url, $matches ) ) {
+			return 'https://www.youtube.com/embed/' . $matches[1] . '?rel=0&modestbranding=1';
+		}
+		if ( preg_match( '/vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/([^\/]*)\/videos\/|album\/(\d+)\/video\/|video\/|)(\d+)/i', $url, $matches ) ) {
+			return 'https://player.vimeo.com/video/' . $matches[3];
+		}
+		return $url;
 	}
-	if ( preg_match( '/vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/([^\/]*)\/videos\/|album\/(\d+)\/video\/|video\/|)(\d+)/i', $url, $matches ) ) {
-		return 'https://player.vimeo.com/video/' . $matches[3];
-	}
-	return $url;
 }
 $embed_main_video = tpd_get_video_embed_url( $video_url );
 
@@ -540,52 +543,60 @@ if ( class_exists( 'TPD_Tool_Analytics' ) ) {
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-	// Frontend Tab Switcher for Enhanced Listing Profile
-	var tabs = document.querySelectorAll('.tpd-pub-tab');
-	var panels = document.querySelectorAll('.tpd-pub-panel');
+(function() {
+	function initTpdShowcase() {
+		// Frontend Tab Switcher for Enhanced Listing Profile
+		var tabs = document.querySelectorAll('.tpd-pub-tab');
+		var panels = document.querySelectorAll('.tpd-pub-panel');
 
-	tabs.forEach(function(tab) {
-		tab.addEventListener('click', function(e) {
-			e.preventDefault();
-			var target = this.getAttribute('data-tab');
-			tabs.forEach(function(t) {
-				t.classList.remove('active');
-				t.style.borderBottom = 'none';
-				t.style.color = '#64748b';
-				t.style.fontWeight = '600';
-			});
-			this.classList.add('active');
-			this.style.borderBottom = '3px solid #00798c';
-			this.style.color = '#0f172a';
-			this.style.fontWeight = '700';
+		tabs.forEach(function(tab) {
+			tab.onclick = function(e) {
+				e.preventDefault();
+				var target = this.getAttribute('data-tab');
+				tabs.forEach(function(t) {
+					t.classList.remove('active');
+					t.style.borderBottom = 'none';
+					t.style.color = '#64748b';
+					t.style.fontWeight = '600';
+				});
+				this.classList.add('active');
+				this.style.borderBottom = '3px solid #00798c';
+				this.style.color = '#0f172a';
+				this.style.fontWeight = '700';
 
-			panels.forEach(function(p) {
-				p.style.display = 'none';
-			});
-			var activePanel = document.getElementById(target);
-			if (activePanel) {
-				activePanel.style.display = 'block';
-			}
+				panels.forEach(function(p) {
+					p.style.display = 'none';
+				});
+				var activePanel = document.getElementById(target);
+				if (activePanel) {
+					activePanel.style.display = 'block';
+				}
+			};
 		});
-	});
 
-	// FAQ Accordion Toggle
-	var faqTriggers = document.querySelectorAll('.tpd-faq-trigger');
-	faqTriggers.forEach(function(btn) {
-		btn.addEventListener('click', function() {
-			var content = this.nextElementSibling;
-			var icon = this.querySelector('i');
-			if (content.style.display === 'block') {
-				content.style.display = 'none';
-				if (icon) icon.style.transform = 'rotate(0deg)';
-			} else {
-				content.style.display = 'block';
-				if (icon) icon.style.transform = 'rotate(180deg)';
-			}
+		// FAQ Accordion Toggle
+		var faqTriggers = document.querySelectorAll('.tpd-faq-trigger');
+		faqTriggers.forEach(function(btn) {
+			btn.onclick = function() {
+				var content = this.nextElementSibling;
+				var icon = this.querySelector('i');
+				if (content && content.style.display === 'block') {
+					content.style.display = 'none';
+					if (icon) icon.style.transform = 'rotate(0deg)';
+				} else if (content) {
+					content.style.display = 'block';
+					if (icon) icon.style.transform = 'rotate(180deg)';
+				}
+			};
 		});
-	});
-});
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', initTpdShowcase);
+	} else {
+		initTpdShowcase();
+	}
+})();
 </script>
 
 <?php
