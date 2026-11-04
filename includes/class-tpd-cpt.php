@@ -108,6 +108,10 @@ class TPD_Tool_CPT {
 				'tpd_country_of_residence' => array( 'label' => 'Supplier Country', 'type' => 'text', 'meta_key' => 'tpd_country_of_residence' ),
 				'tpd_booking_portal_url'   => array( 'label' => 'Advisor Booking Portal URL', 'type' => 'url', 'meta_key' => 'tpd_booking_portal_url' ),
 				'tpd_primary_rep_phone'    => array( 'label' => 'Trade Desk / Rep Phone Number', 'type' => 'text', 'meta_key' => 'tpd_primary_rep_phone' ),
+				'tpd_additional_phone_1'   => array( 'label' => 'Additional Phone Number 1', 'type' => 'text', 'meta_key' => 'tpd_additional_phone_1' ),
+				'tpd_additional_phone_2'   => array( 'label' => 'Additional Phone Number 2', 'type' => 'text', 'meta_key' => 'tpd_additional_phone_2' ),
+				'tpd_education_training_url'=> array( 'label' => 'Education & Training Website', 'type' => 'url', 'meta_key' => 'tpd_education_training_url' ),
+				'tpd_additional_website'   => array( 'label' => 'Additional Website', 'type' => 'url', 'meta_key' => 'tpd_additional_website' ),
 				'tpd_position_title'       => array( 'label' => 'Primary Rep Position / Title', 'type' => 'text', 'meta_key' => 'tpd_position_title' ),
 				'rep_full_name'            => array( 'label' => 'Primary Rep Full Name', 'type' => 'text', 'meta_key' => 'display_name' ),
 				'rep_email'                => array( 'label' => 'Primary Rep Email Address', 'type' => 'email', 'meta_key' => 'user_email' ),
@@ -116,14 +120,25 @@ class TPD_Tool_CPT {
 				'tpd_agent_rewards'        => array( 'label' => 'Agent Rewards Program (Yes/No)', 'type' => 'text', 'meta_key' => 'tpd_agent_rewards' ),
 				'tpd_member_ustoa'         => array( 'label' => 'Member of USTOA (Yes/No)', 'type' => 'text', 'meta_key' => 'tpd_member_ustoa' ),
 				'tpd_member_asta'          => array( 'label' => 'Member of ASTA (Yes/No)', 'type' => 'text', 'meta_key' => 'tpd_member_asta' ),
+				'tpd_member_clia'          => array( 'label' => 'Member of CLIA (Yes/No)', 'type' => 'text', 'meta_key' => 'tpd_member_clia' ),
+				'tpd_associations'         => array( 'label' => 'Consortia & Affiliations', 'type' => 'text', 'meta_key' => 'tpd_associations' ),
 				'tpd_featured_supplier'    => array( 'label' => 'Featured Spotlight Status (yes/no)', 'type' => 'text', 'meta_key' => 'tpd_featured_supplier' ),
 				'tpd_promo_title'          => array( 'label' => 'Advisor Incentive / Promo Headline', 'type' => 'text', 'meta_key' => 'tpd_promo_title' ),
 				'tpd_promo_desc'           => array( 'label' => 'Advisor Incentive / Promo Details', 'type' => 'textarea', 'meta_key' => 'tpd_promo_desc' ),
 
-				// Media
+				// Media & Social Links
 				'tpd_logo_url'             => array( 'label' => 'Supplier Brand Logo Image', 'type' => 'image', 'meta_key' => 'tpd_logo_url' ),
 				'tpd_banner_url'           => array( 'label' => 'Supplier Showcase Hero Banner', 'type' => 'image', 'meta_key' => 'tpd_banner_url' ),
 				'tpd_main_video_url'       => array( 'label' => 'Main Showcase Video URL', 'type' => 'url', 'meta_key' => 'tpd_main_video_url' ),
+				'tpd_social_facebook'      => array( 'label' => 'Facebook URL', 'type' => 'url', 'meta_key' => 'tpd_social_facebook' ),
+				'tpd_social_twitter'       => array( 'label' => 'Twitter / X URL', 'type' => 'url', 'meta_key' => 'tpd_social_twitter' ),
+				'tpd_social_youtube'       => array( 'label' => 'YouTube URL', 'type' => 'url', 'meta_key' => 'tpd_social_youtube' ),
+				'tpd_social_instagram'     => array( 'label' => 'Instagram URL', 'type' => 'url', 'meta_key' => 'tpd_social_instagram' ),
+				'tpd_social_tiktok'        => array( 'label' => 'TikTok URL', 'type' => 'url', 'meta_key' => 'tpd_social_tiktok' ),
+				'tpd_social_linkedin'      => array( 'label' => 'LinkedIn URL', 'type' => 'url', 'meta_key' => 'tpd_social_linkedin' ),
+				'tax_destinations'         => array( 'label' => 'Destinations (Taxonomy List)', 'type' => 'text', 'meta_key' => 'tax:travel_destination' ),
+				'tax_travel_styles'        => array( 'label' => 'Travel Styles (Taxonomy List)', 'type' => 'text', 'meta_key' => 'tax:travel_style' ),
+				'tax_supplier_types'       => array( 'label' => 'Supplier Types (Taxonomy List)', 'type' => 'text', 'meta_key' => 'tax:supplier_type' ),
 			),
 
 			'event' => array(
@@ -418,6 +433,25 @@ class TPD_Tool_CPT {
 				'show_admin_column' => true,
 				'show_in_rest'      => true,
 				'rewrite'           => array( 'slug' => 'country', 'with_front' => false ),
+			)
+		);
+
+		// 5. Supplier Types / Categories
+		register_taxonomy(
+			'supplier_type',
+			array( 'supplier_listing' ),
+			array(
+				'labels'            => array(
+					'name'          => __( 'Supplier Types', 'tpd-tool' ),
+					'singular_name' => __( 'Supplier Type', 'tpd-tool' ),
+					'menu_name'     => __( 'Supplier Types', 'tpd-tool' ),
+				),
+				'hierarchical'      => true,
+				'public'            => true,
+				'show_ui'           => true,
+				'show_admin_column' => true,
+				'show_in_rest'      => true,
+				'rewrite'           => array( 'slug' => 'supplier-type', 'with_front' => false ),
 			)
 		);
 	}

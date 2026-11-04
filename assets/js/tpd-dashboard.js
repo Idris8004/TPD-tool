@@ -889,16 +889,97 @@
 		function syncConferences() {
 			var arr = [];
 			$('#tpd-conferences-container .tpd-conf-row').each(function() {
-				var name = $(this).find('.conf-name').val() || '';
-				var date = $(this).find('.conf-date').val() || '';
-				var loc  = $(this).find('.conf-location').val() || '';
-				var url  = $(this).find('.conf-url').val() || '';
+				var name  = $(this).find('.conf-name').val() || '';
+				var sDate = $(this).find('.conf-start-date').val() || '';
+				var eDate = $(this).find('.conf-end-date').val() || '';
+				var loc   = $(this).find('.conf-location').val() || '';
+				var file  = $(this).find('.conf-file-url').val() || '';
+				var url   = $(this).find('.conf-url').val() || '';
+				var legacyDate = $(this).find('.conf-date').val() || '';
+
+				var displayDate = legacyDate;
+				if (sDate && eDate) {
+					displayDate = sDate + ' to ' + eDate;
+				} else if (sDate) {
+					displayDate = sDate;
+				}
+
 				if ($.trim(name)) {
-					arr.push({ name: $.trim(name), date: $.trim(date), location: $.trim(loc), url: $.trim(url) });
+					arr.push({
+						name: $.trim(name),
+						title: $.trim(name),
+						start_date: $.trim(sDate),
+						end_date: $.trim(eDate),
+						date: $.trim(displayDate),
+						location: $.trim(loc),
+						file_url: $.trim(file),
+						url: $.trim(url)
+					});
 				}
 			});
 			$('#tpd-conferences-json').val(JSON.stringify(arr));
 		}
+
+		// Conference Single File / Flyer Upload Handler
+		var $activeConfFileInput = null;
+		$(document).on('click', '.tpd-btn-upload-conf-file', function(e) {
+			e.preventDefault();
+			$activeConfFileInput = $(this).siblings('.conf-file-url');
+			$('#tpd-file-conf-single-upload').click();
+		});
+
+		$(document).on('change', '#tpd-file-conf-single-upload', function() {
+			var file = this.files[0];
+			if (!file || !$activeConfFileInput) return;
+			uploadMediaFile(file, function(url) {
+				$activeConfFileInput.val(url);
+				syncConferences();
+				showToast('<i class="fa-solid fa-file-arrow-up"></i> Conference flyer / agenda uploaded successfully!');
+			});
+			$(this).val('');
+		});
+
+		// Destination Tag Pills Handler
+		function addDestinationPill(destName) {
+			destName = $.trim(destName).replace(/,+$/, '');
+			if (!destName) return;
+			var exists = false;
+			$('#tpd-destinations-pill-container .tpd-dest-pill').each(function() {
+				var val = $(this).find('input[name="destinations[]"]').val();
+				if (val && val.toLowerCase() === destName.toLowerCase()) {
+					exists = true;
+				}
+			});
+			if (!exists) {
+				var pillHtml = '<span class="tpd-dest-pill" style="display:inline-flex; align-items:center; gap:6px; background:#00798c; color:#ffffff; font-size:12px; font-weight:700; padding:4px 10px; border-radius:6px;">' +
+					'<span>' + destName + '</span>' +
+					'<button type="button" class="tpd-remove-dest-pill" data-dest="' + destName + '" style="background:none; border:none; color:#ffffff; font-size:11px; cursor:pointer; padding:0; line-height:1;" title="Remove">&times;</button>' +
+					'<input type="hidden" name="destinations[]" value="' + destName + '">' +
+				'</span>';
+				$('#tpd-add-dest-input').before(pillHtml);
+			}
+		}
+
+		$(document).on('keydown', '#tpd-add-dest-input', function(e) {
+			if (e.which === 13 || e.which === 188) { // Enter or comma
+				e.preventDefault();
+				addDestinationPill($(this).val());
+				$(this).val('');
+			}
+		});
+
+		$(document).on('blur', '#tpd-add-dest-input', function() {
+			var val = $(this).val();
+			if ($.trim(val)) {
+				addDestinationPill(val);
+				$(this).val('');
+			}
+		});
+
+		$(document).on('click', '.tpd-remove-dest-pill', function(e) {
+			e.preventDefault();
+			$(this).closest('.tpd-dest-pill').remove();
+		});
 
 		function syncResources() {
 			var arr = [];
@@ -959,12 +1040,29 @@
 		// Repeater Add / Remove Events
 		$(document).on('click', '#tpd-btn-add-conference', function(e) {
 			e.preventDefault();
-			var rowHtml = '<div class="tpd-repeater-row tpd-conf-row" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; display:grid; grid-template-columns: 2fr 1.5fr 2fr 1fr auto; gap:10px; align-items:center;">' +
-				'<input type="text" class="tpd-input tpd-input-sm conf-name" placeholder="Conference / Event Name">' +
-				'<input type="text" class="tpd-input tpd-input-sm conf-date" placeholder="Date (e.g. Oct 14-17, 2026)">' +
-				'<input type="text" class="tpd-input tpd-input-sm conf-location" placeholder="Location / Booth #">' +
-				'<input type="url" class="tpd-input tpd-input-sm conf-url" placeholder="Info Link https://">' +
-				'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-remove-repeater-row" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;" title="Remove conference"><i class="fa-solid fa-trash-can"></i></button>' +
+			var rowHtml = '<div class="tpd-repeater-row tpd-conf-row" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px; display:flex; flex-direction:column; gap:10px;">' +
+				'<div style="display:grid; grid-template-columns: 2fr 1fr 1fr auto; gap:10px; align-items:center;">' +
+					'<input type="text" class="tpd-input tpd-input-sm conf-name" placeholder="Conference / Event Title *">' +
+					'<div style="display:flex; flex-direction:column;">' +
+						'<span style="font-size:10.5px; color:#64748b; font-weight:700; margin-bottom:2px;">Start Date</span>' +
+						'<input type="date" class="tpd-input tpd-input-sm conf-start-date" title="Start Date">' +
+					'</div>' +
+					'<div style="display:flex; flex-direction:column;">' +
+						'<span style="font-size:10.5px; color:#64748b; font-weight:700; margin-bottom:2px;">End Date</span>' +
+						'<input type="date" class="tpd-input tpd-input-sm conf-end-date" title="End Date">' +
+					'</div>' +
+					'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-remove-repeater-row" style="background:#fee2e2; color:#dc2626; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;" title="Remove conference"><i class="fa-solid fa-trash-can"></i></button>' +
+				'</div>' +
+				'<div style="display:grid; grid-template-columns: 1.5fr 1.5fr 1.5fr; gap:10px; align-items:center;">' +
+					'<input type="text" class="tpd-input tpd-input-sm conf-location" placeholder="Location / Booth # (e.g. Las Vegas, Booth 402)">' +
+					'<div style="display:flex; gap:6px; align-items:center;">' +
+						'<input type="url" class="tpd-input tpd-input-sm conf-file-url" placeholder="Event Flyer / Agenda File URL">' +
+						'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-btn-upload-conf-file" title="Upload Flyer or Schedule PDF">' +
+							'<i class="fa-solid fa-file-arrow-up"></i>' +
+						'</button>' +
+					'</div>' +
+					'<input type="url" class="tpd-input tpd-input-sm conf-url" placeholder="Info Link https://">' +
+				'</div>' +
 			'</div>';
 			$('#tpd-conferences-container').append(rowHtml);
 			syncConferences();
@@ -1114,6 +1212,21 @@
 				$form.find('input[name="listing_id"]').val('0');
 				$form.find('input[name="logo_url"]').val('');
 				$form.find('input[name="banner_url"]').val('');
+				$form.find('input[name="education_training_url"]').val('');
+				$form.find('input[name="additional_website"]').val('');
+				$form.find('input[name="additional_phone_1"]').val('');
+				$form.find('input[name="additional_phone_2"]').val('');
+				$form.find('input[name="social_facebook"]').val('');
+				$form.find('input[name="social_twitter"]').val('');
+				$form.find('input[name="social_youtube"]').val('');
+				$form.find('input[name="social_instagram"]').val('');
+				$form.find('input[name="social_tiktok"]').val('');
+				$form.find('input[name="social_linkedin"]').val('');
+				$form.find('#tpd-supp-type-select').val('');
+				$form.find('#tpd-supp-style-select').val('');
+				$form.find('input[name="rewards"][value="No"]').prop('checked', true);
+				$form.find('input[name="ustoa"][value="No"]').prop('checked', true);
+				$('#tpd-destinations-pill-container .tpd-dest-pill').remove();
 				$form.find('input[name="gallery_images_json"]').val('[]');
 				$form.find('input[name="conferences_json"]').val('[]');
 				$form.find('input[name="resources_json"]').val('[]');
@@ -1180,10 +1293,42 @@
 						$f.find('input[name="tagline"]').val(d.tagline);
 						$f.find('input[name="phone"]').val(d.phone);
 						$f.find('input[name="booking_url"]').val(d.booking_url);
+						$f.find('input[name="education_training_url"]').val(d.education_training_url || '');
+						$f.find('input[name="additional_website"]').val(d.additional_website || '');
+						$f.find('input[name="additional_phone_1"]').val(d.additional_phone_1 || '');
+						$f.find('input[name="additional_phone_2"]').val(d.additional_phone_2 || '');
 						$f.find('input[name="headquarters"]').val(d.headquarters);
 						$f.find('textarea[name="description"]').val(d.description);
 						$f.find('input[name="logo_url"]').val(d.logo_url);
 						$f.find('input[name="banner_url"]').val(d.banner_url);
+
+						// Radios: Rewards & USTOA
+						$f.find('input[name="rewards"][value="' + (d.rewards || 'No') + '"]').prop('checked', true);
+						$f.find('input[name="ustoa"][value="' + (d.ustoa || 'No') + '"]').prop('checked', true);
+
+						// Selects: Supplier Type & Travel Style
+						if (d.supplier_type) {
+							$f.find('#tpd-supp-type-select').val(d.supplier_type);
+						}
+						if (d.travel_styles && d.travel_styles.length) {
+							$f.find('#tpd-supp-style-select').val(d.travel_styles[0]);
+						}
+
+						// Social Media Links
+						$f.find('input[name="social_facebook"]').val(d.social_facebook || '');
+						$f.find('input[name="social_twitter"]').val(d.social_twitter || '');
+						$f.find('input[name="social_youtube"]').val(d.social_youtube || '');
+						$f.find('input[name="social_instagram"]').val(d.social_instagram || '');
+						$f.find('input[name="social_tiktok"]').val(d.social_tiktok || '');
+						$f.find('input[name="social_linkedin"]').val(d.social_linkedin || '');
+
+						// Rebuild Destination Pills
+						$('#tpd-destinations-pill-container .tpd-dest-pill').remove();
+						if (d.destinations && d.destinations.length) {
+							$.each(d.destinations, function(i, dst) {
+								addDestinationPill(dst);
+							});
+						}
 
 						// Tab 2: Associations & Conferences
 						$f.find('select[name="ustoa"]').val(d.ustoa || 'No');
@@ -1216,12 +1361,30 @@
 						$confContainer.empty();
 						if (d.conferences && d.conferences.length) {
 							$.each(d.conferences, function(i, c) {
-								var rowHtml = '<div class="tpd-repeater-row tpd-conf-row" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; display:grid; grid-template-columns: 2fr 1.5fr 2fr 1fr auto; gap:10px; align-items:center;">' +
-									'<input type="text" class="tpd-input tpd-input-sm conf-name" placeholder="Conference / Event Name" value="' + (c.name || '') + '">' +
-									'<input type="text" class="tpd-input tpd-input-sm conf-date" placeholder="Date" value="' + (c.date || '') + '">' +
-									'<input type="text" class="tpd-input tpd-input-sm conf-location" placeholder="Location / Booth #" value="' + (c.location || '') + '">' +
-									'<input type="url" class="tpd-input tpd-input-sm conf-url" placeholder="Info Link https://" value="' + (c.url || '') + '">' +
-									'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-remove-repeater-row" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;" title="Remove conference"><i class="fa-solid fa-trash-can"></i></button>' +
+								var cTitle = c.title || c.name || '';
+								var rowHtml = '<div class="tpd-repeater-row tpd-conf-row" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px; display:flex; flex-direction:column; gap:10px;">' +
+									'<div style="display:grid; grid-template-columns: 2fr 1fr 1fr auto; gap:10px; align-items:center;">' +
+										'<input type="text" class="tpd-input tpd-input-sm conf-name" placeholder="Conference / Event Title *" value="' + cTitle + '">' +
+										'<div style="display:flex; flex-direction:column;">' +
+											'<span style="font-size:10.5px; color:#64748b; font-weight:700; margin-bottom:2px;">Start Date</span>' +
+											'<input type="date" class="tpd-input tpd-input-sm conf-start-date" value="' + (c.start_date || '') + '" title="Start Date">' +
+										'</div>' +
+										'<div style="display:flex; flex-direction:column;">' +
+											'<span style="font-size:10.5px; color:#64748b; font-weight:700; margin-bottom:2px;">End Date</span>' +
+											'<input type="date" class="tpd-input tpd-input-sm conf-end-date" value="' + (c.end_date || '') + '" title="End Date">' +
+										'</div>' +
+										'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-remove-repeater-row" style="background:#fee2e2; color:#dc2626; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;" title="Remove conference"><i class="fa-solid fa-trash-can"></i></button>' +
+									'</div>' +
+									'<div style="display:grid; grid-template-columns: 1.5fr 1.5fr 1.5fr; gap:10px; align-items:center;">' +
+										'<input type="text" class="tpd-input tpd-input-sm conf-location" placeholder="Location / Booth #" value="' + (c.location || '') + '">' +
+										'<div style="display:flex; gap:6px; align-items:center;">' +
+											'<input type="url" class="tpd-input tpd-input-sm conf-file-url" placeholder="Event Flyer / Agenda File URL" value="' + (c.file_url || '') + '">' +
+											'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-btn-upload-conf-file" title="Upload Flyer or Schedule PDF">' +
+												'<i class="fa-solid fa-file-arrow-up"></i>' +
+											'</button>' +
+										'</div>' +
+										'<input type="url" class="tpd-input tpd-input-sm conf-url" placeholder="Info Link https://" value="' + (c.url || '') + '">' +
+									'</div>' +
 								'</div>';
 								$confContainer.append(rowHtml);
 							});

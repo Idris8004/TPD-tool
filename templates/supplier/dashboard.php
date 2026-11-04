@@ -55,23 +55,52 @@ $headshot_url   = get_user_meta( $current_user_id, 'tpd_headshot_url', true ) ?:
 $avatar_src     = $headshot_url ?: 'https://ui-avatars.com/api/?name=' . rawurlencode( $full_name ) . '&background=0284c7&color=fff&size=128';
 
 // Listing Showcase fields
-$tagline        = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_tagline', true ) : '';
-$booking_url    = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_booking_portal_url', true ) : '';
-$headquarters   = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_headquarters', true ) : '' ) ?: $country;
-$rewards        = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_agent_rewards', true ) : '' ) ?: 'Yes';
-$rewards_desc   = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_agent_rewards_desc', true ) : '';
-$ustoa          = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_member_ustoa', true ) : '' ) ?: 'Yes';
-$asta           = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_member_asta', true ) : '' ) ?: 'Yes';
-$clia           = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_member_clia', true ) : '' ) ?: 'No';
-$associations   = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_associations', true ) : '';
-$logo_url       = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_logo_url', true ) : '' ) ?: get_user_meta( $current_user_id, 'tpd_logo_url', true );
-$banner_url     = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_banner_url', true ) : '' ) ?: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&auto=format&fit=crop&q=80';
-$gallery_images = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Profile_Editor::get_user_gallery( $current_user_id, $supplier_post_id ) : array();
-$video_url      = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_main_video_url', true ) : '';
-$promo_title    = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_promo_title', true ) : '';
-$promo_desc     = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_promo_desc', true ) : '';
-$description    = $supplier_post_id ? get_post_field( 'post_content', $supplier_post_id ) : '';
-$public_url     = $supplier_post_id ? get_permalink( $supplier_post_id ) : home_url( '/suppliers/' );
+$tagline                = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_tagline', true ) : '';
+$booking_url            = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_booking_portal_url', true ) : '';
+$education_training_url = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_education_training_url', true ) : '';
+$additional_website     = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_additional_website', true ) : '';
+$additional_phone_1     = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_additional_phone_1', true ) : '';
+$additional_phone_2     = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_additional_phone_2', true ) : '';
+$headquarters           = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_headquarters', true ) : '' ) ?: $country;
+$rewards                = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_agent_rewards', true ) : '' ) ?: 'Yes';
+$rewards_desc           = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_agent_rewards_desc', true ) : '';
+$ustoa                  = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_member_ustoa', true ) : '' ) ?: 'Yes';
+$asta                   = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_member_asta', true ) : '' ) ?: 'Yes';
+$clia                   = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_member_clia', true ) : '' ) ?: 'No';
+$associations           = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_associations', true ) : '';
+$logo_url               = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_logo_url', true ) : '' ) ?: get_user_meta( $current_user_id, 'tpd_logo_url', true );
+$banner_url             = ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_banner_url', true ) : '' ) ?: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&auto=format&fit=crop&q=80';
+$gallery_images         = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Profile_Editor::get_user_gallery( $current_user_id, $supplier_post_id ) : array();
+$video_url              = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_main_video_url', true ) : '';
+$promo_title            = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_promo_title', true ) : '';
+$promo_desc             = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_promo_desc', true ) : '';
+$description            = $supplier_post_id ? get_post_field( 'post_content', $supplier_post_id ) : '';
+$public_url             = $supplier_post_id ? get_permalink( $supplier_post_id ) : home_url( '/suppliers/' );
+
+// Social Media Links
+$social_facebook  = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_social_facebook', true ) : '';
+$social_twitter   = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_social_twitter', true ) : '';
+$social_youtube   = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_social_youtube', true ) : '';
+$social_instagram = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_social_instagram', true ) : '';
+$social_tiktok    = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_social_tiktok', true ) : '';
+$social_linkedin  = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_social_linkedin', true ) : '';
+
+// Taxonomies (Destinations, Styles, Supplier Types)
+$selected_destinations = $supplier_post_id ? wp_get_object_terms( $supplier_post_id, 'travel_destination', array( 'fields' => 'names' ) ) : array();
+if ( is_wp_error( $selected_destinations ) || ! is_array( $selected_destinations ) ) {
+	$selected_destinations = array();
+}
+$selected_styles = $supplier_post_id ? wp_get_object_terms( $supplier_post_id, 'travel_style', array( 'fields' => 'names' ) ) : array();
+$selected_style  = ! empty( $selected_styles ) && ! is_wp_error( $selected_styles ) ? $selected_styles[0] : '';
+
+$selected_stypes = $supplier_post_id ? wp_get_object_terms( $supplier_post_id, 'supplier_type', array( 'fields' => 'names' ) ) : array();
+$selected_stype  = ! empty( $selected_stypes ) && ! is_wp_error( $selected_stypes ) ? $selected_stypes[0] : ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_supplier_type', true ) : '' );
+
+// Standard Styles Options
+$available_styles = array( 'Adventure', 'All-Inclusive', 'Beach & Island', 'Custom Itineraries', 'Expedition', 'Family & Multigenerational', 'Guided Tours', 'Luxury', 'Ocean Cruise', 'Rail & Train', 'River Cruise', 'Romantic & Honeymoon', 'Safari & Wildlife', 'Ski & Winter', 'Wellness & Spa' );
+
+// Standard Supplier Types Options
+$available_supplier_types = array( 'Tour Operator', 'Cruise Line', 'River Cruise', 'Transportation & Ferries', 'Hotel & Resort', 'Rail Operator', 'Tourism Board / DMO', 'Villa & Private Estate', 'Airline Partner', 'Destination Management Company (DMC)' );
 
 // 6-Tab Membership Data
 $is_supplier_enhanced = class_exists( 'TPD_Tool_Tiers' ) ? TPD_Tool_Tiers::is_enhanced_supplier( $current_user_id ) : false;
@@ -683,29 +712,178 @@ $all_directory_listings = get_posts( array(
 
 							<!-- TAB 1: ABOUT (Basic & Free: Accessible to all) -->
 							<div id="set-about" class="tpd-editor-panel active">
-								<div class="tpd-form-grid-2">
+								<!-- Title -->
+								<div class="tpd-form-group">
+									<label><?php esc_html_e( 'Title *', 'tpd-tool' ); ?></label>
+									<input type="text" name="company_name" required value="<?php echo esc_attr( $company_name ); ?>" class="tpd-input" placeholder="<?php esc_attr_e( 'e.g. Direct Ferries', 'tpd-tool' ); ?>">
+								</div>
+
+								<!-- Description -->
+								<div class="tpd-form-group mt-3">
+									<label><?php esc_html_e( 'Description *', 'tpd-tool' ); ?></label>
+									<textarea name="description" rows="5" class="tpd-textarea" placeholder="<?php esc_attr_e( 'Founded in 1999, describe your company history, fleet, properties, destinations, advisor commission structure, and key value propositions...', 'tpd-tool' ); ?>"><?php echo esc_textarea( $description ); ?></textarea>
+								</div>
+
+								<!-- Primary Phone & Advisor Portal Link -->
+								<div class="tpd-form-grid-2 mt-3">
 									<div class="tpd-form-group">
-										<label><?php esc_html_e( 'Supplier / Company Display Name *', 'tpd-tool' ); ?></label>
-										<input type="text" name="company_name" required value="<?php echo esc_attr( $company_name ); ?>" class="tpd-input">
+										<label><?php esc_html_e( 'Primary Phone Number', 'tpd-tool' ); ?></label>
+										<input type="tel" name="phone" value="<?php echo esc_attr( $rep_phone ); ?>" class="tpd-input" placeholder="<?php esc_attr_e( 'Enter Primary Phone Number', 'tpd-tool' ); ?>">
 									</div>
 									<div class="tpd-form-group">
-										<label><?php esc_html_e( 'Tagline / Value Proposition', 'tpd-tool' ); ?></label>
-										<input type="text" name="tagline" value="<?php echo esc_attr( $tagline ); ?>" placeholder="<?php esc_attr_e( 'e.g. Bespoke Luxury River & Ocean Voyages', 'tpd-tool' ); ?>" class="tpd-input">
+										<label><?php esc_html_e( 'Advisor Portal Link', 'tpd-tool' ); ?></label>
+										<input type="url" name="booking_url" value="<?php echo esc_attr( $booking_url ); ?>" class="tpd-input" placeholder="<?php esc_attr_e( 'Enter Advisor Portal Link', 'tpd-tool' ); ?>">
 									</div>
 								</div>
 
-								<div class="tpd-form-grid-3 mt-3">
+								<!-- Education & Training Website & Additional Website -->
+								<div class="tpd-form-grid-2 mt-3">
 									<div class="tpd-form-group">
-										<label><?php esc_html_e( 'Advisor Booking / Support Phone *', 'tpd-tool' ); ?></label>
-										<input type="tel" name="phone" value="<?php echo esc_attr( $rep_phone ); ?>" class="tpd-input">
+										<label><?php esc_html_e( 'Education & Training Website', 'tpd-tool' ); ?></label>
+										<input type="url" name="education_training_url" value="<?php echo esc_attr( $education_training_url ); ?>" class="tpd-input" placeholder="<?php esc_attr_e( 'Enter Education & Training Website', 'tpd-tool' ); ?>">
 									</div>
 									<div class="tpd-form-group">
-										<label><?php esc_html_e( 'Advisor Booking Portal URL', 'tpd-tool' ); ?></label>
-										<input type="url" name="booking_url" value="<?php echo esc_attr( $booking_url ); ?>" placeholder="https://" class="tpd-input">
+										<label><?php esc_html_e( 'Additional Website', 'tpd-tool' ); ?></label>
+										<input type="url" name="additional_website" value="<?php echo esc_attr( $additional_website ); ?>" class="tpd-input" placeholder="<?php esc_attr_e( 'Enter Additional Website', 'tpd-tool' ); ?>">
+									</div>
+								</div>
+
+								<!-- Additional Phone 1 & Additional Phone 2 -->
+								<div class="tpd-form-grid-2 mt-3">
+									<div class="tpd-form-group">
+										<label><?php esc_html_e( 'Additional Phone Number 1', 'tpd-tool' ); ?></label>
+										<input type="tel" name="additional_phone_1" value="<?php echo esc_attr( $additional_phone_1 ); ?>" class="tpd-input" placeholder="<?php esc_attr_e( 'Enter Additional Phone Number 1', 'tpd-tool' ); ?>">
+									</div>
+									<div class="tpd-form-group">
+										<label><?php esc_html_e( 'Additional Phone Number 2', 'tpd-tool' ); ?></label>
+										<input type="tel" name="additional_phone_2" value="<?php echo esc_attr( $additional_phone_2 ); ?>" class="tpd-input" placeholder="<?php esc_attr_e( 'Enter Additional Phone Number 2', 'tpd-tool' ); ?>">
+									</div>
+								</div>
+
+								<!-- Agent Rewards & Member of USTOA Radios -->
+								<div class="tpd-form-grid-2 mt-3">
+									<div class="tpd-form-group">
+										<label style="display:block; margin-bottom:8px; font-weight:700;"><?php esc_html_e( 'Agent Rewards?', 'tpd-tool' ); ?></label>
+										<div style="display:flex; gap:20px; align-items:center;">
+											<label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:13.5px; font-weight:600; color:#1e293b;">
+												<input type="radio" name="rewards" value="Yes" <?php checked( $rewards, 'Yes' ); ?>> <?php esc_html_e( 'Yes', 'tpd-tool' ); ?>
+											</label>
+											<label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:13.5px; font-weight:600; color:#1e293b;">
+												<input type="radio" name="rewards" value="No" <?php checked( $rewards !== 'Yes', true ); ?>> <?php esc_html_e( 'No', 'tpd-tool' ); ?>
+											</label>
+										</div>
+									</div>
+									<div class="tpd-form-group">
+										<label style="display:block; margin-bottom:8px; font-weight:700;"><?php esc_html_e( 'Member of USTOA?', 'tpd-tool' ); ?></label>
+										<div style="display:flex; gap:20px; align-items:center;">
+											<label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:13.5px; font-weight:600; color:#1e293b;">
+												<input type="radio" name="ustoa" value="Yes" <?php checked( $ustoa, 'Yes' ); ?>> <?php esc_html_e( 'Yes', 'tpd-tool' ); ?>
+											</label>
+											<label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:13.5px; font-weight:600; color:#1e293b;">
+												<input type="radio" name="ustoa" value="No" <?php checked( $ustoa !== 'Yes', true ); ?>> <?php esc_html_e( 'No', 'tpd-tool' ); ?>
+											</label>
+										</div>
+									</div>
+								</div>
+
+								<!-- Styles & My Travel Specialties Destinations -->
+								<div class="tpd-form-grid-2 mt-3">
+									<div class="tpd-form-group">
+										<label><?php esc_html_e( 'Styles', 'tpd-tool' ); ?></label>
+										<select name="travel_styles[]" class="tpd-select" id="tpd-supp-style-select">
+											<option value=""><?php esc_html_e( 'Select Style', 'tpd-tool' ); ?></option>
+											<?php foreach ( $available_styles as $st ) : ?>
+												<option value="<?php echo esc_attr( $st ); ?>" <?php selected( $selected_style, $st ); ?>><?php echo esc_html( $st ); ?></option>
+											<?php endforeach; ?>
+										</select>
+									</div>
+									<div class="tpd-form-group">
+										<label><?php esc_html_e( 'My Travel Specialties Destinations', 'tpd-tool' ); ?></label>
+										<div class="tpd-destinations-pill-container" id="tpd-destinations-pill-container" style="min-height:44px; padding:6px 10px; border:1px solid #cbd5e1; border-radius:8px; background:#ffffff; display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+											<?php if ( ! empty( $selected_destinations ) ) : ?>
+												<?php foreach ( $selected_destinations as $dest_name ) : ?>
+													<span class="tpd-dest-pill" style="display:inline-flex; align-items:center; gap:6px; background:#00798c; color:#ffffff; font-size:12px; font-weight:700; padding:4px 10px; border-radius:6px;">
+														<span><?php echo esc_html( $dest_name ); ?></span>
+														<button type="button" class="tpd-remove-dest-pill" data-dest="<?php echo esc_attr( $dest_name ); ?>" style="background:none; border:none; color:#ffffff; font-size:11px; cursor:pointer; padding:0; line-height:1;" title="Remove">&times;</button>
+														<input type="hidden" name="destinations[]" value="<?php echo esc_attr( $dest_name ); ?>">
+													</span>
+												<?php endforeach; ?>
+											<?php endif; ?>
+											<input type="text" id="tpd-add-dest-input" placeholder="<?php esc_attr_e( '+ Type country/region & press Enter...', 'tpd-tool' ); ?>" style="border:none; outline:none; font-size:12.5px; padding:4px 6px; flex:1; min-width:140px; color:#1e293b;">
+										</div>
+										<span style="font-size:11px; color:#64748b; margin-top:4px; display:block;"><?php esc_html_e( 'Type any country or destination and press Enter or comma to add as a tag pill.', 'tpd-tool' ); ?></span>
+									</div>
+								</div>
+
+								<!-- Suppliers Types -->
+								<div class="tpd-form-group mt-3">
+									<label><?php esc_html_e( 'Suppliers Types', 'tpd-tool' ); ?></label>
+									<select name="supplier_type" class="tpd-select" id="tpd-supp-type-select">
+										<option value=""><?php esc_html_e( 'Select Suppliers Types', 'tpd-tool' ); ?></option>
+										<?php foreach ( $available_supplier_types as $stype_item ) : ?>
+											<option value="<?php echo esc_attr( $stype_item ); ?>" <?php selected( $selected_stype, $stype_item ); ?>><?php echo esc_html( $stype_item ); ?></option>
+										<?php endforeach; ?>
+									</select>
+								</div>
+
+								<!-- Video Url -->
+								<div class="tpd-form-group mt-3">
+									<label><?php esc_html_e( 'Video Url', 'tpd-tool' ); ?></label>
+									<input type="url" name="video_url" value="<?php echo esc_attr( $video_url ); ?>" placeholder="https://www.youtube.com/watch?v=..." class="tpd-input">
+								</div>
+
+								<!-- Social Media Links (Enter Url) -->
+								<div class="tpd-social-links-section mt-4" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:18px;">
+									<div style="margin-bottom:14px;">
+										<h4 style="margin:0 0 2px; font-size:14.5px; font-weight:800; color:#0f172a;">
+											<?php esc_html_e( 'Social Media Links', 'tpd-tool' ); ?> <span style="color:#ef4444; font-size:12.5px; font-weight:600;">(<?php esc_html_e( 'Enter Url', 'tpd-tool' ); ?>)</span>
+										</h4>
+										<span style="font-size:12px; color:#64748b;"><?php esc_html_e( 'Add your verified brand social channels so travel advisors can follow your announcements and client marketing.', 'tpd-tool' ); ?></span>
+									</div>
+
+									<div class="tpd-form-grid-2">
+										<div class="tpd-form-group">
+											<label style="font-size:12.5px; color:#334155; font-weight:600;"><i class="fa-brands fa-facebook text-blue"></i> <?php esc_html_e( 'Facebook', 'tpd-tool' ); ?></label>
+											<input type="url" name="social_facebook" value="<?php echo esc_attr( $social_facebook ); ?>" placeholder="https://www.facebook.com/your-brand" class="tpd-input tpd-input-sm">
+										</div>
+										<div class="tpd-form-group">
+											<label style="font-size:12.5px; color:#334155; font-weight:600;"><i class="fa-brands fa-x-twitter"></i> <?php esc_html_e( 'Twitter', 'tpd-tool' ); ?></label>
+											<input type="url" name="social_twitter" value="<?php echo esc_attr( $social_twitter ); ?>" placeholder="https://twitter.com/your-handle" class="tpd-input tpd-input-sm">
+										</div>
+									</div>
+
+									<div class="tpd-form-grid-2 mt-3">
+										<div class="tpd-form-group">
+											<label style="font-size:12.5px; color:#334155; font-weight:600;"><i class="fa-brands fa-youtube text-red"></i> <?php esc_html_e( 'YouTube', 'tpd-tool' ); ?></label>
+											<input type="url" name="social_youtube" value="<?php echo esc_attr( $social_youtube ); ?>" placeholder="https://www.youtube.com/@your-channel" class="tpd-input tpd-input-sm">
+										</div>
+										<div class="tpd-form-group">
+											<label style="font-size:12.5px; color:#334155; font-weight:600;"><i class="fa-brands fa-instagram text-purple"></i> <?php esc_html_e( 'Instagram', 'tpd-tool' ); ?></label>
+											<input type="url" name="social_instagram" value="<?php echo esc_attr( $social_instagram ); ?>" placeholder="https://www.instagram.com/your-brand" class="tpd-input tpd-input-sm">
+										</div>
+									</div>
+
+									<div class="tpd-form-grid-2 mt-3">
+										<div class="tpd-form-group">
+											<label style="font-size:12.5px; color:#334155; font-weight:600;"><i class="fa-brands fa-tiktok"></i> <?php esc_html_e( 'TikTok', 'tpd-tool' ); ?></label>
+											<input type="url" name="social_tiktok" value="<?php echo esc_attr( $social_tiktok ); ?>" placeholder="https://tiktok.com/@your-profile" class="tpd-input tpd-input-sm">
+										</div>
+										<div class="tpd-form-group">
+											<label style="font-size:12.5px; color:#334155; font-weight:600;"><i class="fa-brands fa-linkedin text-blue"></i> <?php esc_html_e( 'LinkedIn', 'tpd-tool' ); ?></label>
+											<input type="url" name="social_linkedin" value="<?php echo esc_attr( $social_linkedin ); ?>" placeholder="https://linkedin.com/in/your-profile" class="tpd-input tpd-input-sm">
+										</div>
+									</div>
+								</div>
+
+								<!-- Tagline & Headquarters Details -->
+								<div class="tpd-form-grid-2 mt-3">
+									<div class="tpd-form-group">
+										<label><?php esc_html_e( 'Tagline / Value Proposition', 'tpd-tool' ); ?></label>
+										<input type="text" name="tagline" value="<?php echo esc_attr( $tagline ); ?>" placeholder="<?php esc_attr_e( 'e.g. Bespoke Luxury Voyages & Ferries', 'tpd-tool' ); ?>" class="tpd-input">
 									</div>
 									<div class="tpd-form-group">
 										<label><?php esc_html_e( 'Headquarters Location', 'tpd-tool' ); ?></label>
-										<input type="text" name="headquarters" value="<?php echo esc_attr( $headquarters ); ?>" class="tpd-input">
+										<input type="text" name="headquarters" value="<?php echo esc_attr( $headquarters ); ?>" placeholder="e.g. London, UK / Global" class="tpd-input">
 									</div>
 								</div>
 
@@ -754,12 +932,6 @@ $all_directory_listings = get_posts( array(
 											<i class="fa-solid fa-panorama"></i> <?php esc_html_e( 'Upload Banner Image', 'tpd-tool' ); ?>
 										</button>
 									</div>
-								</div>
-
-								<div class="tpd-form-group mt-3">
-									<label><?php esc_html_e( 'About Us & Company Overview for Travel Advisors', 'tpd-tool' ); ?></label>
-									<p style="margin:0 0 6px; font-size:12px; color:#64748b;"><?php esc_html_e( 'Describe your company history, fleet, properties, destinations, advisor commission structure, and key value propositions.', 'tpd-tool' ); ?></p>
-									<textarea name="description" rows="5" class="tpd-textarea" placeholder="<?php esc_attr_e( 'Provide your company overview and selling points...', 'tpd-tool' ); ?>"><?php echo esc_textarea( $description ); ?></textarea>
 								</div>
 
 								<!-- Dynamic ACF Field Groups & Admin Custom Fields Bridge -->
@@ -835,26 +1007,52 @@ $all_directory_listings = get_posts( array(
 										<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
 											<div>
 												<h4 style="margin:0 0 4px; font-size:15px; font-weight:800; color:#0f172a;"><i class="fa-solid fa-calendar-days text-purple"></i> <?php esc_html_e( 'Upcoming Conferences & Trade Events Attended', 'tpd-tool' ); ?></h4>
-												<p style="margin:0; font-size:12.5px; color:#64748b;"><?php esc_html_e( 'Let travel advisors know where they can meet your sales directors and BDMs in person.', 'tpd-tool' ); ?></p>
+												<p style="margin:0; font-size:12.5px; color:#64748b;"><?php esc_html_e( 'Add upcoming trade shows, conferences, start/end dates, event flyer files, and meeting locations.', 'tpd-tool' ); ?></p>
 											</div>
 											<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-primary" id="tpd-btn-add-conference">
 												<i class="fa-solid fa-plus"></i> <?php esc_html_e( 'Add Conference', 'tpd-tool' ); ?>
 											</button>
 										</div>
 
-										<div id="tpd-conferences-container" style="display:flex; flex-direction:column; gap:12px;">
+										<div id="tpd-conferences-container" style="display:flex; flex-direction:column; gap:14px;">
 											<?php if ( ! empty( $conferences ) ) : ?>
-												<?php foreach ( $conferences as $idx => $conf ) : ?>
-													<div class="tpd-repeater-row tpd-conf-row" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; display:grid; grid-template-columns: 2fr 1.5fr 2fr 1fr auto; gap:10px; align-items:center;">
-														<input type="text" class="tpd-input tpd-input-sm conf-name" placeholder="Conference / Event Name" value="<?php echo esc_attr( isset( $conf['name'] ) ? $conf['name'] : '' ); ?>">
-														<input type="text" class="tpd-input tpd-input-sm conf-date" placeholder="Date (e.g. Oct 14-17, 2026)" value="<?php echo esc_attr( isset( $conf['date'] ) ? $conf['date'] : '' ); ?>">
-														<input type="text" class="tpd-input tpd-input-sm conf-location" placeholder="Location / Booth #" value="<?php echo esc_attr( isset( $conf['location'] ) ? $conf['location'] : '' ); ?>">
-														<input type="url" class="tpd-input tpd-input-sm conf-url" placeholder="Info Link https://" value="<?php echo esc_attr( isset( $conf['url'] ) ? $conf['url'] : '' ); ?>">
-														<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-remove-repeater-row" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;" title="Remove conference"><i class="fa-solid fa-trash-can"></i></button>
+												<?php foreach ( $conferences as $idx => $conf ) :
+													$c_name       = isset( $conf['title'] ) && ! empty( $conf['title'] ) ? $conf['title'] : ( isset( $conf['name'] ) ? $conf['name'] : '' );
+													$c_start_date = isset( $conf['start_date'] ) ? $conf['start_date'] : '';
+													$c_end_date   = isset( $conf['end_date'] ) ? $conf['end_date'] : '';
+													$c_date       = isset( $conf['date'] ) ? $conf['date'] : '';
+													$c_loc        = isset( $conf['location'] ) ? $conf['location'] : '';
+													$c_file       = isset( $conf['file_url'] ) ? $conf['file_url'] : '';
+													$c_url        = isset( $conf['url'] ) ? $conf['url'] : '';
+												?>
+													<div class="tpd-repeater-row tpd-conf-row" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px; display:flex; flex-direction:column; gap:10px;">
+														<div style="display:grid; grid-template-columns: 2fr 1fr 1fr auto; gap:10px; align-items:center;">
+															<input type="text" class="tpd-input tpd-input-sm conf-name" placeholder="<?php esc_attr_e( 'Conference / Event Title *', 'tpd-tool' ); ?>" value="<?php echo esc_attr( $c_name ); ?>">
+															<div style="display:flex; flex-direction:column;">
+																<span style="font-size:10.5px; color:#64748b; font-weight:700; margin-bottom:2px;"><?php esc_html_e( 'Start Date', 'tpd-tool' ); ?></span>
+																<input type="date" class="tpd-input tpd-input-sm conf-start-date" value="<?php echo esc_attr( $c_start_date ); ?>" title="Start Date">
+															</div>
+															<div style="display:flex; flex-direction:column;">
+																<span style="font-size:10.5px; color:#64748b; font-weight:700; margin-bottom:2px;"><?php esc_html_e( 'End Date', 'tpd-tool' ); ?></span>
+																<input type="date" class="tpd-input tpd-input-sm conf-end-date" value="<?php echo esc_attr( $c_end_date ); ?>" title="End Date">
+															</div>
+															<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-danger tpd-remove-repeater-row" style="background:#fee2e2; color:#dc2626; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;" title="Remove conference"><i class="fa-solid fa-trash-can"></i></button>
+														</div>
+														<div style="display:grid; grid-template-columns: 1.5fr 1.5fr 1.5fr; gap:10px; align-items:center;">
+															<input type="text" class="tpd-input tpd-input-sm conf-location" placeholder="<?php esc_attr_e( 'Location / Booth # (e.g. Las Vegas, Booth 402)', 'tpd-tool' ); ?>" value="<?php echo esc_attr( $c_loc ); ?>">
+															<div style="display:flex; gap:6px; align-items:center;">
+																<input type="url" class="tpd-input tpd-input-sm conf-file-url" placeholder="<?php esc_attr_e( 'Event Flyer / Agenda File URL', 'tpd-tool' ); ?>" value="<?php echo esc_attr( $c_file ); ?>">
+																<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-btn-upload-conf-file" title="Upload Flyer or Schedule PDF">
+																	<i class="fa-solid fa-file-arrow-up"></i>
+																</button>
+															</div>
+															<input type="url" class="tpd-input tpd-input-sm conf-url" placeholder="<?php esc_attr_e( 'Info Link https://', 'tpd-tool' ); ?>" value="<?php echo esc_attr( $c_url ); ?>">
+														</div>
 													</div>
 												<?php endforeach; ?>
 											<?php endif; ?>
 										</div>
+										<input type="file" id="tpd-file-conf-single-upload" accept=".pdf,.doc,.docx,.jpg,.png" style="display:none;">
 										<input type="hidden" name="conferences_json" id="tpd-conferences-json" value="<?php echo esc_attr( wp_json_encode( $conferences ) ); ?>">
 									</div>
 								<?php endif; ?>

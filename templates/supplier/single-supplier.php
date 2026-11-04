@@ -29,16 +29,39 @@ if ( $is_standalone_template ) {
 $post_id = ! empty( $listing_id ) ? absint( $listing_id ) : ( get_the_ID() ?: ( ! empty( $GLOBALS['post']->ID ) ? $GLOBALS['post']->ID : 0 ) );
 
 // Core Brand Identity & Basic Fields
-$company_name = get_post_meta( $post_id, 'tpd_company_name', true ) ?: get_the_title( $post_id );
-$company_name = $company_name ?: __( 'Supplier Partner Showcase', 'tpd-tool' );
-$tagline      = get_post_meta( $post_id, 'tpd_tagline', true ) ?: '';
-$phone        = get_post_meta( $post_id, 'tpd_primary_rep_phone', true ) ?: '';
-$booking_url  = get_post_meta( $post_id, 'tpd_booking_portal_url', true ) ?: '';
-$headquarters = get_post_meta( $post_id, 'tpd_headquarters', true ) ?: 'Global';
-$country      = get_post_meta( $post_id, 'tpd_country_of_residence', true ) ?: '';
-$description  = get_post_field( 'post_content', $post_id );
-$logo_url     = get_post_meta( $post_id, 'tpd_logo_url', true ) ?: '';
-$banner_url   = get_post_meta( $post_id, 'tpd_banner_url', true ) ?: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&auto=format&fit=crop&q=80';
+$company_name           = get_post_meta( $post_id, 'tpd_company_name', true ) ?: get_the_title( $post_id );
+$company_name           = $company_name ?: __( 'Supplier Partner Showcase', 'tpd-tool' );
+$tagline                = get_post_meta( $post_id, 'tpd_tagline', true ) ?: '';
+$phone                  = get_post_meta( $post_id, 'tpd_primary_rep_phone', true ) ?: '';
+$additional_phone_1     = get_post_meta( $post_id, 'tpd_additional_phone_1', true ) ?: '';
+$additional_phone_2     = get_post_meta( $post_id, 'tpd_additional_phone_2', true ) ?: '';
+$booking_url            = get_post_meta( $post_id, 'tpd_booking_portal_url', true ) ?: '';
+$education_training_url = get_post_meta( $post_id, 'tpd_education_training_url', true ) ?: '';
+$additional_website     = get_post_meta( $post_id, 'tpd_additional_website', true ) ?: '';
+$headquarters           = get_post_meta( $post_id, 'tpd_headquarters', true ) ?: 'Global';
+$country                = get_post_meta( $post_id, 'tpd_country_of_residence', true ) ?: '';
+$description            = get_post_field( 'post_content', $post_id );
+$logo_url               = get_post_meta( $post_id, 'tpd_logo_url', true ) ?: '';
+$banner_url             = get_post_meta( $post_id, 'tpd_banner_url', true ) ?: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&auto=format&fit=crop&q=80';
+
+// Social Media Links
+$social_facebook  = get_post_meta( $post_id, 'tpd_social_facebook', true ) ?: '';
+$social_twitter   = get_post_meta( $post_id, 'tpd_social_twitter', true ) ?: '';
+$social_youtube   = get_post_meta( $post_id, 'tpd_social_youtube', true ) ?: '';
+$social_instagram = get_post_meta( $post_id, 'tpd_social_instagram', true ) ?: '';
+$social_tiktok    = get_post_meta( $post_id, 'tpd_social_tiktok', true ) ?: '';
+$social_linkedin  = get_post_meta( $post_id, 'tpd_social_linkedin', true ) ?: '';
+
+// Taxonomies
+$supplier_types = wp_get_object_terms( $post_id, 'supplier_type', array( 'fields' => 'names' ) );
+$travel_styles  = wp_get_object_terms( $post_id, 'travel_style', array( 'fields' => 'names' ) );
+$destinations   = wp_get_object_terms( $post_id, 'travel_destination', array( 'fields' => 'names' ) );
+
+// Viewer Role & Identity
+$viewer_id          = get_current_user_id();
+$is_advisor_viewer  = $viewer_id && ( current_user_can( 'travel_advisor' ) || ( function_exists( 'tpd_get_user_portal_type' ) && 'advisor' === tpd_get_user_portal_type( $viewer_id ) ) );
+$is_admin_viewer    = $viewer_id && current_user_can( 'manage_options' );
+$is_supplier_owner  = $viewer_id && ( (int) get_post_field( 'post_author', $post_id ) === $viewer_id || (int) get_post_meta( $post_id, 'tpd_assigned_user', true ) === $viewer_id );
 
 // Membership Level Check
 $is_enhanced  = function_exists( 'tpd_is_listing_enhanced' ) ? tpd_is_listing_enhanced( $post_id ) : false;
@@ -116,6 +139,22 @@ if ( class_exists( 'TPD_Tool_Analytics' ) ) {
 								<?php esc_html_e( 'Verified Supplier', 'tpd-tool' ); ?>
 							</span>
 						<?php endif; ?>
+
+						<?php if ( ! empty( $supplier_types ) && ! is_wp_error( $supplier_types ) ) : ?>
+							<?php foreach ( $supplier_types as $st_name ) : ?>
+								<span style="background:rgba(0,121,140,0.4); backdrop-filter:blur(4px); color:#ffffff; border:1px solid rgba(255,255,255,0.2); font-size:11px; font-weight:700; padding:4px 10px; border-radius:999px;">
+									<i class="fa-solid fa-tag"></i> <?php echo esc_html( $st_name ); ?>
+								</span>
+							<?php endforeach; ?>
+						<?php endif; ?>
+
+						<?php if ( ! empty( $travel_styles ) && ! is_wp_error( $travel_styles ) ) : ?>
+							<?php foreach ( $travel_styles as $tstyle_name ) : ?>
+								<span style="background:rgba(255,255,255,0.15); backdrop-filter:blur(4px); color:#ffffff; border:1px solid rgba(255,255,255,0.2); font-size:11px; font-weight:600; padding:4px 10px; border-radius:999px;">
+									<i class="fa-solid fa-compass"></i> <?php echo esc_html( $tstyle_name ); ?>
+								</span>
+							<?php endforeach; ?>
+						<?php endif; ?>
 					</div>
 
 					<?php if ( $tagline ) : ?>
@@ -138,6 +177,11 @@ if ( class_exists( 'TPD_Tool_Analytics' ) ) {
 					<?php if ( $booking_url ) : ?>
 						<a href="<?php echo esc_url( $booking_url ); ?>" target="_blank" rel="noopener noreferrer" class="tpd-btn tpd-btn-sm" style="background:#00798c; color:#ffffff; font-weight:700; border:none; padding:10px 18px; border-radius:8px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(0,121,140,0.3);">
 							<i class="fa-solid fa-arrow-up-right-from-square"></i> <?php esc_html_e( 'Advisor Booking Portal', 'tpd-tool' ); ?>
+						</a>
+					<?php endif; ?>
+					<?php if ( $education_training_url ) : ?>
+						<a href="<?php echo esc_url( $education_training_url ); ?>" target="_blank" rel="noopener noreferrer" class="tpd-btn tpd-btn-sm" style="background:rgba(255,255,255,0.18); backdrop-filter:blur(4px); color:#ffffff; font-weight:700; border:1px solid rgba(255,255,255,0.3); padding:10px 16px; border-radius:8px; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+							<i class="fa-solid fa-graduation-cap text-gold"></i> <?php esc_html_e( 'Advisor Training Academy', 'tpd-tool' ); ?>
 						</a>
 					<?php endif; ?>
 					<?php if ( $phone ) : ?>
@@ -172,6 +216,22 @@ if ( class_exists( 'TPD_Tool_Analytics' ) ) {
 					<?php else : ?>
 						<p style="color:#64748b; font-size:14px;"><?php esc_html_e( 'Welcome to our partner directory profile. Travel advisors can book and access live support through our dedicated trade desk.', 'tpd-tool' ); ?></p>
 					<?php endif; ?>
+
+					<!-- Specialty Destinations Tag Pills -->
+					<?php if ( ! empty( $destinations ) && ! is_wp_error( $destinations ) ) : ?>
+						<div style="margin-top:24px; padding-top:20px; border-top:1px solid #f1f5f9;">
+							<span style="display:block; font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:10px;">
+								<i class="fa-solid fa-map-location-dot text-blue"></i> <?php esc_html_e( 'Specialty Destinations & Regions Covered:', 'tpd-tool' ); ?>
+							</span>
+							<div style="display:flex; flex-wrap:wrap; gap:8px;">
+								<?php foreach ( $destinations as $d_name ) : ?>
+									<span style="display:inline-flex; align-items:center; gap:6px; background:#00798c; color:#ffffff; font-size:12px; font-weight:700; padding:4px 12px; border-radius:6px;">
+										<?php echo esc_html( $d_name ); ?>
+									</span>
+								<?php endforeach; ?>
+							</div>
+						</div>
+					<?php endif; ?>
 				</div>
 
 				<!-- Right Column: Quick Company Information -->
@@ -186,28 +246,117 @@ if ( class_exists( 'TPD_Tool_Analytics' ) ) {
 							</div>
 							<?php if ( $phone ) : ?>
 								<div>
-									<span style="display:block; color:#64748b; font-size:11.5px; font-weight:700; text-transform:uppercase;"><?php esc_html_e( 'Advisor Support Phone', 'tpd-tool' ); ?></span>
-									<strong style="color:#0f172a;"><?php echo esc_html( $phone ); ?></strong>
+									<span style="display:block; color:#64748b; font-size:11.5px; font-weight:700; text-transform:uppercase;"><?php esc_html_e( 'Primary Support Phone', 'tpd-tool' ); ?></span>
+									<a href="tel:<?php echo esc_attr( preg_replace( '/[^0-9+]/', '', $phone ) ); ?>" style="color:#00798c; font-weight:700; text-decoration:none;"><?php echo esc_html( $phone ); ?></a>
+								</div>
+							<?php endif; ?>
+							<?php if ( $additional_phone_1 ) : ?>
+								<div>
+									<span style="display:block; color:#64748b; font-size:11.5px; font-weight:700; text-transform:uppercase;"><?php esc_html_e( 'Additional Phone 1', 'tpd-tool' ); ?></span>
+									<a href="tel:<?php echo esc_attr( preg_replace( '/[^0-9+]/', '', $additional_phone_1 ) ); ?>" style="color:#00798c; font-weight:700; text-decoration:none;"><?php echo esc_html( $additional_phone_1 ); ?></a>
+								</div>
+							<?php endif; ?>
+							<?php if ( $additional_phone_2 ) : ?>
+								<div>
+									<span style="display:block; color:#64748b; font-size:11.5px; font-weight:700; text-transform:uppercase;"><?php esc_html_e( 'Additional Phone 2', 'tpd-tool' ); ?></span>
+									<a href="tel:<?php echo esc_attr( preg_replace( '/[^0-9+]/', '', $additional_phone_2 ) ); ?>" style="color:#00798c; font-weight:700; text-decoration:none;"><?php echo esc_html( $additional_phone_2 ); ?></a>
 								</div>
 							<?php endif; ?>
 							<?php if ( $booking_url ) : ?>
 								<div>
-									<span style="display:block; color:#64748b; font-size:11.5px; font-weight:700; text-transform:uppercase;"><?php esc_html_e( 'Booking Portal', 'tpd-tool' ); ?></span>
+									<span style="display:block; color:#64748b; font-size:11.5px; font-weight:700; text-transform:uppercase;"><?php esc_html_e( 'Advisor Booking Portal', 'tpd-tool' ); ?></span>
 									<a href="<?php echo esc_url( $booking_url ); ?>" target="_blank" rel="noopener noreferrer" style="color:#00798c; font-weight:700; word-break:break-all; text-decoration:none;">
 										<?php echo esc_html( $booking_url ); ?> &rarr;
 									</a>
 								</div>
 							<?php endif; ?>
+							<?php if ( $education_training_url ) : ?>
+								<div>
+									<span style="display:block; color:#64748b; font-size:11.5px; font-weight:700; text-transform:uppercase;"><?php esc_html_e( 'Education & Training Academy', 'tpd-tool' ); ?></span>
+									<a href="<?php echo esc_url( $education_training_url ); ?>" target="_blank" rel="noopener noreferrer" style="color:#00798c; font-weight:700; word-break:break-all; text-decoration:none;">
+										<?php echo esc_html( $education_training_url ); ?> &rarr;
+									</a>
+								</div>
+							<?php endif; ?>
+							<?php if ( $additional_website ) : ?>
+								<div>
+									<span style="display:block; color:#64748b; font-size:11.5px; font-weight:700; text-transform:uppercase;"><?php esc_html_e( 'Official Website', 'tpd-tool' ); ?></span>
+									<a href="<?php echo esc_url( $additional_website ); ?>" target="_blank" rel="noopener noreferrer" style="color:#00798c; font-weight:700; word-break:break-all; text-decoration:none;">
+										<?php echo esc_html( $additional_website ); ?> &rarr;
+									</a>
+								</div>
+							<?php endif; ?>
+
+							<?php if ( $social_facebook || $social_twitter || $social_youtube || $social_instagram || $social_tiktok || $social_linkedin ) : ?>
+								<div style="margin-top:10px; padding-top:12px; border-top:1px solid #f1f5f9;">
+									<span style="display:block; color:#64748b; font-size:11.5px; font-weight:700; text-transform:uppercase; margin-bottom:8px;"><?php esc_html_e( 'Social Channels', 'tpd-tool' ); ?></span>
+									<div style="display:flex; gap:8px; flex-wrap:wrap;">
+										<?php if ( $social_facebook ) : ?><a href="<?php echo esc_url( $social_facebook ); ?>" target="_blank" rel="noopener noreferrer" style="width:30px; height:30px; border-radius:50%; background:#1877f2; color:#fff; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; font-size:13px;"><i class="fa-brands fa-facebook-f"></i></a><?php endif; ?>
+										<?php if ( $social_twitter ) : ?><a href="<?php echo esc_url( $social_twitter ); ?>" target="_blank" rel="noopener noreferrer" style="width:30px; height:30px; border-radius:50%; background:#000000; color:#fff; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; font-size:13px;"><i class="fa-brands fa-x-twitter"></i></a><?php endif; ?>
+										<?php if ( $social_youtube ) : ?><a href="<?php echo esc_url( $social_youtube ); ?>" target="_blank" rel="noopener noreferrer" style="width:30px; height:30px; border-radius:50%; background:#ff0000; color:#fff; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; font-size:13px;"><i class="fa-brands fa-youtube"></i></a><?php endif; ?>
+										<?php if ( $social_instagram ) : ?><a href="<?php echo esc_url( $social_instagram ); ?>" target="_blank" rel="noopener noreferrer" style="width:30px; height:30px; border-radius:50%; background:linear-gradient(45deg, #f09433, #dc2743, #bc1888); color:#fff; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; font-size:13px;"><i class="fa-brands fa-instagram"></i></a><?php endif; ?>
+										<?php if ( $social_tiktok ) : ?><a href="<?php echo esc_url( $social_tiktok ); ?>" target="_blank" rel="noopener noreferrer" style="width:30px; height:30px; border-radius:50%; background:#010101; color:#fff; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; font-size:13px;"><i class="fa-brands fa-tiktok"></i></a><?php endif; ?>
+										<?php if ( $social_linkedin ) : ?><a href="<?php echo esc_url( $social_linkedin ); ?>" target="_blank" rel="noopener noreferrer" style="width:30px; height:30px; border-radius:50%; background:#0a66c2; color:#fff; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; font-size:13px;"><i class="fa-brands fa-linkedin-in"></i></a><?php endif; ?>
+									</div>
+								</div>
+							<?php endif; ?>
 						</div>
 					</div>
 
-					<div class="tpd-card-box" style="background:linear-gradient(135deg, #013243 0%, #00798c 100%); color:#ffffff; border-radius:14px; padding:24px;">
-						<h4 style="margin:0 0 8px; font-size:15px; font-weight:800; color:#ffffff;"><i class="fa-solid fa-handshake text-gold"></i> <?php esc_html_e( 'Are you a Travel Advisor?', 'tpd-tool' ); ?></h4>
-						<p style="margin:0 0 16px; font-size:13px; color:#e2e8f0; line-height:1.6;"><?php esc_html_e( 'Register or log in to message this supplier, request dedicated itineraries, and access exclusive trade incentives.', 'tpd-tool' ); ?></p>
-						<a href="<?php echo esc_url( home_url( '/advisor-registration/' ) ); ?>" class="tpd-btn tpd-btn-sm tpd-btn-gold" style="background:#eab308; color:#0f172a; font-weight:800; border:none; padding:10px 18px; border-radius:8px; text-decoration:none; display:inline-block;">
-							<?php esc_html_e( 'Join Travel Advisor Directory', 'tpd-tool' ); ?> &rarr;
-						</a>
-					</div>
+					<!-- Role-Aware Connect Box (Basic View) -->
+					<?php if ( $is_advisor_viewer ) : ?>
+						<div class="tpd-card-box" style="background:linear-gradient(135deg, #013243 0%, #00798c 100%); color:#ffffff; border-radius:14px; padding:24px; box-shadow:0 4px 14px rgba(0,121,140,0.25);">
+							<span style="background:rgba(234,179,8,0.25); color:#fde047; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:800; text-transform:uppercase; display:inline-block; margin-bottom:10px;">
+								<i class="fa-solid fa-circle-check"></i> <?php esc_html_e( 'Verified Advisor Access', 'tpd-tool' ); ?>
+							</span>
+							<h4 style="margin:0 0 8px; font-size:16px; font-weight:800; color:#ffffff;"><i class="fa-solid fa-comments text-gold"></i> <?php esc_html_e( 'Connect with this Partner', 'tpd-tool' ); ?></h4>
+							<p style="margin:0 0 16px; font-size:13px; color:#e2e8f0; line-height:1.6;"><?php printf( esc_html__( 'Chat live with %s BDMs, request discovery meetings, and save to your favorites.', 'tpd-tool' ), esc_html( $company_name ) ); ?></p>
+							<div style="display:flex; flex-direction:column; gap:8px;">
+								<a href="<?php echo esc_url( home_url( '/advisor-dashboard/#tpd-tab-chat' ) ); ?>" class="tpd-btn tpd-btn-sm tpd-btn-gold" style="background:#eab308; color:#0f172a; font-weight:800; border:none; padding:10px 16px; border-radius:8px; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:8px;">
+									<i class="fa-solid fa-comment-dots"></i> <?php esc_html_e( 'Chat Live with Representative', 'tpd-tool' ); ?>
+								</a>
+								<a href="<?php echo esc_url( home_url( '/advisor-dashboard/' ) ); ?>" class="tpd-btn tpd-btn-sm" style="background:rgba(255,255,255,0.12); color:#ffffff; border:1px solid rgba(255,255,255,0.25); padding:8px 16px; border-radius:8px; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:8px;">
+									<i class="fa-solid fa-gauge-high"></i> <?php esc_html_e( 'Open Advisor Workspace', 'tpd-tool' ); ?>
+								</a>
+							</div>
+						</div>
+					<?php elseif ( $is_admin_viewer || $is_supplier_owner ) : ?>
+						<div class="tpd-card-box" style="background:linear-gradient(135deg, #0b1526 0%, #1e293b 100%); color:#ffffff; border-radius:14px; padding:24px;">
+							<span style="background:rgba(59,130,246,0.25); color:#93c5fd; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:800; text-transform:uppercase; display:inline-block; margin-bottom:10px;">
+								<i class="fa-solid fa-id-badge"></i> <?php esc_html_e( 'Showcase Preview Mode', 'tpd-tool' ); ?>
+							</span>
+							<h4 style="margin:0 0 8px; font-size:16px; font-weight:800; color:#ffffff;"><i class="fa-solid fa-sliders text-blue"></i> <?php esc_html_e( 'Manage this Showcase', 'tpd-tool' ); ?></h4>
+							<p style="margin:0 0 16px; font-size:13px; color:#cbd5e1; line-height:1.6;"><?php esc_html_e( 'You have administrative / partner access to update this showcase profile.', 'tpd-tool' ); ?></p>
+							<a href="<?php echo esc_url( home_url( '/supplier-dashboard/' ) ); ?>" class="tpd-btn tpd-btn-sm tpd-btn-primary" style="background:#00798c; color:#ffffff; font-weight:800; border:none; padding:10px 16px; border-radius:8px; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:8px;">
+								<i class="fa-solid fa-pen-to-square"></i> <?php esc_html_e( 'Edit in Supplier Dashboard', 'tpd-tool' ); ?>
+							</a>
+						</div>
+					<?php else : ?>
+						<div class="tpd-card-box" style="background:linear-gradient(135deg, #013243 0%, #00798c 100%); color:#ffffff; border-radius:14px; padding:24px; box-shadow:0 4px 14px rgba(0,121,140,0.25);">
+							<h4 style="margin:0 0 12px; font-size:16px; font-weight:800; color:#ffffff;"><i class="fa-solid fa-handshake text-gold"></i> <?php esc_html_e( 'Connect with this Supplier', 'tpd-tool' ); ?></h4>
+							
+							<div style="background:rgba(255,255,255,0.08); border-radius:10px; padding:14px; margin-bottom:14px; border:1px solid rgba(255,255,255,0.14);">
+								<strong style="font-size:13px; color:#facc15; display:block; margin-bottom:4px;"><i class="fa-solid fa-briefcase"></i> <?php esc_html_e( 'Are you a Travel Advisor?', 'tpd-tool' ); ?></strong>
+								<p style="margin:0 0 10px; font-size:12px; color:#e2e8f0; line-height:1.5;"><?php esc_html_e( 'Sign in to access trade collateral, chat live with BDMs, and unlock exclusive advisor incentives.', 'tpd-tool' ); ?></p>
+								<div style="display:flex; gap:8px; flex-wrap:wrap;">
+									<a href="<?php echo esc_url( home_url( '/advisor-dashboard/' ) ); ?>" class="tpd-btn tpd-btn-xs tpd-btn-gold" style="background:#eab308; color:#0f172a; font-weight:800; border:none; padding:7px 12px; border-radius:6px; text-decoration:none;">
+										<?php esc_html_e( 'Advisor Sign In', 'tpd-tool' ); ?> &rarr;
+									</a>
+									<a href="<?php echo esc_url( home_url( '/advisor-registration/' ) ); ?>" class="tpd-btn tpd-btn-xs" style="background:rgba(255,255,255,0.15); color:#ffffff; border:1px solid rgba(255,255,255,0.3); padding:7px 12px; border-radius:6px; text-decoration:none;">
+										<?php esc_html_e( 'Join Directory', 'tpd-tool' ); ?>
+									</a>
+								</div>
+							</div>
+
+							<div style="background:rgba(0,0,0,0.16); border-radius:10px; padding:14px; border:1px solid rgba(255,255,255,0.08);">
+								<strong style="font-size:13px; color:#ffffff; display:block; margin-bottom:4px;"><i class="fa-solid fa-compass"></i> <?php esc_html_e( 'Planning a Trip?', 'tpd-tool' ); ?></strong>
+								<p style="margin:0 0 10px; font-size:12px; color:#cbd5e1; line-height:1.5;"><?php printf( esc_html__( 'Looking to book with %s? Connect with a verified specialist travel advisor.', 'tpd-tool' ), esc_html( $company_name ) ); ?></p>
+								<a href="<?php echo esc_url( home_url( '/find-an-advisor/' ) ); ?>" class="tpd-btn tpd-btn-xs" style="background:#ffffff; color:#013243; font-weight:700; border:none; padding:7px 12px; border-radius:6px; text-decoration:none; display:inline-block;">
+									<?php esc_html_e( 'Find a Travel Advisor', 'tpd-tool' ); ?> &rarr;
+								</a>
+							</div>
+						</div>
+					<?php endif; ?>
 				</div>
 			</div>
 
@@ -259,6 +408,22 @@ if ( class_exists( 'TPD_Tool_Analytics' ) ) {
 							<p style="color:#64748b; font-size:14px;"><?php esc_html_e( 'Welcome to our official showcase on the Travel Partner Directory. Browse our resources, accreditations, and upcoming conference schedule.', 'tpd-tool' ); ?></p>
 						<?php endif; ?>
 
+						<!-- Specialty Destinations Tag Pills -->
+						<?php if ( ! empty( $destinations ) && ! is_wp_error( $destinations ) ) : ?>
+							<div style="margin-top:24px; padding-top:20px; border-top:1px solid #f1f5f9;">
+								<span style="display:block; font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:10px;">
+									<i class="fa-solid fa-map-location-dot text-blue"></i> <?php esc_html_e( 'Specialty Destinations & Regions Covered:', 'tpd-tool' ); ?>
+								</span>
+								<div style="display:flex; flex-wrap:wrap; gap:8px;">
+									<?php foreach ( $destinations as $d_name ) : ?>
+										<span style="display:inline-flex; align-items:center; gap:6px; background:#00798c; color:#ffffff; font-size:12px; font-weight:700; padding:4px 12px; border-radius:6px;">
+											<?php echo esc_html( $d_name ); ?>
+										</span>
+									<?php endforeach; ?>
+								</div>
+							</div>
+						<?php endif; ?>
+
 						<?php if ( 'Yes' === $rewards && ( $promo_title || $promo_desc ) ) : ?>
 							<div style="margin-top:28px; background:linear-gradient(135deg, #fef9c3 0%, #fef08a 100%); border:1px solid #fde047; border-radius:12px; padding:20px;">
 								<span style="font-size:11px; font-weight:800; color:#854d0e; text-transform:uppercase; letter-spacing:0.5px; display:inline-flex; align-items:center; gap:4px; margin-bottom:4px;">
@@ -285,6 +450,18 @@ if ( class_exists( 'TPD_Tool_Analytics' ) ) {
 										<a href="tel:<?php echo esc_attr( preg_replace( '/[^0-9+]/', '', $phone ) ); ?>" style="color:#00798c; font-weight:700; text-decoration:none;"><?php echo esc_html( $phone ); ?></a>
 									</div>
 								<?php endif; ?>
+								<?php if ( $additional_phone_1 ) : ?>
+									<div>
+										<span style="display:block; color:#64748b; font-size:11.5px; font-weight:700; text-transform:uppercase;"><?php esc_html_e( 'Additional Phone 1', 'tpd-tool' ); ?></span>
+										<a href="tel:<?php echo esc_attr( preg_replace( '/[^0-9+]/', '', $additional_phone_1 ) ); ?>" style="color:#00798c; font-weight:700; text-decoration:none;"><?php echo esc_html( $additional_phone_1 ); ?></a>
+									</div>
+								<?php endif; ?>
+								<?php if ( $additional_phone_2 ) : ?>
+									<div>
+										<span style="display:block; color:#64748b; font-size:11.5px; font-weight:700; text-transform:uppercase;"><?php esc_html_e( 'Additional Phone 2', 'tpd-tool' ); ?></span>
+										<a href="tel:<?php echo esc_attr( preg_replace( '/[^0-9+]/', '', $additional_phone_2 ) ); ?>" style="color:#00798c; font-weight:700; text-decoration:none;"><?php echo esc_html( $additional_phone_2 ); ?></a>
+									</div>
+								<?php endif; ?>
 								<?php if ( $booking_url ) : ?>
 									<div>
 										<span style="display:block; color:#64748b; font-size:11.5px; font-weight:700; text-transform:uppercase;"><?php esc_html_e( 'Online Booking Portal', 'tpd-tool' ); ?></span>
@@ -293,16 +470,93 @@ if ( class_exists( 'TPD_Tool_Analytics' ) ) {
 										</a>
 									</div>
 								<?php endif; ?>
+								<?php if ( $education_training_url ) : ?>
+									<div>
+										<span style="display:block; color:#64748b; font-size:11.5px; font-weight:700; text-transform:uppercase;"><?php esc_html_e( 'Education & Training Academy', 'tpd-tool' ); ?></span>
+										<a href="<?php echo esc_url( $education_training_url ); ?>" target="_blank" rel="noopener noreferrer" style="color:#00798c; font-weight:700; word-break:break-all; text-decoration:none;">
+											<?php echo esc_html( $education_training_url ); ?> &rarr;
+										</a>
+									</div>
+								<?php endif; ?>
+								<?php if ( $additional_website ) : ?>
+									<div>
+										<span style="display:block; color:#64748b; font-size:11.5px; font-weight:700; text-transform:uppercase;"><?php esc_html_e( 'Official Website', 'tpd-tool' ); ?></span>
+										<a href="<?php echo esc_url( $additional_website ); ?>" target="_blank" rel="noopener noreferrer" style="color:#00798c; font-weight:700; word-break:break-all; text-decoration:none;">
+											<?php echo esc_html( $additional_website ); ?> &rarr;
+										</a>
+									</div>
+								<?php endif; ?>
+
+								<?php if ( $social_facebook || $social_twitter || $social_youtube || $social_instagram || $social_tiktok || $social_linkedin ) : ?>
+									<div style="margin-top:10px; padding-top:12px; border-top:1px solid #f1f5f9;">
+										<span style="display:block; color:#64748b; font-size:11.5px; font-weight:700; text-transform:uppercase; margin-bottom:8px;"><?php esc_html_e( 'Official Social Channels', 'tpd-tool' ); ?></span>
+										<div style="display:flex; gap:8px; flex-wrap:wrap;">
+											<?php if ( $social_facebook ) : ?><a href="<?php echo esc_url( $social_facebook ); ?>" target="_blank" rel="noopener noreferrer" style="width:30px; height:30px; border-radius:50%; background:#1877f2; color:#fff; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; font-size:13px;"><i class="fa-brands fa-facebook-f"></i></a><?php endif; ?>
+											<?php if ( $social_twitter ) : ?><a href="<?php echo esc_url( $social_twitter ); ?>" target="_blank" rel="noopener noreferrer" style="width:30px; height:30px; border-radius:50%; background:#000000; color:#fff; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; font-size:13px;"><i class="fa-brands fa-x-twitter"></i></a><?php endif; ?>
+											<?php if ( $social_youtube ) : ?><a href="<?php echo esc_url( $social_youtube ); ?>" target="_blank" rel="noopener noreferrer" style="width:30px; height:30px; border-radius:50%; background:#ff0000; color:#fff; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; font-size:13px;"><i class="fa-brands fa-youtube"></i></a><?php endif; ?>
+											<?php if ( $social_instagram ) : ?><a href="<?php echo esc_url( $social_instagram ); ?>" target="_blank" rel="noopener noreferrer" style="width:30px; height:30px; border-radius:50%; background:linear-gradient(45deg, #f09433, #dc2743, #bc1888); color:#fff; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; font-size:13px;"><i class="fa-brands fa-instagram"></i></a><?php endif; ?>
+											<?php if ( $social_tiktok ) : ?><a href="<?php echo esc_url( $social_tiktok ); ?>" target="_blank" rel="noopener noreferrer" style="width:30px; height:30px; border-radius:50%; background:#010101; color:#fff; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; font-size:13px;"><i class="fa-brands fa-tiktok"></i></a><?php endif; ?>
+											<?php if ( $social_linkedin ) : ?><a href="<?php echo esc_url( $social_linkedin ); ?>" target="_blank" rel="noopener noreferrer" style="width:30px; height:30px; border-radius:50%; background:#0a66c2; color:#fff; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; font-size:13px;"><i class="fa-brands fa-linkedin-in"></i></a><?php endif; ?>
+										</div>
+									</div>
+								<?php endif; ?>
 							</div>
 						</div>
 
-						<div class="tpd-card-box" style="background:linear-gradient(135deg, #013243 0%, #00798c 100%); color:#ffffff; border-radius:14px; padding:24px;">
-							<h4 style="margin:0 0 8px; font-size:15px; font-weight:800; color:#ffffff;"><i class="fa-solid fa-comments text-gold"></i> <?php esc_html_e( 'Connect with this Supplier', 'tpd-tool' ); ?></h4>
-							<p style="margin:0 0 16px; font-size:13px; color:#e2e8f0; line-height:1.6;"><?php esc_html_e( 'Log in to your Advisor Dashboard to chat live with BDMs, request discovery meetings, and bookmark this partner.', 'tpd-tool' ); ?></p>
-							<a href="<?php echo esc_url( home_url( '/advisor-dashboard/' ) ); ?>" class="tpd-btn tpd-btn-sm tpd-btn-gold" style="background:#eab308; color:#0f172a; font-weight:800; border:none; padding:10px 18px; border-radius:8px; text-decoration:none; display:inline-block;">
-								<?php esc_html_e( 'Open Advisor Dashboard', 'tpd-tool' ); ?> &rarr;
-							</a>
-						</div>
+						<!-- Role-Aware Connect Box (Enhanced View) -->
+						<?php if ( $is_advisor_viewer ) : ?>
+							<div class="tpd-card-box" style="background:linear-gradient(135deg, #013243 0%, #00798c 100%); color:#ffffff; border-radius:14px; padding:24px; box-shadow:0 4px 14px rgba(0,121,140,0.25);">
+								<span style="background:rgba(234,179,8,0.25); color:#fde047; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:800; text-transform:uppercase; display:inline-block; margin-bottom:10px;">
+									<i class="fa-solid fa-circle-check"></i> <?php esc_html_e( 'Verified Advisor Access', 'tpd-tool' ); ?>
+								</span>
+								<h4 style="margin:0 0 8px; font-size:16px; font-weight:800; color:#ffffff;"><i class="fa-solid fa-comments text-gold"></i> <?php esc_html_e( 'Connect with this Partner', 'tpd-tool' ); ?></h4>
+								<p style="margin:0 0 16px; font-size:13px; color:#e2e8f0; line-height:1.6;"><?php printf( esc_html__( 'Chat live with %s BDMs, request discovery meetings, and save to your favorites.', 'tpd-tool' ), esc_html( $company_name ) ); ?></p>
+								<div style="display:flex; flex-direction:column; gap:8px;">
+									<a href="<?php echo esc_url( home_url( '/advisor-dashboard/#tpd-tab-chat' ) ); ?>" class="tpd-btn tpd-btn-sm tpd-btn-gold" style="background:#eab308; color:#0f172a; font-weight:800; border:none; padding:10px 16px; border-radius:8px; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:8px;">
+										<i class="fa-solid fa-comment-dots"></i> <?php esc_html_e( 'Chat Live with Representative', 'tpd-tool' ); ?>
+									</a>
+									<a href="<?php echo esc_url( home_url( '/advisor-dashboard/' ) ); ?>" class="tpd-btn tpd-btn-sm" style="background:rgba(255,255,255,0.12); color:#ffffff; border:1px solid rgba(255,255,255,0.25); padding:8px 16px; border-radius:8px; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:8px;">
+										<i class="fa-solid fa-gauge-high"></i> <?php esc_html_e( 'Open Advisor Workspace', 'tpd-tool' ); ?>
+									</a>
+								</div>
+							</div>
+						<?php elseif ( $is_admin_viewer || $is_supplier_owner ) : ?>
+							<div class="tpd-card-box" style="background:linear-gradient(135deg, #0b1526 0%, #1e293b 100%); color:#ffffff; border-radius:14px; padding:24px;">
+								<span style="background:rgba(59,130,246,0.25); color:#93c5fd; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:800; text-transform:uppercase; display:inline-block; margin-bottom:10px;">
+									<i class="fa-solid fa-id-badge"></i> <?php esc_html_e( 'Showcase Preview Mode', 'tpd-tool' ); ?>
+								</span>
+								<h4 style="margin:0 0 8px; font-size:16px; font-weight:800; color:#ffffff;"><i class="fa-solid fa-sliders text-blue"></i> <?php esc_html_e( 'Manage this Showcase', 'tpd-tool' ); ?></h4>
+								<p style="margin:0 0 16px; font-size:13px; color:#cbd5e1; line-height:1.6;"><?php esc_html_e( 'You have administrative / partner access to update this showcase profile.', 'tpd-tool' ); ?></p>
+								<a href="<?php echo esc_url( home_url( '/supplier-dashboard/' ) ); ?>" class="tpd-btn tpd-btn-sm tpd-btn-primary" style="background:#00798c; color:#ffffff; font-weight:800; border:none; padding:10px 16px; border-radius:8px; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; gap:8px;">
+									<i class="fa-solid fa-pen-to-square"></i> <?php esc_html_e( 'Edit in Supplier Dashboard', 'tpd-tool' ); ?>
+								</a>
+							</div>
+						<?php else : ?>
+							<div class="tpd-card-box" style="background:linear-gradient(135deg, #013243 0%, #00798c 100%); color:#ffffff; border-radius:14px; padding:24px; box-shadow:0 4px 14px rgba(0,121,140,0.25);">
+								<h4 style="margin:0 0 12px; font-size:16px; font-weight:800; color:#ffffff;"><i class="fa-solid fa-handshake text-gold"></i> <?php esc_html_e( 'Connect with this Supplier', 'tpd-tool' ); ?></h4>
+								
+								<div style="background:rgba(255,255,255,0.08); border-radius:10px; padding:14px; margin-bottom:14px; border:1px solid rgba(255,255,255,0.14);">
+									<strong style="font-size:13px; color:#facc15; display:block; margin-bottom:4px;"><i class="fa-solid fa-briefcase"></i> <?php esc_html_e( 'Are you a Travel Advisor?', 'tpd-tool' ); ?></strong>
+									<p style="margin:0 0 10px; font-size:12px; color:#e2e8f0; line-height:1.5;"><?php esc_html_e( 'Sign in to access trade collateral, chat live with BDMs, and unlock exclusive advisor incentives.', 'tpd-tool' ); ?></p>
+									<div style="display:flex; gap:8px; flex-wrap:wrap;">
+										<a href="<?php echo esc_url( home_url( '/advisor-dashboard/' ) ); ?>" class="tpd-btn tpd-btn-xs tpd-btn-gold" style="background:#eab308; color:#0f172a; font-weight:800; border:none; padding:7px 12px; border-radius:6px; text-decoration:none;">
+											<?php esc_html_e( 'Advisor Sign In', 'tpd-tool' ); ?> &rarr;
+										</a>
+										<a href="<?php echo esc_url( home_url( '/advisor-registration/' ) ); ?>" class="tpd-btn tpd-btn-xs" style="background:rgba(255,255,255,0.15); color:#ffffff; border:1px solid rgba(255,255,255,0.3); padding:7px 12px; border-radius:6px; text-decoration:none;">
+											<?php esc_html_e( 'Join Directory', 'tpd-tool' ); ?>
+										</a>
+									</div>
+								</div>
+
+								<div style="background:rgba(0,0,0,0.16); border-radius:10px; padding:14px; border:1px solid rgba(255,255,255,0.08);">
+									<strong style="font-size:13px; color:#ffffff; display:block; margin-bottom:4px;"><i class="fa-solid fa-compass"></i> <?php esc_html_e( 'Planning a Trip?', 'tpd-tool' ); ?></strong>
+									<p style="margin:0 0 10px; font-size:12px; color:#cbd5e1; line-height:1.5;"><?php printf( esc_html__( 'Looking to book with %s? Connect with a verified specialist travel advisor.', 'tpd-tool' ), esc_html( $company_name ) ); ?></p>
+									<a href="<?php echo esc_url( home_url( '/find-an-advisor/' ) ); ?>" class="tpd-btn tpd-btn-xs" style="background:#ffffff; color:#013243; font-weight:700; border:none; padding:7px 12px; border-radius:6px; text-decoration:none; display:inline-block;">
+										<?php esc_html_e( 'Find a Travel Advisor', 'tpd-tool' ); ?> &rarr;
+									</a>
+								</div>
+							</div>
+						<?php endif; ?>
 					</div>
 				</div>
 			</div>
@@ -364,22 +618,44 @@ if ( class_exists( 'TPD_Tool_Analytics' ) ) {
 
 					<?php if ( ! empty( $conferences ) ) : ?>
 						<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:16px;">
-							<?php foreach ( $conferences as $c ) : ?>
+							<?php foreach ( $conferences as $c ) :
+								$c_title = ! empty( $c['title'] ) ? $c['title'] : ( ! empty( $c['name'] ) ? $c['name'] : __( 'Trade Conference', 'tpd-tool' ) );
+								$c_date_label = '';
+								if ( ! empty( $c['start_date'] ) && ! empty( $c['end_date'] ) ) {
+									$s_ts = strtotime( $c['start_date'] );
+									$e_ts = strtotime( $c['end_date'] );
+									$c_date_label = ( $s_ts && $e_ts ) ? date_i18n( 'M j, Y', $s_ts ) . ' – ' . date_i18n( 'M j, Y', $e_ts ) : ( $c['start_date'] . ' – ' . $c['end_date'] );
+								} elseif ( ! empty( $c['start_date'] ) ) {
+									$s_ts = strtotime( $c['start_date'] );
+									$c_date_label = $s_ts ? date_i18n( 'M j, Y', $s_ts ) : $c['start_date'];
+								} elseif ( ! empty( $c['date'] ) ) {
+									$c_date_label = $c['date'];
+								} else {
+									$c_date_label = __( 'Upcoming Event', 'tpd-tool' );
+								}
+							?>
 								<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:18px; display:flex; flex-direction:column; justify-content:space-between;">
 									<div>
 										<span style="font-size:11px; font-weight:800; color:#0284c7; background:#e0f2fe; padding:3px 8px; border-radius:4px; text-transform:uppercase;">
-											<i class="fa-solid fa-calendar"></i> <?php echo esc_html( isset( $c['date'] ) ? $c['date'] : 'Upcoming' ); ?>
+											<i class="fa-solid fa-calendar-days"></i> <?php echo esc_html( $c_date_label ); ?>
 										</span>
-										<h4 style="margin:10px 0 6px; font-size:16px; font-weight:800; color:#0f172a;"><?php echo esc_html( isset( $c['name'] ) ? $c['name'] : 'Conference' ); ?></h4>
+										<h4 style="margin:10px 0 6px; font-size:16px; font-weight:800; color:#0f172a;"><?php echo esc_html( $c_title ); ?></h4>
 										<?php if ( ! empty( $c['location'] ) ) : ?>
-											<p style="margin:0 0 12px; font-size:13px; color:#475569;"><i class="fa-solid fa-map-pin text-gold"></i> <?php echo esc_html( $c['location'] ); ?></p>
+											<p style="margin:0 0 14px; font-size:13px; color:#475569;"><i class="fa-solid fa-map-pin text-gold"></i> <?php echo esc_html( $c['location'] ); ?></p>
 										<?php endif; ?>
 									</div>
-									<?php if ( ! empty( $c['url'] ) ) : ?>
-										<a href="<?php echo esc_url( $c['url'] ); ?>" target="_blank" rel="noopener noreferrer" style="font-size:12.5px; font-weight:700; color:#00798c; text-decoration:none;">
-											<?php esc_html_e( 'Event Information', 'tpd-tool' ); ?> &rarr;
-										</a>
-									<?php endif; ?>
+									<div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:8px; padding-top:10px; border-top:1px solid #edf2f7;">
+										<?php if ( ! empty( $c['file_url'] ) ) : ?>
+											<a href="<?php echo esc_url( $c['file_url'] ); ?>" target="_blank" download class="tpd-btn tpd-btn-xs" style="background:#00798c; color:#ffffff; font-weight:700; border:none; padding:6px 12px; border-radius:6px; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+												<i class="fa-solid fa-cloud-arrow-down"></i> <?php esc_html_e( 'Event Flyer / Agenda', 'tpd-tool' ); ?>
+											</a>
+										<?php endif; ?>
+										<?php if ( ! empty( $c['url'] ) ) : ?>
+											<a href="<?php echo esc_url( $c['url'] ); ?>" target="_blank" rel="noopener noreferrer" style="font-size:12.5px; font-weight:700; color:#00798c; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+												<?php esc_html_e( 'Event Info', 'tpd-tool' ); ?> &rarr;
+											</a>
+										<?php endif; ?>
+									</div>
 								</div>
 							<?php endforeach; ?>
 						</div>

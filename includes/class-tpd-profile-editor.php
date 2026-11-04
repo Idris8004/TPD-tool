@@ -400,15 +400,27 @@ class TPD_Tool_Profile_Editor {
 		$is_enhanced = class_exists( 'TPD_Tool_Tiers' ) ? TPD_Tool_Tiers::is_enhanced_supplier( $user_id ) : false;
 
 		// 1. Basic Company Information (Accessible to ALL suppliers: Free & Paid)
-		$company_name = isset( $_POST['company_name'] ) ? sanitize_text_field( wp_unslash( $_POST['company_name'] ) ) : '';
-		$tagline      = isset( $_POST['tagline'] ) ? sanitize_text_field( wp_unslash( $_POST['tagline'] ) ) : '';
-		$phone        = isset( $_POST['phone'] ) ? sanitize_text_field( wp_unslash( $_POST['phone'] ) ) : '';
-		$booking_url  = isset( $_POST['booking_url'] ) ? esc_url_raw( wp_unslash( $_POST['booking_url'] ) ) : '';
-		$headquarters = isset( $_POST['headquarters'] ) ? sanitize_text_field( wp_unslash( $_POST['headquarters'] ) ) : '';
-		$country      = isset( $_POST['country'] ) ? sanitize_text_field( wp_unslash( $_POST['country'] ) ) : '';
-		$description  = isset( $_POST['description'] ) ? wp_kses_post( wp_unslash( $_POST['description'] ) ) : '';
-		$logo_url     = isset( $_POST['logo_url'] ) ? esc_url_raw( wp_unslash( $_POST['logo_url'] ) ) : '';
-		$banner_url   = isset( $_POST['banner_url'] ) ? esc_url_raw( wp_unslash( $_POST['banner_url'] ) ) : '';
+		$company_name           = isset( $_POST['company_name'] ) ? sanitize_text_field( wp_unslash( $_POST['company_name'] ) ) : '';
+		$tagline                = isset( $_POST['tagline'] ) ? sanitize_text_field( wp_unslash( $_POST['tagline'] ) ) : '';
+		$phone                  = isset( $_POST['phone'] ) ? sanitize_text_field( wp_unslash( $_POST['phone'] ) ) : '';
+		$booking_url            = isset( $_POST['booking_url'] ) ? esc_url_raw( wp_unslash( $_POST['booking_url'] ) ) : '';
+		$education_training_url = isset( $_POST['education_training_url'] ) ? esc_url_raw( wp_unslash( $_POST['education_training_url'] ) ) : '';
+		$additional_website     = isset( $_POST['additional_website'] ) ? esc_url_raw( wp_unslash( $_POST['additional_website'] ) ) : '';
+		$additional_phone_1     = isset( $_POST['additional_phone_1'] ) ? sanitize_text_field( wp_unslash( $_POST['additional_phone_1'] ) ) : '';
+		$additional_phone_2     = isset( $_POST['additional_phone_2'] ) ? sanitize_text_field( wp_unslash( $_POST['additional_phone_2'] ) ) : '';
+		$headquarters           = isset( $_POST['headquarters'] ) ? sanitize_text_field( wp_unslash( $_POST['headquarters'] ) ) : '';
+		$country                = isset( $_POST['country'] ) ? sanitize_text_field( wp_unslash( $_POST['country'] ) ) : '';
+		$description            = isset( $_POST['description'] ) ? wp_kses_post( wp_unslash( $_POST['description'] ) ) : '';
+		$logo_url               = isset( $_POST['logo_url'] ) ? esc_url_raw( wp_unslash( $_POST['logo_url'] ) ) : '';
+		$banner_url             = isset( $_POST['banner_url'] ) ? esc_url_raw( wp_unslash( $_POST['banner_url'] ) ) : '';
+
+		// Social Media Links
+		$social_facebook        = isset( $_POST['social_facebook'] ) ? esc_url_raw( wp_unslash( $_POST['social_facebook'] ) ) : '';
+		$social_twitter         = isset( $_POST['social_twitter'] ) ? esc_url_raw( wp_unslash( $_POST['social_twitter'] ) ) : '';
+		$social_youtube         = isset( $_POST['social_youtube'] ) ? esc_url_raw( wp_unslash( $_POST['social_youtube'] ) ) : '';
+		$social_instagram       = isset( $_POST['social_instagram'] ) ? esc_url_raw( wp_unslash( $_POST['social_instagram'] ) ) : '';
+		$social_tiktok          = isset( $_POST['social_tiktok'] ) ? esc_url_raw( wp_unslash( $_POST['social_tiktok'] ) ) : '';
+		$social_linkedin        = isset( $_POST['social_linkedin'] ) ? esc_url_raw( wp_unslash( $_POST['social_linkedin'] ) ) : '';
 
 		if ( ! $listing_id ) {
 			$listing_id = wp_insert_post( array(
@@ -431,7 +443,37 @@ class TPD_Tool_Profile_Editor {
 		update_post_meta( $listing_id, 'tpd_tagline', $tagline );
 		update_post_meta( $listing_id, 'tpd_primary_rep_phone', $phone );
 		update_post_meta( $listing_id, 'tpd_booking_portal_url', $booking_url );
+		update_post_meta( $listing_id, 'tpd_education_training_url', $education_training_url );
+		update_post_meta( $listing_id, 'tpd_additional_website', $additional_website );
+		update_post_meta( $listing_id, 'tpd_additional_phone_1', $additional_phone_1 );
+		update_post_meta( $listing_id, 'tpd_additional_phone_2', $additional_phone_2 );
 		update_post_meta( $listing_id, 'tpd_headquarters', $headquarters );
+
+		// Save Social Media Links
+		update_post_meta( $listing_id, 'tpd_social_facebook', $social_facebook );
+		update_post_meta( $listing_id, 'tpd_social_twitter', $social_twitter );
+		update_post_meta( $listing_id, 'tpd_social_youtube', $social_youtube );
+		update_post_meta( $listing_id, 'tpd_social_instagram', $social_instagram );
+		update_post_meta( $listing_id, 'tpd_social_tiktok', $social_tiktok );
+		update_post_meta( $listing_id, 'tpd_social_linkedin', $social_linkedin );
+
+		// Save Taxonomies (Destinations, Travel Styles, Supplier Types)
+		if ( isset( $_POST['destinations'] ) ) {
+			$dests = is_array( $_POST['destinations'] ) ? array_map( 'sanitize_text_field', (array) $_POST['destinations'] ) : array_filter( array_map( 'trim', explode( ',', sanitize_text_field( wp_unslash( $_POST['destinations'] ) ) ) ) );
+			wp_set_object_terms( $listing_id, $dests, 'travel_destination' );
+		}
+		if ( isset( $_POST['travel_styles'] ) ) {
+			$styles = is_array( $_POST['travel_styles'] ) ? array_map( 'sanitize_text_field', (array) $_POST['travel_styles'] ) : array_filter( array_map( 'trim', explode( ',', sanitize_text_field( wp_unslash( $_POST['travel_styles'] ) ) ) ) );
+			wp_set_object_terms( $listing_id, $styles, 'travel_style' );
+		}
+		if ( isset( $_POST['supplier_type'] ) ) {
+			$stype = sanitize_text_field( wp_unslash( $_POST['supplier_type'] ) );
+			if ( $stype ) {
+				wp_set_object_terms( $listing_id, array( $stype ), 'supplier_type' );
+				update_post_meta( $listing_id, 'tpd_supplier_type', $stype );
+			}
+		}
+
 		if ( $country ) {
 			update_post_meta( $listing_id, 'tpd_country_of_residence', $country );
 		}
@@ -467,30 +509,40 @@ class TPD_Tool_Profile_Editor {
 			update_post_meta( $listing_id, 'tpd_promo_title', $promo_title );
 			update_post_meta( $listing_id, 'tpd_promo_desc', $promo_desc );
 
-			// Associations & Conferences: Save upcoming conferences
+			// Associations & Conferences: Save upcoming conferences with title, start/end dates, location, file & link
 			$conferences = array();
 			if ( isset( $_POST['conferences_json'] ) ) {
 				$dec = json_decode( wp_unslash( $_POST['conferences_json'] ), true );
 				if ( is_array( $dec ) ) {
 					foreach ( $dec as $c ) {
-						if ( ! empty( $c['name'] ) ) {
+						$c_title = ! empty( $c['name'] ) ? $c['name'] : ( ! empty( $c['title'] ) ? $c['title'] : '' );
+						if ( ! empty( $c_title ) ) {
 							$conferences[] = array(
-								'name'     => sanitize_text_field( $c['name'] ),
-								'date'     => sanitize_text_field( isset( $c['date'] ) ? $c['date'] : '' ),
-								'location' => sanitize_text_field( isset( $c['location'] ) ? $c['location'] : '' ),
-								'url'      => esc_url_raw( isset( $c['url'] ) ? $c['url'] : '' ),
+								'name'       => sanitize_text_field( $c_title ),
+								'title'      => sanitize_text_field( $c_title ),
+								'start_date' => sanitize_text_field( isset( $c['start_date'] ) ? $c['start_date'] : '' ),
+								'end_date'   => sanitize_text_field( isset( $c['end_date'] ) ? $c['end_date'] : '' ),
+								'date'       => sanitize_text_field( isset( $c['date'] ) ? $c['date'] : '' ),
+								'location'   => sanitize_text_field( isset( $c['location'] ) ? $c['location'] : '' ),
+								'file_url'   => esc_url_raw( isset( $c['file_url'] ) ? $c['file_url'] : '' ),
+								'url'        => esc_url_raw( isset( $c['url'] ) ? $c['url'] : '' ),
 							);
 						}
 					}
 				}
 			} elseif ( isset( $_POST['conferences'] ) && is_array( $_POST['conferences'] ) ) {
 				foreach ( wp_unslash( $_POST['conferences'] ) as $c ) {
-					if ( ! empty( $c['name'] ) ) {
+					$c_title = ! empty( $c['name'] ) ? $c['name'] : ( ! empty( $c['title'] ) ? $c['title'] : '' );
+					if ( ! empty( $c_title ) ) {
 						$conferences[] = array(
-							'name'     => sanitize_text_field( $c['name'] ),
-							'date'     => sanitize_text_field( isset( $c['date'] ) ? $c['date'] : '' ),
-							'location' => sanitize_text_field( isset( $c['location'] ) ? $c['location'] : '' ),
-							'url'      => esc_url_raw( isset( $c['url'] ) ? $c['url'] : '' ),
+							'name'       => sanitize_text_field( $c_title ),
+							'title'      => sanitize_text_field( $c_title ),
+							'start_date' => sanitize_text_field( isset( $c['start_date'] ) ? $c['start_date'] : '' ),
+							'end_date'   => sanitize_text_field( isset( $c['end_date'] ) ? $c['end_date'] : '' ),
+							'date'       => sanitize_text_field( isset( $c['date'] ) ? $c['date'] : '' ),
+							'location'   => sanitize_text_field( isset( $c['location'] ) ? $c['location'] : '' ),
+							'file_url'   => esc_url_raw( isset( $c['file_url'] ) ? $c['file_url'] : '' ),
+							'url'        => esc_url_raw( isset( $c['url'] ) ? $c['url'] : '' ),
 						);
 					}
 				}
@@ -690,33 +742,55 @@ class TPD_Tool_Profile_Editor {
 		$faqs         = get_post_meta( $listing_id, '_tpd_supplier_faqs', true );
 		$videos       = get_post_meta( $listing_id, '_tpd_supplier_videos', true );
 
+		$dest_terms   = wp_get_object_terms( $listing_id, 'travel_destination', array( 'fields' => 'names' ) );
+		$dest_names   = ( ! empty( $dest_terms ) && ! is_wp_error( $dest_terms ) ) ? $dest_terms : array();
+
+		$style_terms  = wp_get_object_terms( $listing_id, 'travel_style', array( 'fields' => 'names' ) );
+		$style_names  = ( ! empty( $style_terms ) && ! is_wp_error( $style_terms ) ) ? $style_terms : array();
+
+		$stype_terms  = wp_get_object_terms( $listing_id, 'supplier_type', array( 'fields' => 'names' ) );
+		$stype_name   = ( ! empty( $stype_terms ) && ! is_wp_error( $stype_terms ) ) ? $stype_terms[0] : ( get_post_meta( $listing_id, 'tpd_supplier_type', true ) ?: '' );
+
 		wp_send_json_success( array(
-			'listing_id'   => $listing_id,
-			'is_enhanced'  => $is_enhanced,
-			'company_name' => $post->post_title,
-			'tagline'      => get_post_meta( $listing_id, 'tpd_tagline', true ) ?: '',
-			'phone'        => get_post_meta( $listing_id, 'tpd_primary_rep_phone', true ) ?: '',
-			'booking_url'  => get_post_meta( $listing_id, 'tpd_booking_portal_url', true ) ?: '',
-			'headquarters' => get_post_meta( $listing_id, 'tpd_headquarters', true ) ?: '',
-			'country'      => get_post_meta( $listing_id, 'tpd_country_of_residence', true ) ?: '',
-			'rewards'      => get_post_meta( $listing_id, 'tpd_agent_rewards', true ) ?: 'No',
-			'rewards_desc' => get_post_meta( $listing_id, 'tpd_agent_rewards_desc', true ) ?: '',
-			'ustoa'        => get_post_meta( $listing_id, 'tpd_member_ustoa', true ) ?: 'No',
-			'asta'         => get_post_meta( $listing_id, 'tpd_member_asta', true ) ?: 'No',
-			'clia'         => get_post_meta( $listing_id, 'tpd_member_clia', true ) ?: 'No',
-			'associations' => get_post_meta( $listing_id, 'tpd_associations', true ) ?: '',
-			'description'  => $post->post_content ?: '',
-			'logo_url'     => get_post_meta( $listing_id, 'tpd_logo_url', true ) ?: '',
-			'banner_url'   => get_post_meta( $listing_id, 'tpd_banner_url', true ) ?: '',
-			'video_url'    => get_post_meta( $listing_id, 'tpd_main_video_url', true ) ?: '',
-			'promo_title'  => get_post_meta( $listing_id, 'tpd_promo_title', true ) ?: '',
-			'promo_desc'   => get_post_meta( $listing_id, 'tpd_promo_desc', true ) ?: '',
-			'gallery'      => is_array( $gallery ) ? $gallery : array(),
-			'conferences'  => is_array( $conferences ) ? $conferences : array(),
-			'resources'    => is_array( $resources ) ? $resources : array(),
-			'faqs'         => is_array( $faqs ) ? $faqs : array(),
-			'videos'       => is_array( $videos ) ? $videos : array(),
-			'public_url'   => get_permalink( $listing_id ),
+			'listing_id'             => $listing_id,
+			'is_enhanced'            => $is_enhanced,
+			'company_name'           => $post->post_title,
+			'tagline'                => get_post_meta( $listing_id, 'tpd_tagline', true ) ?: '',
+			'phone'                  => get_post_meta( $listing_id, 'tpd_primary_rep_phone', true ) ?: '',
+			'booking_url'            => get_post_meta( $listing_id, 'tpd_booking_portal_url', true ) ?: '',
+			'education_training_url' => get_post_meta( $listing_id, 'tpd_education_training_url', true ) ?: '',
+			'additional_website'     => get_post_meta( $listing_id, 'tpd_additional_website', true ) ?: '',
+			'additional_phone_1'     => get_post_meta( $listing_id, 'tpd_additional_phone_1', true ) ?: '',
+			'additional_phone_2'     => get_post_meta( $listing_id, 'tpd_additional_phone_2', true ) ?: '',
+			'headquarters'           => get_post_meta( $listing_id, 'tpd_headquarters', true ) ?: '',
+			'country'                => get_post_meta( $listing_id, 'tpd_country_of_residence', true ) ?: '',
+			'social_facebook'        => get_post_meta( $listing_id, 'tpd_social_facebook', true ) ?: '',
+			'social_twitter'         => get_post_meta( $listing_id, 'tpd_social_twitter', true ) ?: '',
+			'social_youtube'         => get_post_meta( $listing_id, 'tpd_social_youtube', true ) ?: '',
+			'social_instagram'       => get_post_meta( $listing_id, 'tpd_social_instagram', true ) ?: '',
+			'social_tiktok'          => get_post_meta( $listing_id, 'tpd_social_tiktok', true ) ?: '',
+			'social_linkedin'        => get_post_meta( $listing_id, 'tpd_social_linkedin', true ) ?: '',
+			'destinations'           => $dest_names,
+			'travel_styles'          => $style_names,
+			'supplier_type'          => $stype_name,
+			'rewards'                => get_post_meta( $listing_id, 'tpd_agent_rewards', true ) ?: 'No',
+			'rewards_desc'           => get_post_meta( $listing_id, 'tpd_agent_rewards_desc', true ) ?: '',
+			'ustoa'                  => get_post_meta( $listing_id, 'tpd_member_ustoa', true ) ?: 'No',
+			'asta'                   => get_post_meta( $listing_id, 'tpd_member_asta', true ) ?: 'No',
+			'clia'                   => get_post_meta( $listing_id, 'tpd_member_clia', true ) ?: 'No',
+			'associations'           => get_post_meta( $listing_id, 'tpd_associations', true ) ?: '',
+			'description'            => $post->post_content ?: '',
+			'logo_url'               => get_post_meta( $listing_id, 'tpd_logo_url', true ) ?: '',
+			'banner_url'             => get_post_meta( $listing_id, 'tpd_banner_url', true ) ?: '',
+			'video_url'              => get_post_meta( $listing_id, 'tpd_main_video_url', true ) ?: '',
+			'promo_title'            => get_post_meta( $listing_id, 'tpd_promo_title', true ) ?: '',
+			'promo_desc'             => get_post_meta( $listing_id, 'tpd_promo_desc', true ) ?: '',
+			'gallery'                => is_array( $gallery ) ? $gallery : array(),
+			'conferences'            => is_array( $conferences ) ? $conferences : array(),
+			'resources'              => is_array( $resources ) ? $resources : array(),
+			'faqs'                   => is_array( $faqs ) ? $faqs : array(),
+			'videos'                 => is_array( $videos ) ? $videos : array(),
+			'public_url'             => get_permalink( $listing_id ),
 		) );
 	}
 
