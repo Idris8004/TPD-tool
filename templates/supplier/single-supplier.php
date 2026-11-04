@@ -161,13 +161,24 @@ if ( class_exists( 'TPD_Tool_Analytics' ) ) {
 						<p style="margin:0 0 10px; font-size:15px; color:#e2e8f0; text-shadow:0 1px 3px rgba(0,0,0,0.5);"><?php echo esc_html( $tagline ); ?></p>
 					<?php endif; ?>
 
-					<div style="display:flex; gap:14px; flex-wrap:wrap; font-size:13px; color:#cbd5e1;">
+					<div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap; font-size:13px; color:#cbd5e1;">
 						<span><i class="fa-solid fa-location-dot text-gold"></i> <?php echo esc_html( $headquarters ); ?></span>
 						<?php if ( $country && $country !== $headquarters ) : ?>
 							<span><i class="fa-solid fa-earth-americas text-blue"></i> <?php echo esc_html( $country ); ?></span>
 						<?php endif; ?>
 						<?php if ( $phone ) : ?>
 							<span><i class="fa-solid fa-phone text-green"></i> <?php echo esc_html( $phone ); ?></span>
+						<?php endif; ?>
+
+						<?php if ( $social_facebook || $social_twitter || $social_youtube || $social_instagram || $social_tiktok || $social_linkedin ) : ?>
+							<div style="display:inline-flex; gap:6px; align-items:center; margin-left:6px; padding-left:12px; border-left:1px solid rgba(255,255,255,0.2);">
+								<?php if ( $social_facebook ) : ?><a href="<?php echo esc_url( $social_facebook ); ?>" target="_blank" rel="noopener noreferrer" style="width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,0.2); backdrop-filter:blur(4px); color:#fff; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; font-size:12px; transition:background 0.2s;" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a><?php endif; ?>
+								<?php if ( $social_twitter ) : ?><a href="<?php echo esc_url( $social_twitter ); ?>" target="_blank" rel="noopener noreferrer" style="width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,0.2); backdrop-filter:blur(4px); color:#fff; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; font-size:12px; transition:background 0.2s;" title="Twitter / X"><i class="fa-brands fa-x-twitter"></i></a><?php endif; ?>
+								<?php if ( $social_youtube ) : ?><a href="<?php echo esc_url( $social_youtube ); ?>" target="_blank" rel="noopener noreferrer" style="width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,0.2); backdrop-filter:blur(4px); color:#fff; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; font-size:12px; transition:background 0.2s;" title="YouTube"><i class="fa-brands fa-youtube"></i></a><?php endif; ?>
+								<?php if ( $social_instagram ) : ?><a href="<?php echo esc_url( $social_instagram ); ?>" target="_blank" rel="noopener noreferrer" style="width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,0.2); backdrop-filter:blur(4px); color:#fff; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; font-size:12px; transition:background 0.2s;" title="Instagram"><i class="fa-brands fa-instagram"></i></a><?php endif; ?>
+								<?php if ( $social_tiktok ) : ?><a href="<?php echo esc_url( $social_tiktok ); ?>" target="_blank" rel="noopener noreferrer" style="width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,0.2); backdrop-filter:blur(4px); color:#fff; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; font-size:12px; transition:background 0.2s;" title="TikTok"><i class="fa-brands fa-tiktok"></i></a><?php endif; ?>
+								<?php if ( $social_linkedin ) : ?><a href="<?php echo esc_url( $social_linkedin ); ?>" target="_blank" rel="noopener noreferrer" style="width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,0.2); backdrop-filter:blur(4px); color:#fff; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; font-size:12px; transition:background 0.2s;" title="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a><?php endif; ?>
+							</div>
 						<?php endif; ?>
 					</div>
 				</div>
