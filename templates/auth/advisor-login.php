@@ -289,12 +289,6 @@ if ( $is_standalone ) {
 				</label>
 				<a href="mailto:support@travelpartnerdirectory.com" class="tpd-ml-underline-link"><?php esc_html_e( 'Contact Support', 'tpd-tool' ); ?></a>
 			</div>
-
-			<div style="margin-top:16px; text-align:center; font-size:12px;">
-				<a href="<?php echo esc_url( home_url( '/admin-login/' ) ); ?>" style="color:rgba(255,255,255,0.65); text-decoration:none; font-weight:600;">
-					<i class="fa-solid fa-shield-halved text-gold"></i> <?php esc_html_e( 'Super Admin Portal', 'tpd-tool' ); ?>
-				</a>
-			</div>
 		</form>
 
 		<!-- Inline Forgot Password Box (No wp-login.php redirect) -->

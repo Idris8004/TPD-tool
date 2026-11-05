@@ -735,6 +735,151 @@
 			});
 		});
 
+		// ---------------------------------------------------------------------
+		// 15. Super Admin Account Creation & Credential Management
+		// ---------------------------------------------------------------------
+		function generateSecurePassword(length) {
+			length = length || 14;
+			var charset = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%&*';
+			var retVal = '';
+			for (var i = 0, n = charset.length; i < length; ++i) {
+				retVal += charset.charAt(Math.floor(Math.random() * n));
+			}
+			return retVal;
+		}
+
+		// Open Create Super Admin Modal
+		$(document).on('click', '#tpd-btn-open-create-admin', function(e) {
+			e.preventDefault();
+			var $form = $('#tpd-sa-create-admin-form');
+			if ($form.length) {
+				$form[0].reset();
+			}
+			$('#tpd-sa-create-admin-modal').addClass('open').fadeIn(150);
+		});
+
+		// Generate Password inside Create Admin Form
+		$(document).on('click', '#csa_btn_gen_pass', function(e) {
+			e.preventDefault();
+			var pass = generateSecurePassword(14);
+			$('#csa_password').attr('type', 'text').val(pass);
+		});
+
+		// Submit Create Super Admin Form
+		$(document).on('submit', '#tpd-sa-create-admin-form', function(e) {
+			e.preventDefault();
+			var $form = $(this);
+			var $btn = $form.find('button[type="submit"]');
+			var origHtml = $btn.html();
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Creating...');
+
+			var formData = $form.serialize();
+			formData += '&action=tpd_admin_create_super_admin&nonce=' + encodeURIComponent(adminNonce);
+
+			$.ajax({
+				url: ajaxUrl,
+				type: 'POST',
+				data: formData,
+				success: function(res) {
+					$btn.prop('disabled', false).html(origHtml);
+					if (res && res.success) {
+						$('#tpd-sa-create-admin-modal').removeClass('open').fadeOut(150);
+						showAdminToast(res.data.message || 'Super Admin account created successfully!');
+						setTimeout(function() {
+							window.location.reload();
+						}, 1200);
+					} else {
+						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to create Super Admin account.');
+					}
+				},
+				error: function() {
+					$btn.prop('disabled', false).html(origHtml);
+					alert('Network error while creating Super Admin account.');
+				}
+			});
+		});
+
+		// Open Change Admin Password Modal
+		$(document).on('click', '.tpd-btn-admin-change-pass', function(e) {
+			e.preventDefault();
+			var uid = $(this).attr('data-user-id');
+			var uname = $(this).attr('data-username');
+			$('#cap_user_id').val(uid);
+			$('#cap_target_username').text(uname);
+			$('#cap_new_password').attr('type', 'password').val('');
+			$('#tpd-sa-admin-pass-modal').addClass('open').fadeIn(150);
+		});
+
+		// Generate Password inside Admin Password Modal
+		$(document).on('click', '#cap_btn_gen_pass', function(e) {
+			e.preventDefault();
+			var pass = generateSecurePassword(14);
+			$('#cap_new_password').attr('type', 'text').val(pass);
+		});
+
+		// Submit Change Admin Password Form
+		$(document).on('submit', '#tpd-sa-admin-pass-form', function(e) {
+			e.preventDefault();
+			var $form = $(this);
+			var $btn = $form.find('button[type="submit"]');
+			var origHtml = $btn.html();
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Updating...');
+
+			var formData = $form.serialize();
+			formData += '&action=tpd_admin_update_admin_password&nonce=' + encodeURIComponent(adminNonce);
+
+			$.ajax({
+				url: ajaxUrl,
+				type: 'POST',
+				data: formData,
+				success: function(res) {
+					$btn.prop('disabled', false).html(origHtml);
+					if (res && res.success) {
+						$('#tpd-sa-admin-pass-modal').removeClass('open').fadeOut(150);
+						showAdminToast(res.data.message || 'Password updated successfully!');
+					} else {
+						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to update password.');
+					}
+				},
+				error: function() {
+					$btn.prop('disabled', false).html(origHtml);
+					alert('Network error while updating password.');
+				}
+			});
+		});
+
+		// Delete Super Admin
+		$(document).on('click', '.tpd-btn-admin-del', function(e) {
+			e.preventDefault();
+			var uid = $(this).attr('data-user-id');
+			var uname = $(this).attr('data-username');
+			if (!confirm('Are you sure you want to permanently delete Super Admin account "' + uname + '"? This action cannot be undone.')) {
+				return;
+			}
+
+			var $row = $('#sa-admin-row-' + uid);
+			$.ajax({
+				url: ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'tpd_admin_delete_super_admin',
+					user_id: uid,
+					nonce: adminNonce
+				},
+				success: function(res) {
+					if (res && res.success) {
+						$row.fadeOut(300, function() { $(this).remove(); });
+						showAdminToast(res.data.message || 'Super Admin deleted.');
+					} else {
+						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to delete administrator.');
+					}
+				},
+				error: function() {
+					alert('Network error while deleting administrator.');
+				}
+			});
+		});
+
 		function showAdminToast(msg) {
 			var $toast = $('<div class="tpd-admin-toast"><i class="fa-solid fa-circle-check" style="color:#4ade80;"></i> ' + msg + '</div>');
 			$('body').append($toast);

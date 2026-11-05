@@ -282,7 +282,6 @@ if ( $is_standalone ) {
 			<div class="tpd-sl-switch-links">
 				<span><?php esc_html_e( 'New Supplier?', 'tpd-tool' ); ?> <a href="<?php echo esc_url( home_url( '/supplier-registration/' ) ); ?>"><?php esc_html_e( 'Register Partner Account', 'tpd-tool' ); ?></a></span>
 				<span><?php esc_html_e( 'Travel Advisor?', 'tpd-tool' ); ?> <a href="<?php echo esc_url( home_url( '/advisor-login/' ) ); ?>"><?php esc_html_e( 'Member Login', 'tpd-tool' ); ?></a></span>
-				<span><a href="<?php echo esc_url( home_url( '/admin-login/' ) ); ?>" style="color:#006d77; opacity:0.8;"><i class="fa-solid fa-shield-halved"></i> <?php esc_html_e( 'Admin Portal', 'tpd-tool' ); ?></a></span>
 			</div>
 		</div>
 	</div>

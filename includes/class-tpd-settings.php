@@ -28,6 +28,9 @@ class TPD_Tool_Settings {
 		add_action( 'wp_ajax_tpd_admin_get_user', array( __CLASS__, 'ajax_admin_get_user' ) );
 		add_action( 'wp_ajax_tpd_admin_delete_user', array( __CLASS__, 'ajax_admin_delete_user' ) );
 		add_action( 'wp_ajax_tpd_admin_toggle_user_status', array( __CLASS__, 'ajax_admin_toggle_user_status' ) );
+		add_action( 'wp_ajax_tpd_admin_create_super_admin', array( __CLASS__, 'ajax_admin_create_super_admin' ) );
+		add_action( 'wp_ajax_tpd_admin_update_admin_password', array( __CLASS__, 'ajax_admin_update_admin_password' ) );
+		add_action( 'wp_ajax_tpd_admin_delete_super_admin', array( __CLASS__, 'ajax_admin_delete_super_admin' ) );
 
 		// Plans & Payment AJAX Handlers
 		add_action( 'wp_ajax_tpd_admin_save_plan', array( __CLASS__, 'ajax_admin_save_plan' ) );
@@ -1387,6 +1390,130 @@ class TPD_Tool_Settings {
 		wp_send_json_success( array(
 			'message'      => 'Your account and directory profile have been permanently deleted.',
 			'redirect_url' => home_url( '/' ),
+		) );
+	}
+
+	/**
+	 * AJAX: Create New Super Admin Account
+	 */
+	public static function ajax_admin_create_super_admin() {
+		check_ajax_referer( 'tpd_admin_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized: manage_options capability required.', 'tpd-tool' ) ) );
+		}
+
+		$first_name = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
+		$last_name  = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
+		$email      = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+		$username   = isset( $_POST['username'] ) ? sanitize_user( wp_unslash( $_POST['username'] ) ) : '';
+		$password   = isset( $_POST['password'] ) ? (string) wp_unslash( $_POST['password'] ) : '';
+
+		if ( empty( $first_name ) || empty( $email ) || empty( $password ) ) {
+			wp_send_json_error( array( 'message' => __( 'First name, email address, and password are required.', 'tpd-tool' ) ) );
+		}
+
+		if ( ! is_email( $email ) ) {
+			wp_send_json_error( array( 'message' => __( 'Please enter a valid email address.', 'tpd-tool' ) ) );
+		}
+
+		if ( email_exists( $email ) ) {
+			wp_send_json_error( array( 'message' => __( 'An account with this email address already exists.', 'tpd-tool' ) ) );
+		}
+
+		if ( empty( $username ) ) {
+			$username = sanitize_user( current( explode( '@', $email ) ) );
+		}
+
+		if ( username_exists( $username ) ) {
+			$username .= '_' . wp_rand( 10, 999 );
+		}
+
+		$new_uid = wp_create_user( $username, $password, $email );
+		if ( is_wp_error( $new_uid ) ) {
+			wp_send_json_error( array( 'message' => $new_uid->get_error_message() ) );
+		}
+
+		$display_name = trim( $first_name . ' ' . $last_name );
+		wp_update_user( array(
+			'ID'           => $new_uid,
+			'first_name'   => $first_name,
+			'last_name'    => $last_name,
+			'display_name' => $display_name ?: $username,
+			'role'         => 'administrator',
+		) );
+
+		wp_send_json_success( array(
+			'message'  => sprintf( __( 'Super Admin account "%s" created successfully! They can now log in at /admin-login/.', 'tpd-tool' ), $username ),
+			'user_id'  => $new_uid,
+			'username' => $username,
+			'email'    => $email,
+		) );
+	}
+
+	/**
+	 * AJAX: Update Super Admin Password
+	 */
+	public static function ajax_admin_update_admin_password() {
+		check_ajax_referer( 'tpd_admin_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized: manage_options capability required.', 'tpd-tool' ) ) );
+		}
+
+		$target_uid = isset( $_POST['user_id'] ) ? absint( $_POST['user_id'] ) : 0;
+		$new_pass   = isset( $_POST['new_password'] ) ? (string) wp_unslash( $_POST['new_password'] ) : '';
+
+		if ( ! $target_uid || empty( $new_pass ) ) {
+			wp_send_json_error( array( 'message' => __( 'Target user ID and new password are required.', 'tpd-tool' ) ) );
+		}
+
+		if ( strlen( $new_pass ) < 6 ) {
+			wp_send_json_error( array( 'message' => __( 'Password must be at least 6 characters long.', 'tpd-tool' ) ) );
+		}
+
+		$target_user = get_userdata( $target_uid );
+		if ( ! $target_user ) {
+			wp_send_json_error( array( 'message' => __( 'Target user account not found.', 'tpd-tool' ) ) );
+		}
+
+		wp_set_password( $new_pass, $target_uid );
+
+		wp_send_json_success( array(
+			'message' => sprintf( __( 'Password for administrator "%s" updated successfully!', 'tpd-tool' ), $target_user->user_login ),
+		) );
+	}
+
+	/**
+	 * AJAX: Delete Super Admin Account
+	 */
+	public static function ajax_admin_delete_super_admin() {
+		check_ajax_referer( 'tpd_admin_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized: manage_options capability required.', 'tpd-tool' ) ) );
+		}
+
+		$target_uid  = isset( $_POST['user_id'] ) ? absint( $_POST['user_id'] ) : 0;
+		$current_uid = get_current_user_id();
+
+		if ( $target_uid === $current_uid ) {
+			wp_send_json_error( array( 'message' => __( 'Security Protection: You cannot delete your own active administrator account!', 'tpd-tool' ) ) );
+		}
+
+		if ( ! $target_uid ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid user ID.', 'tpd-tool' ) ) );
+		}
+
+		require_once ABSPATH . 'wp-admin/includes/user.php';
+		$deleted = wp_delete_user( $target_uid, $current_uid );
+
+		if ( ! $deleted ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to delete administrator account.', 'tpd-tool' ) ) );
+		}
+
+		wp_send_json_success( array(
+			'message' => __( 'Administrator account deleted successfully.', 'tpd-tool' ),
 		) );
 	}
 }

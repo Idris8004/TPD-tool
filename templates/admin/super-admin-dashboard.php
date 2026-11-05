@@ -272,6 +272,11 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 					<i class="fa-solid fa-code"></i> <span><?php esc_html_e( 'Shortcodes & Dev Hub', 'tpd-tool' ); ?></span>
 				</a>
 			</li>
+			<li>
+				<a href="#sa-admin-users" class="tpd-sa-nav-link" data-pane="sa-admin-users">
+					<i class="fa-solid fa-user-shield text-gold"></i> <span><?php esc_html_e( 'Super Admins & Security', 'tpd-tool' ); ?></span>
+				</a>
+			</li>
 			<li style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;">
 				<a href="<?php echo esc_url( wp_logout_url( home_url( '/admin-login/?loggedout=1' ) ) ); ?>" class="tpd-sa-nav-link" style="color:#fca5a5;">
 					<i class="fa-solid fa-arrow-right-from-bracket"></i> <span><?php esc_html_e( 'Log Out of Admin Hub', 'tpd-tool' ); ?></span>
@@ -1866,6 +1871,96 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 				</div>
 			</div>
 
+			<!-- =========================================================================
+			     PANE 12: SUPER ADMINS & CREDENTIALS MANAGEMENT
+			     ========================================================================= -->
+			<div id="sa-admin-users" class="tpd-sa-pane">
+				<div class="tpd-sa-card">
+					<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:20px;">
+						<div>
+							<h3 class="tpd-sa-card-title" style="margin:0 0 4px;">
+								<i class="fa-solid fa-user-shield text-gold"></i> <?php esc_html_e( 'Super Administrators & Access Credentials', 'tpd-tool' ); ?>
+							</h3>
+							<p style="font-size:13px; color:#64748b; margin:0;">
+								<?php esc_html_e( 'Manage administrative users who have access to the Super Admin Control Hub and /admin-login/. Create new administrators or change credentials directly.', 'tpd-tool' ); ?>
+							</p>
+						</div>
+						<div>
+							<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-darkblue" id="tpd-btn-open-create-admin" style="background:#0b1526; border:1px solid rgba(245,158,11,0.4);">
+								<i class="fa-solid fa-user-plus text-gold"></i> <?php esc_html_e( 'Create Super Admin Account', 'tpd-tool' ); ?>
+							</button>
+						</div>
+					</div>
+
+					<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 16px; margin-bottom:20px; font-size:13px; color:#475569; display:flex; align-items:center; gap:10px;">
+						<i class="fa-solid fa-circle-info text-blue" style="font-size:16px;"></i>
+						<span>
+							<?php esc_html_e( 'Super Admins can log in directly at ', 'tpd-tool' ); ?>
+							<a href="<?php echo esc_url( home_url( '/admin-login/' ) ); ?>" target="_blank" style="color:#00798c; font-weight:700;"><code><?php echo esc_html( home_url( '/admin-login/' ) ); ?></code></a>.
+							<?php esc_html_e( 'This portal is separated from the public directory and WordPress backend.', 'tpd-tool' ); ?>
+						</span>
+					</div>
+
+					<?php
+					$admin_accounts = get_users( array(
+						'role'    => 'administrator',
+						'orderby' => 'registered',
+						'order'   => 'ASC',
+					) );
+					$cur_uid = get_current_user_id();
+					?>
+
+					<table class="tpd-sa-table" id="tpd-sa-admins-table">
+						<thead>
+							<tr>
+								<th>S.No.</th>
+								<th>Administrator Name</th>
+								<th>Login Username</th>
+								<th>Email Address</th>
+								<th>Registered Date</th>
+								<th>Security Status</th>
+								<th>Actions</th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php
+							$a_idx = 1;
+							foreach ( $admin_accounts as $adm ) :
+								$is_me = ( (int) $adm->ID === (int) $cur_uid );
+							?>
+								<tr id="sa-admin-row-<?php echo esc_attr( $adm->ID ); ?>">
+									<td><?php echo esc_html( $a_idx++ ); ?></td>
+									<td>
+										<strong><?php echo esc_html( $adm->display_name ?: $adm->user_login ); ?></strong>
+										<?php if ( $is_me ) : ?>
+											<span style="background:#e0f2fe; color:#0369a1; font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; margin-left:6px;">(You)</span>
+										<?php endif; ?>
+									</td>
+									<td><code style="background:#f1f5f9; padding:3px 8px; border-radius:4px; font-weight:700; color:#0f172a;"><?php echo esc_html( $adm->user_login ); ?></code></td>
+									<td><?php echo esc_html( $adm->user_email ); ?></td>
+									<td><?php echo esc_html( date_i18n( 'M j, Y', strtotime( $adm->user_registered ) ) ); ?></td>
+									<td>
+										<span style="background:#ecfdf5; color:#047857; font-size:11px; font-weight:700; padding:3px 8px; border-radius:4px; display:inline-flex; align-items:center; gap:4px;">
+											<i class="fa-solid fa-shield-halved text-gold"></i> Super Admin
+										</span>
+									</td>
+									<td style="white-space:nowrap;">
+										<button type="button" class="tpd-act-btn tpd-act-edit tpd-btn-admin-change-pass" data-user-id="<?php echo esc_attr( $adm->ID ); ?>" data-username="<?php echo esc_attr( $adm->user_login ); ?>" title="Change Password">
+											<i class="fa-solid fa-key"></i>
+										</button>
+										<?php if ( ! $is_me ) : ?>
+											<button type="button" class="tpd-act-btn tpd-act-del tpd-btn-admin-del" data-user-id="<?php echo esc_attr( $adm->ID ); ?>" data-username="<?php echo esc_attr( $adm->user_login ); ?>" title="Delete Admin">
+												<i class="fa-regular fa-trash-can"></i>
+											</button>
+										<?php endif; ?>
+									</td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+				</div>
+			</div>
+
 		</div>
 	</div>
 </div>
@@ -1981,6 +2076,102 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 			<div style="text-align:right; margin-top:16px;">
 				<button type="submit" class="tpd-btn tpd-btn-darkblue" style="background:#164e87;">
 					<i class="fa-solid fa-floppy-disk"></i> <?php esc_html_e( 'Save User Account', 'tpd-tool' ); ?>
+				</button>
+			</div>
+		</form>
+	</div>
+</div>
+
+<!-- =========================================================================
+     MODAL 3: CREATE NEW SUPER ADMIN ACCOUNT
+     ========================================================================= -->
+<div class="tpd-sa-modal-backdrop" id="tpd-sa-create-admin-modal">
+	<div class="tpd-sa-modal" style="max-width:540px;">
+		<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:12px; margin-bottom:16px;">
+			<h3 style="margin:0; font-size:18px; color:#0b1526;">
+				<i class="fa-solid fa-user-shield text-gold"></i> <?php esc_html_e( 'Create Super Admin Account', 'tpd-tool' ); ?>
+			</h3>
+			<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="jQuery('#tpd-sa-create-admin-modal').removeClass('open').fadeOut(150);">Cancel</button>
+		</div>
+
+		<form id="tpd-sa-create-admin-form">
+			<div class="tpd-form-grid-2">
+				<div class="tpd-form-group">
+					<label><?php esc_html_e( 'First Name *', 'tpd-tool' ); ?></label>
+					<input type="text" name="first_name" id="csa_first_name" required class="tpd-input" placeholder="e.g. John">
+				</div>
+				<div class="tpd-form-group">
+					<label><?php esc_html_e( 'Last Name', 'tpd-tool' ); ?></label>
+					<input type="text" name="last_name" id="csa_last_name" class="tpd-input" placeholder="e.g. Doe">
+				</div>
+			</div>
+
+			<div class="tpd-form-group">
+				<label><?php esc_html_e( 'Email Address *', 'tpd-tool' ); ?></label>
+				<input type="email" name="email" id="csa_email" required class="tpd-input" placeholder="admin@example.com">
+			</div>
+
+			<div class="tpd-form-group">
+				<label><?php esc_html_e( 'Username (optional - will use email prefix if blank)', 'tpd-tool' ); ?></label>
+				<input type="text" name="username" id="csa_username" class="tpd-input" placeholder="e.g. jdoe_admin">
+			</div>
+
+			<div class="tpd-form-group">
+				<label><?php esc_html_e( 'Password *', 'tpd-tool' ); ?></label>
+				<div style="display:flex; gap:8px;">
+					<input type="password" name="password" id="csa_password" required class="tpd-input" style="flex:1;" placeholder="Minimum 8 characters">
+					<button type="button" class="tpd-btn tpd-btn-outline tpd-btn-sm" id="csa_btn_gen_pass" title="Generate Secure Password">
+						<i class="fa-solid fa-wand-magic-sparkles"></i> Generate
+					</button>
+				</div>
+			</div>
+
+			<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; margin:16px 0; font-size:12.5px; color:#64748b;">
+				<i class="fa-solid fa-circle-info text-blue"></i>
+				<?php esc_html_e( 'This account will have full administrator capabilities and can log in at /admin-login/.', 'tpd-tool' ); ?>
+			</div>
+
+			<div style="text-align:right;">
+				<button type="submit" class="tpd-btn tpd-btn-darkblue" style="background:#0b1526;">
+					<i class="fa-solid fa-check"></i> <?php esc_html_e( 'Create Super Admin', 'tpd-tool' ); ?>
+				</button>
+			</div>
+		</form>
+	</div>
+</div>
+
+<!-- =========================================================================
+     MODAL 4: CHANGE SUPER ADMIN PASSWORD
+     ========================================================================= -->
+<div class="tpd-sa-modal-backdrop" id="tpd-sa-admin-pass-modal">
+	<div class="tpd-sa-modal" style="max-width:480px;">
+		<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:12px; margin-bottom:16px;">
+			<h3 style="margin:0; font-size:18px; color:#0b1526;">
+				<i class="fa-solid fa-key text-gold"></i> <?php esc_html_e( 'Change Administrator Password', 'tpd-tool' ); ?>
+			</h3>
+			<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="jQuery('#tpd-sa-admin-pass-modal').removeClass('open').fadeOut(150);">Cancel</button>
+		</div>
+
+		<form id="tpd-sa-admin-pass-form">
+			<input type="hidden" name="user_id" id="cap_user_id" value="0">
+			<p style="font-size:13.5px; color:#475569; margin:0 0 16px;">
+				<?php esc_html_e( 'Updating password for administrator: ', 'tpd-tool' ); ?>
+				<strong id="cap_target_username" style="color:#0f172a;"></strong>
+			</p>
+
+			<div class="tpd-form-group">
+				<label><?php esc_html_e( 'New Password *', 'tpd-tool' ); ?></label>
+				<div style="display:flex; gap:8px;">
+					<input type="password" name="new_password" id="cap_new_password" required class="tpd-input" style="flex:1;" placeholder="Enter new secure password">
+					<button type="button" class="tpd-btn tpd-btn-outline tpd-btn-sm" id="cap_btn_gen_pass" title="Generate Secure Password">
+						<i class="fa-solid fa-wand-magic-sparkles"></i> Generate
+					</button>
+				</div>
+			</div>
+
+			<div style="text-align:right; margin-top:20px;">
+				<button type="submit" class="tpd-btn tpd-btn-darkblue" style="background:#0b1526;">
+					<i class="fa-solid fa-floppy-disk"></i> <?php esc_html_e( 'Update Password', 'tpd-tool' ); ?>
 				</button>
 			</div>
 		</form>
