@@ -29,7 +29,7 @@ if ( ! current_user_can( 'manage_options' ) ) {
 				<i class="fa-solid fa-shield-halved" style="font-size: 48px; color: #d97706; margin-bottom: 16px;"></i>
 				<h2 style="font-size: 22px; font-weight: 800; color: #0b1526;"><?php esc_html_e( 'Administrator Access Required', 'tpd-tool' ); ?></h2>
 				<p style="color: #64748b; font-size: 14px; margin: 12px 0 24px; line-height: 1.5;"><?php esc_html_e( 'Please log in with an administrator account to access the TPD Super Admin Control Hub.', 'tpd-tool' ); ?></p>
-				<a href="<?php echo esc_url( wp_login_url( home_url( '/tpd-admin/' ) ) ); ?>" class="tpd-btn tpd-btn-darkblue" style="padding: 12px 24px; text-decoration:none;">
+				<a href="<?php echo esc_url( home_url( '/admin-login/?redirect_to=' . urlencode( home_url( '/tpd-admin/' ) ) ) ); ?>" class="tpd-btn tpd-btn-darkblue" style="padding: 12px 24px; text-decoration:none;">
 					<i class="fa-solid fa-right-to-bracket"></i> <?php esc_html_e( 'Log In as Administrator', 'tpd-tool' ); ?>
 				</a>
 			</div>
@@ -272,6 +272,11 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 					<i class="fa-solid fa-code"></i> <span><?php esc_html_e( 'Shortcodes & Dev Hub', 'tpd-tool' ); ?></span>
 				</a>
 			</li>
+			<li style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;">
+				<a href="<?php echo esc_url( wp_logout_url( home_url( '/admin-login/?loggedout=1' ) ) ); ?>" class="tpd-sa-nav-link" style="color:#fca5a5;">
+					<i class="fa-solid fa-arrow-right-from-bracket"></i> <span><?php esc_html_e( 'Log Out of Admin Hub', 'tpd-tool' ); ?></span>
+				</a>
+			</li>
 		</ul>
 	</aside>
 
@@ -295,6 +300,14 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 				<a href="<?php echo esc_url( home_url( '/supplier-dashboard/' ) ); ?>" target="_blank" class="tpd-btn tpd-btn-xs tpd-btn-outline-white" style="text-decoration:none;">
 					<i class="fa-solid fa-arrow-up-right-from-square"></i> <?php esc_html_e( 'Supplier Portal', 'tpd-tool' ); ?>
 				</a>
+				<div style="display:flex; align-items:center; gap:8px; margin-left:8px; padding-left:12px; border-left:1px solid rgba(255,255,255,0.2);">
+					<span style="font-size:12.5px; color:#e2e8f0; display:flex; align-items:center; gap:6px;">
+						<i class="fa-solid fa-user-shield text-gold"></i> <?php echo esc_html( wp_get_current_user()->display_name ?: 'Super Admin' ); ?>
+					</span>
+					<a href="<?php echo esc_url( wp_logout_url( home_url( '/admin-login/?loggedout=1' ) ) ); ?>" class="tpd-btn tpd-btn-xs" style="background:rgba(239,68,68,0.2); color:#fca5a5; border:1px solid rgba(239,68,68,0.4); text-decoration:none;" title="<?php esc_attr_e( 'Log Out of Super Admin Hub', 'tpd-tool' ); ?>">
+						<i class="fa-solid fa-power-off"></i> <?php esc_html_e( 'Log Out', 'tpd-tool' ); ?>
+					</a>
+				</div>
 			</div>
 		</header>
 
@@ -1733,6 +1746,18 @@ $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Prof
 								<div style="display:flex; align-items:center; gap:8px;">
 									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_supplier_login]</code>
 									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_supplier_login]'); alert('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
+								</div>
+							</div>
+
+							<div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:16px;">
+								<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+									<strong style="font-size:13.5px; color:#0f172a;">Super Admin Login Portal</strong>
+									<span style="font-size:10px; font-weight:800; background:#fef3c7; color:#b45309; padding:2px 6px; border-radius:4px;">SUPER ADMIN</span>
+								</div>
+								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Dedicated administrator-only login portal at /admin-login/ separated from WordPress backend.</p>
+								<div style="display:flex; align-items:center; gap:8px;">
+									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_admin_login]</code>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_admin_login]'); alert('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
 								</div>
 							</div>
 						</div>

@@ -155,7 +155,7 @@ class TPD_Tool_Roles {
 				wp_safe_redirect( add_query_arg( 'auth_required', '1', home_url( '/supplier-login/' ) ) );
 				exit;
 			} elseif ( 'admin' === $portal_type ) {
-				wp_safe_redirect( wp_login_url( home_url( '/tpd-admin/' ) ) );
+				wp_safe_redirect( add_query_arg( 'auth_required', '1', home_url( '/admin-login/' ) ) );
 				exit;
 			} else {
 				wp_safe_redirect( add_query_arg( 'auth_required', '1', home_url( '/advisor-login/' ) ) );
@@ -178,17 +178,9 @@ class TPD_Tool_Roles {
 			exit;
 		}
 
-		// 4. Super Admin Portal check
+		// 4. Super Admin Portal check - strictly requires administrator role
 		if ( 'admin' === $portal_type ) {
-			if ( self::is_advisor( $user_id ) ) {
-				wp_safe_redirect( home_url( '/advisor-dashboard/' ) );
-				exit;
-			}
-			if ( self::is_supplier( $user_id ) ) {
-				wp_safe_redirect( home_url( '/supplier-dashboard/' ) );
-				exit;
-			}
-			wp_safe_redirect( home_url( '/' ) );
+			wp_safe_redirect( add_query_arg( 'role_restricted', '1', home_url( '/admin-login/' ) ) );
 			exit;
 		}
 

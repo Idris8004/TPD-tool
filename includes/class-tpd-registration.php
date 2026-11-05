@@ -684,6 +684,14 @@ class TPD_Tool_Registration {
 		$is_adv   = TPD_Tool_Roles::is_advisor( $user->ID );
 		$is_supp  = TPD_Tool_Roles::is_supplier( $user->ID );
 
+		if ( 'admin' === $portal_type ) {
+			if ( ! $is_admin ) {
+				wp_send_json_error( array(
+					'message' => __( 'Access denied: Super Administrator privileges are required to log in here.', 'tpd-tool' ),
+				) );
+			}
+		}
+
 		if ( 'advisor' === $portal_type && ! $is_adv && ! $is_admin ) {
 			if ( $is_supp ) {
 				wp_send_json_error( array(
@@ -728,7 +736,13 @@ class TPD_Tool_Registration {
 		wp_set_current_user( $user->ID );
 		wp_set_auth_cookie( $user->ID, $remember, is_ssl() );
 
-		$redirect_url = ( 'supplier' === $portal_type ) ? home_url( '/supplier-dashboard/' ) : home_url( '/advisor-dashboard/' );
+		if ( 'admin' === $portal_type ) {
+			$redirect_url = ! empty( $_POST['redirect_to'] ) ? esc_url_raw( wp_unslash( $_POST['redirect_to'] ) ) : home_url( '/tpd-admin/' );
+		} elseif ( 'supplier' === $portal_type ) {
+			$redirect_url = home_url( '/supplier-dashboard/' );
+		} else {
+			$redirect_url = home_url( '/advisor-dashboard/' );
+		}
 
 		wp_send_json_success( array(
 			'message'      => __( 'Login successful! Redirecting to your dashboard...', 'tpd-tool' ),

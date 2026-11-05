@@ -45,6 +45,7 @@ class TPD_Tool_Elementor {
 		require_once TPD_TOOL_DIR . 'widgets/elementor/widget-upcoming-events.php';
 		require_once TPD_TOOL_DIR . 'widgets/elementor/widget-supplier-user-profile.php';
 		require_once TPD_TOOL_DIR . 'widgets/elementor/widget-supplier-account-info.php';
+		require_once TPD_TOOL_DIR . 'widgets/elementor/widget-admin-login.php';
 
 		$widgets_manager->register( new \TPD_Elementor_Advisor_Dashboard() );
 		$widgets_manager->register( new \TPD_Elementor_Supplier_Dashboard() );
@@ -52,6 +53,7 @@ class TPD_Tool_Elementor {
 		$widgets_manager->register( new \TPD_Elementor_Chat_Inbox() );
 		$widgets_manager->register( new \TPD_Elementor_Advisor_Login() );
 		$widgets_manager->register( new \TPD_Elementor_Supplier_Login() );
+		$widgets_manager->register( new \TPD_Elementor_Admin_Login() );
 		$widgets_manager->register( new \TPD_Elementor_Advisor_Registration() );
 		$widgets_manager->register( new \TPD_Elementor_Supplier_Registration() );
 		$widgets_manager->register( new \TPD_Elementor_Dynamic_Field() );

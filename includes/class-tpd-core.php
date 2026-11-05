@@ -25,6 +25,7 @@ class TPD_Tool_Core {
 		add_action( 'admin_init', array( $this, 'restrict_admin_access' ) );
 		add_action( 'after_setup_theme', array( $this, 'hide_admin_bar' ) );
 		add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
+		add_filter( 'login_redirect', array( $this, 'custom_login_redirect' ), 10, 3 );
 	}
 
 	public function enqueue_assets() {
@@ -161,6 +162,15 @@ class TPD_Tool_Core {
 			}
 		}
 
+		// Dedicated Super Admin Login Page
+		if ( in_array( $uri, array( 'admin-login', 'tpd-admin-login', 'super-admin-login' ), true ) || is_page( array( 'admin-login', 'tpd-admin-login', 'super-admin-login' ) ) ) {
+			$file = TPD_TOOL_DIR . 'templates/auth/admin-login.php';
+			if ( file_exists( $file ) ) {
+				status_header( 200 );
+				return $file;
+			}
+		}
+
 		// Public Supplier User / Representative Profile
 		if ( in_array( $uri, array( 'supplier-profile', 'rep-profile', 'supplier-rep-profile' ), true ) || is_page( array( 'supplier-profile', 'rep-profile', 'supplier-rep-profile' ) ) ) {
 			$file = TPD_TOOL_DIR . 'templates/supplier/supplier-user-profile.php';
@@ -238,6 +248,29 @@ class TPD_Tool_Core {
 		add_filter( 'admin_footer_text', '__return_empty_string', 999 );
 		add_filter( 'update_footer', '__return_empty_string', 999 );
 		include TPD_TOOL_DIR . 'templates/admin/super-admin-dashboard.php';
+	}
+
+	public function custom_login_redirect( $redirect_to, $requested_redirect_to, $user ) {
+		if ( ! is_a( $user, 'WP_User' ) ) {
+			return $redirect_to;
+		}
+
+		// Keep explicit frontend redirect requests
+		if ( ! empty( $requested_redirect_to ) && strpos( $requested_redirect_to, 'wp-admin' ) === false ) {
+			return $requested_redirect_to;
+		}
+
+		if ( in_array( 'administrator', (array) $user->roles, true ) ) {
+			return home_url( '/tpd-admin/' );
+		}
+		if ( in_array( 'travel_advisor', (array) $user->roles, true ) ) {
+			return home_url( '/advisor-dashboard/' );
+		}
+		if ( in_array( 'supplier', (array) $user->roles, true ) ) {
+			return home_url( '/supplier-dashboard/' );
+		}
+
+		return $redirect_to;
 	}
 
 	public static function activate() {
