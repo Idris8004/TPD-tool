@@ -23,7 +23,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $is_standalone_template = ! did_action( 'get_header' ) && ! defined( 'TPD_EMBEDDED_PROFILE' );
 if ( $is_standalone_template ) {
-	get_header();
+	if ( defined( 'TPD_PLUGIN_DIR' ) && file_exists( TPD_PLUGIN_DIR . 'templates/header.php' ) ) {
+		include TPD_PLUGIN_DIR . 'templates/header.php';
+	} elseif ( locate_template( 'header.php' ) ) {
+		get_header();
+	} else {
+		?><!DOCTYPE html>
+		<html <?php language_attributes(); ?>>
+		<head>
+			<meta charset="<?php bloginfo( 'charset' ); ?>">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<title><?php wp_title( '|', true, 'right' ); bloginfo( 'name' ); ?></title>
+			<?php wp_head(); ?>
+		</head>
+		<body <?php body_class(); ?>>
+		<?php wp_body_open(); ?>
+		<?php
+	}
 }
 
 $post_id = ! empty( $listing_id ) ? absint( $listing_id ) : ( get_the_ID() ?: ( ! empty( $GLOBALS['post']->ID ) ? $GLOBALS['post']->ID : 0 ) );
@@ -888,5 +904,15 @@ if ( class_exists( 'TPD_Tool_Analytics' ) ) {
 
 <?php
 if ( ! empty( $is_standalone_template ) ) {
-	get_footer();
+	if ( defined( 'TPD_PLUGIN_DIR' ) && file_exists( TPD_PLUGIN_DIR . 'templates/footer.php' ) ) {
+		include TPD_PLUGIN_DIR . 'templates/footer.php';
+	} elseif ( locate_template( 'footer.php' ) ) {
+		get_footer();
+	} else {
+		wp_footer();
+		?>
+		</body>
+		</html>
+		<?php
+	}
 }
