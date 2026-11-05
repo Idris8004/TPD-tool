@@ -138,7 +138,7 @@ class TPD_Tool_Updater {
 		);
 		$info->sections      = array(
 			'description' => 'Enterprise-grade travel marketplace suite featuring Multi-Step Registration Wizards, Dual Portals (Advisor & Supplier Dashboards), Bi-Directional WP CPT + ACF Sync, Dynamic Membership Plan Builder, Stripe/PayPal Checkout, and Super Admin Control Hub.',
-			'changelog'   => '<h4>Latest Release (' . esc_html( $info->version ) . ')</h4><ul><li>Multi-step registration wizards for Travel Advisors & Supplier Partners</li><li>Full bi-directional sync between WP Custom Post Types, ACF Fields, and Frontend Dashboards</li><li>Rebuilt Super Admin Hub with KPI cards, user CRUD, plan promote/demote, dynamic plan builder, and payment gateway configuration</li></ul>',
+			'changelog'   => '<h4>Latest Release (' . esc_html( $info->version ) . ')</h4><ul><li>Super Admin Portal separation with private /admin-login/ and direct account creation & credential management.</li><li>Supplier User Profile frontend self-service editor with [tpd_supplier_user_profile] shortcode and Elementor widgets.</li><li>Enhanced supplier profile templates with Associations & Conferences, YouTube showcase, and social media icons.</li><li>Removed block theme header/footer deprecation warnings.</li></ul>',
 		);
 
 		return $info;
