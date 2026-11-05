@@ -27,6 +27,11 @@ class TPD_Tool_Shortcodes {
 		add_shortcode( 'tpd_supplier_profile', array( __CLASS__, 'render_supplier_profile' ) );
 		add_shortcode( 'tpd_supplier_showcase', array( __CLASS__, 'render_supplier_profile' ) );
 
+		// Supplier User / Representative Profile & Account Info
+		add_shortcode( 'tpd_supplier_user_profile', array( __CLASS__, 'render_supplier_user_profile' ) );
+		add_shortcode( 'tpd_supplier_rep_profile', array( __CLASS__, 'render_supplier_user_profile' ) );
+		add_shortcode( 'tpd_supplier_account_info', array( __CLASS__, 'render_supplier_account_info' ) );
+
 		// Client Trip Inquiry Form & Inquire Button Shortcodes
 		add_shortcode( 'tpd_advisor_inquiry_form', array( __CLASS__, 'render_inquiry_form' ) );
 		add_shortcode( 'tpd_inquire_button', array( __CLASS__, 'render_inquire_button' ) );
@@ -299,6 +304,51 @@ class TPD_Tool_Shortcodes {
 		}
 
 		return $output;
+	}
+
+	/**
+	 * Render Public Supplier User / Representative Profile
+	 * [tpd_supplier_user_profile user_id="123" rep_id="123"]
+	 */
+	public static function render_supplier_user_profile( $atts ) {
+		$atts = shortcode_atts(
+			array(
+				'user_id' => 0,
+				'rep_id'  => 0,
+			),
+			$atts,
+			'tpd_supplier_user_profile'
+		);
+
+		$user_id = absint( $atts['user_id'] ?: $atts['rep_id'] );
+
+		if ( ! defined( 'TPD_EMBEDDED_PROFILE' ) ) {
+			define( 'TPD_EMBEDDED_PROFILE', true );
+		}
+
+		ob_start();
+		$template = TPD_TOOL_DIR . 'templates/supplier/supplier-user-profile.php';
+		if ( file_exists( $template ) ) {
+			include $template;
+		}
+		return ob_get_clean();
+	}
+
+	/**
+	 * Render Frontend Supplier Account Info & Profile Editor
+	 * [tpd_supplier_account_info]
+	 */
+	public static function render_supplier_account_info( $atts ) {
+		if ( ! defined( 'TPD_EMBEDDED_PROFILE' ) ) {
+			define( 'TPD_EMBEDDED_PROFILE', true );
+		}
+
+		ob_start();
+		$template = TPD_TOOL_DIR . 'templates/supplier/supplier-account-info.php';
+		if ( file_exists( $template ) ) {
+			include $template;
+		}
+		return ob_get_clean();
 	}
 
 	public static function render_admin_dashboard( $atts ) {

@@ -808,27 +808,38 @@ class TPD_Tool_Profile_Editor {
 			wp_send_json_error( array( 'message' => __( 'Unauthorized: Supplier Partner role required.', 'tpd-tool' ) ) );
 		}
 
-		$first_name     = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
-		$last_name      = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
-		$display_name   = trim( $first_name . ' ' . $last_name );
-		$email          = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
-		$phone          = isset( $_POST['phone'] ) ? sanitize_text_field( wp_unslash( $_POST['phone'] ) ) : '';
-		$position_title = isset( $_POST['position_title'] ) ? sanitize_text_field( wp_unslash( $_POST['position_title'] ) ) : '';
-		$company_name   = isset( $_POST['company_name'] ) ? sanitize_text_field( wp_unslash( $_POST['company_name'] ) ) : '';
-		$country        = isset( $_POST['country'] ) ? sanitize_text_field( wp_unslash( $_POST['country'] ) ) : '';
-		$avatar_url     = isset( $_POST['headshot_url'] ) ? esc_url_raw( wp_unslash( $_POST['headshot_url'] ) ) : '';
+		$first_name       = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
+		$last_name        = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
+		$display_name     = trim( $first_name . ' ' . $last_name );
+		$email            = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+		$phone            = isset( $_POST['phone'] ) ? sanitize_text_field( wp_unslash( $_POST['phone'] ) ) : '';
+		$additional_phone = isset( $_POST['additional_phone'] ) ? sanitize_text_field( wp_unslash( $_POST['additional_phone'] ) ) : '';
+		$position_title   = isset( $_POST['position_title'] ) ? sanitize_text_field( wp_unslash( $_POST['position_title'] ) ) : '';
+		$company_name     = isset( $_POST['company_name'] ) ? sanitize_text_field( wp_unslash( $_POST['company_name'] ) ) : '';
+		$country          = isset( $_POST['country'] ) ? sanitize_text_field( wp_unslash( $_POST['country'] ) ) : '';
+		$bio              = isset( $_POST['bio'] ) ? sanitize_textarea_field( wp_unslash( $_POST['bio'] ) ) : '';
+		$linkedin         = isset( $_POST['linkedin'] ) ? esc_url_raw( wp_unslash( $_POST['linkedin'] ) ) : '';
+		$twitter          = isset( $_POST['twitter'] ) ? esc_url_raw( wp_unslash( $_POST['twitter'] ) ) : '';
+		$website          = isset( $_POST['website'] ) ? esc_url_raw( wp_unslash( $_POST['website'] ) ) : '';
+		$avatar_url       = isset( $_POST['headshot_url'] ) ? esc_url_raw( wp_unslash( $_POST['headshot_url'] ) ) : '';
 
 		$user_args = array( 'ID' => $user_id );
 		if ( $first_name ) $user_args['first_name'] = $first_name;
 		if ( $last_name ) $user_args['last_name'] = $last_name;
 		if ( $display_name ) $user_args['display_name'] = $display_name;
 		if ( $email && is_email( $email ) ) $user_args['user_email'] = $email;
+		if ( $bio ) $user_args['description'] = $bio;
 		wp_update_user( $user_args );
 
 		update_user_meta( $user_id, 'tpd_phone', $phone );
+		update_user_meta( $user_id, 'tpd_additional_phone', $additional_phone );
 		update_user_meta( $user_id, 'tpd_position_title', $position_title );
 		update_user_meta( $user_id, 'tpd_company_name', $company_name );
 		update_user_meta( $user_id, 'tpd_country_of_residence', $country );
+		update_user_meta( $user_id, 'tpd_bio', $bio );
+		update_user_meta( $user_id, 'tpd_social_linkedin', $linkedin );
+		update_user_meta( $user_id, 'tpd_social_twitter', $twitter );
+		update_user_meta( $user_id, 'tpd_website', $website );
 		if ( $avatar_url ) {
 			update_user_meta( $user_id, 'tpd_headshot_url', $avatar_url );
 			update_user_meta( $user_id, 'tpd_avatar_url', $avatar_url );

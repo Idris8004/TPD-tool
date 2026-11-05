@@ -2461,3 +2461,898 @@ body.tpd-app-body {
 
 
 
+
+/* ==========================================================================
+   TPD SUPPLIER USER / REPRESENTATIVE PROFILE & ACCOUNT INFO STYLES
+   ========================================================================== */
+
+/* --- Public Supplier User Profile Wrapper --- */
+.tpd-supplier-user-profile-wrapper {
+	font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+	color: #0f172a;
+	background-color: #f8fafc;
+	min-height: 80vh;
+	padding-bottom: 60px;
+}
+
+/* Hero Section */
+.tpd-sup-hero {
+	position: relative;
+	background-color: #0f172a;
+	background-size: cover;
+	background-position: center;
+	color: #ffffff;
+	padding: 80px 0 60px;
+	overflow: hidden;
+}
+
+.tpd-sup-hero-overlay {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(0, 121, 140, 0.85) 100%);
+	backdrop-filter: blur(4px);
+}
+
+.tpd-sup-hero-inner {
+	position: relative;
+	z-index: 2;
+	display: flex;
+	align-items: center;
+	gap: 32px;
+	flex-wrap: wrap;
+}
+
+.tpd-sup-avatar-wrap {
+	position: relative;
+	flex-shrink: 0;
+	width: 140px;
+	height: 140px;
+	border-radius: 50%;
+	border: 4px solid rgba(255, 255, 255, 0.9);
+	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+	background: #ffffff;
+}
+
+.tpd-sup-avatar-img {
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+	object-fit: cover;
+	display: block;
+}
+
+.tpd-sup-online-status {
+	position: absolute;
+	bottom: 8px;
+	right: 8px;
+	width: 18px;
+	height: 18px;
+	background-color: #10b981;
+	border: 3px solid #ffffff;
+	border-radius: 50%;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.tpd-sup-badge-check {
+	position: absolute;
+	top: 4px;
+	right: 4px;
+	width: 28px;
+	height: 28px;
+	background-color: #00798c;
+	color: #ffffff;
+	border: 2px solid #ffffff;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 13px;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.tpd-sup-hero-meta {
+	flex: 1;
+	min-width: 280px;
+}
+
+.tpd-sup-tier-pill {
+	margin-bottom: 8px;
+}
+
+.tpd-badge-enhanced {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	background: rgba(245, 158, 11, 0.2);
+	color: #fbbf24;
+	border: 1px solid rgba(245, 158, 11, 0.4);
+	padding: 4px 12px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+	text-transform: uppercase;
+}
+
+.tpd-badge-basic {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	background: rgba(255, 255, 255, 0.15);
+	color: #e2e8f0;
+	border: 1px solid rgba(255, 255, 255, 0.25);
+	padding: 4px 12px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+	text-transform: uppercase;
+}
+
+.tpd-sup-name {
+	font-size: 32px;
+	font-weight: 800;
+	color: #ffffff;
+	margin: 0 0 6px;
+	line-height: 1.2;
+}
+
+.tpd-sup-title-company {
+	font-size: 17px;
+	color: #cbd5e1;
+	margin: 0 0 8px;
+}
+
+.tpd-sup-title-company strong {
+	color: #ffffff;
+}
+
+.tpd-sup-location {
+	font-size: 14px;
+	color: #94a3b8;
+	margin: 0;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.tpd-sup-hero-actions {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	min-width: 220px;
+}
+
+/* Layout Columns */
+.tpd-sup-body-container {
+	margin-top: -30px;
+	position: relative;
+	z-index: 5;
+}
+
+.tpd-sup-layout {
+	display: grid;
+	grid-template-columns: 1fr 340px;
+	gap: 24px;
+}
+
+.tpd-sup-card {
+	background: #ffffff;
+	border: 1px solid #e2e8f0;
+	border-radius: 16px;
+	padding: 28px;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.tpd-sup-card-title {
+	font-size: 20px;
+	font-weight: 800;
+	color: #0f172a;
+	margin: 0 0 16px;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	border-bottom: 2px solid #f1f5f9;
+	padding-bottom: 12px;
+}
+
+.tpd-sup-card-title i {
+	color: #00798c;
+}
+
+.tpd-sup-bio-content {
+	font-size: 15px;
+	line-height: 1.7;
+	color: #334155;
+	margin-bottom: 24px;
+}
+
+.tpd-sup-highlights-strip {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 16px;
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	padding: 18px;
+}
+
+.tpd-hl-item {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.tpd-hl-item i {
+	font-size: 22px;
+	color: #00798c;
+	background: #e0f2fe;
+	width: 44px;
+	height: 44px;
+	border-radius: 10px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.tpd-hl-item div {
+	display: flex;
+	flex-direction: column;
+}
+
+.tpd-hl-item strong {
+	font-size: 12px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: #64748b;
+}
+
+.tpd-hl-item span {
+	font-size: 14px;
+	font-weight: 700;
+	color: #0f172a;
+}
+
+/* Listings Showcase Grid */
+.tpd-card-desc {
+	font-size: 14px;
+	color: #64748b;
+	margin: -8px 0 18px;
+}
+
+.tpd-sup-listings-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 18px;
+}
+
+.tpd-sup-listing-item {
+	background: #ffffff;
+	border: 1.5px solid #e2e8f0;
+	border-radius: 14px;
+	padding: 18px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	transition: all 0.2s ease;
+}
+
+.tpd-sup-listing-item:hover {
+	border-color: #00798c;
+	box-shadow: 0 8px 24px rgba(0, 121, 140, 0.08);
+	transform: translateY(-2px);
+}
+
+.tpd-slist-logo-wrap {
+	width: 64px;
+	height: 64px;
+	border-radius: 10px;
+	overflow: hidden;
+	border: 1px solid #e2e8f0;
+	background: #f8fafc;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.tpd-slist-logo {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.tpd-slist-meta {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 6px;
+	flex-wrap: wrap;
+}
+
+.tpd-slist-cat {
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	color: #00798c;
+	background: #e6fffa;
+	padding: 2px 8px;
+	border-radius: 6px;
+}
+
+.tpd-slist-reward-badge {
+	font-size: 11px;
+	font-weight: 700;
+	color: #d97706;
+	background: #fef3c7;
+	padding: 2px 8px;
+	border-radius: 6px;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.tpd-slist-title {
+	font-size: 17px;
+	font-weight: 800;
+	margin: 0 0 6px;
+}
+
+.tpd-slist-title a {
+	color: #0f172a;
+	text-decoration: none;
+}
+
+.tpd-slist-title a:hover {
+	color: #00798c;
+}
+
+.tpd-slist-desc {
+	font-size: 13px;
+	color: #64748b;
+	line-height: 1.5;
+	margin: 0 0 12px;
+	flex: 1;
+}
+
+.tpd-slist-actions {
+	margin-top: auto;
+}
+
+/* Sidebar Desk & Contact */
+.tpd-sup-side-title {
+	font-size: 17px;
+	font-weight: 800;
+	color: #0f172a;
+	margin: 0 0 16px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	border-bottom: 1.5px solid #f1f5f9;
+	padding-bottom: 10px;
+}
+
+.tpd-sup-side-title i {
+	color: #00798c;
+}
+
+.tpd-sup-contact-list {
+	list-style: none;
+	padding: 0;
+	margin: 0 0 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+}
+
+.tpd-sup-contact-list li {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+}
+
+.tpd-sup-contact-list li i {
+	font-size: 16px;
+	color: #00798c;
+	background: #f1f5f9;
+	width: 34px;
+	height: 34px;
+	border-radius: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.tpd-sup-contact-list li div {
+	display: flex;
+	flex-direction: column;
+}
+
+.tpd-sup-contact-list label {
+	font-size: 11px;
+	text-transform: uppercase;
+	font-weight: 700;
+	color: #94a3b8;
+	margin: 0 0 2px;
+}
+
+.tpd-sup-contact-list a,
+.tpd-sup-contact-list span {
+	font-size: 14px;
+	font-weight: 600;
+	color: #0f172a;
+	text-decoration: none;
+	word-break: break-all;
+}
+
+.tpd-sup-contact-list a:hover {
+	color: #00798c;
+}
+
+.tpd-sup-social-strip {
+	border-top: 1px solid #f1f5f9;
+	padding-top: 14px;
+}
+
+.tpd-social-label {
+	font-size: 12px;
+	font-weight: 700;
+	color: #64748b;
+	display: block;
+	margin-bottom: 8px;
+}
+
+.tpd-social-icons {
+	display: flex;
+	gap: 8px;
+}
+
+.tpd-soc-icon {
+	width: 36px;
+	height: 36px;
+	border-radius: 8px;
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	color: #475569;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	text-decoration: none;
+	font-size: 15px;
+	transition: all 0.2s ease;
+}
+
+.tpd-soc-icon:hover {
+	background: #00798c;
+	border-color: #00798c;
+	color: #ffffff;
+}
+
+/* Trust Card */
+.tpd-trust-card {
+	background: linear-gradient(135deg, #f0fdfa 0%, #e6fffa 100%);
+	border-color: #99f6e4;
+	text-align: center;
+}
+
+.tpd-tc-icon {
+	width: 52px;
+	height: 52px;
+	border-radius: 50%;
+	background: #00798c;
+	color: #ffffff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 24px;
+	margin: 0 auto 14px;
+}
+
+.tpd-trust-card h4 {
+	font-size: 16px;
+	font-weight: 800;
+	color: #013243;
+	margin: 0 0 6px;
+}
+
+.tpd-trust-card p {
+	font-size: 13px;
+	line-height: 1.5;
+	color: #475569;
+	margin: 0 0 16px;
+}
+
+.tpd-tc-badges {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	text-align: left;
+	background: #ffffff;
+	border-radius: 10px;
+	padding: 12px 16px;
+	border: 1px solid #ccfbf1;
+}
+
+.tpd-tc-badges span {
+	font-size: 12.5px;
+	font-weight: 600;
+	color: #0f766e;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+/* --- Supplier Account Info Page Styles --- */
+.tpd-account-info-container {
+	font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+	color: #0f172a;
+	background-color: #f8fafc;
+	padding: 30px 0 60px;
+	min-height: 80vh;
+}
+
+.tpd-acc-topbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 16px;
+	margin-bottom: 24px;
+}
+
+.tpd-acc-breadcrumb {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 13.5px;
+	color: #64748b;
+}
+
+.tpd-acc-breadcrumb a {
+	color: #00798c;
+	text-decoration: none;
+	font-weight: 600;
+}
+
+.tpd-acc-breadcrumb a:hover {
+	text-decoration: underline;
+}
+
+.tpd-acc-breadcrumb .sep {
+	color: #cbd5e1;
+}
+
+.tpd-acc-breadcrumb .current {
+	color: #0f172a;
+	font-weight: 700;
+}
+
+.tpd-acc-top-actions {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+/* Hero Summary Card */
+.tpd-acc-hero-card {
+	background: linear-gradient(135deg, #013243 0%, #00798c 100%);
+	color: #ffffff;
+	border-radius: 18px;
+	padding: 28px 32px;
+	display: flex;
+	align-items: center;
+	gap: 24px;
+	margin-bottom: 28px;
+	box-shadow: 0 10px 25px rgba(0, 121, 140, 0.15);
+	flex-wrap: wrap;
+}
+
+.tpd-acc-avatar-wrap {
+	position: relative;
+	width: 90px;
+	height: 90px;
+	border-radius: 50%;
+	border: 3px solid rgba(255, 255, 255, 0.85);
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.tpd-acc-avatar-wrap img {
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.tpd-acc-camera-btn {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	width: 30px;
+	height: 30px;
+	border-radius: 50%;
+	background: #f59e0b;
+	color: #ffffff;
+	border: 2px solid #ffffff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 12px;
+	cursor: pointer;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.tpd-acc-hero-info {
+	flex: 1;
+	min-width: 250px;
+}
+
+.tpd-acc-pill-row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 8px;
+	flex-wrap: wrap;
+}
+
+.tpd-tier-badge.enhanced {
+	background: rgba(245, 158, 11, 0.2);
+	color: #fbbf24;
+	border: 1px solid rgba(245, 158, 11, 0.5);
+	padding: 3px 10px;
+	border-radius: 999px;
+	font-size: 11.5px;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+.tpd-tier-badge.basic {
+	background: rgba(255, 255, 255, 0.15);
+	color: #ffffff;
+	border: 1px solid rgba(255, 255, 255, 0.25);
+	padding: 3px 10px;
+	border-radius: 999px;
+	font-size: 11.5px;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+.tpd-status-pill {
+	font-size: 12px;
+	color: #e2e8f0;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.tpd-acc-name {
+	font-size: 26px;
+	font-weight: 800;
+	color: #ffffff;
+	margin: 0 0 4px;
+}
+
+.tpd-acc-sub {
+	font-size: 15px;
+	color: #cbd5e1;
+	margin: 0;
+}
+
+.tpd-acc-sub strong {
+	color: #ffffff;
+}
+
+/* Account Grid */
+.tpd-acc-grid {
+	display: grid;
+	grid-template-columns: 1fr 340px;
+	gap: 24px;
+}
+
+.tpd-card-box-header h2 {
+	font-size: 19px;
+	font-weight: 800;
+	color: #0f172a;
+	margin: 0 0 4px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.tpd-card-box-header h2 i {
+	color: #00798c;
+}
+
+.tpd-form-body {
+	margin-top: 20px;
+}
+
+.tpd-form-divider {
+	position: relative;
+	text-align: left;
+	margin: 24px 0 18px;
+	border-bottom: 1px solid #e2e8f0;
+	padding-bottom: 8px;
+}
+
+.tpd-form-divider span {
+	font-size: 14px;
+	font-weight: 700;
+	color: #00798c;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.tpd-form-footer {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	margin-top: 24px;
+	padding-top: 18px;
+	border-top: 1px solid #f1f5f9;
+}
+
+.tpd-save-feedback {
+	font-size: 13.5px;
+}
+
+/* Side Column Listings */
+.tpd-card-subtitle {
+	font-size: 17px;
+	font-weight: 800;
+	color: #0f172a;
+	margin: 0 0 6px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.tpd-card-subtitle i {
+	color: #00798c;
+}
+
+.tpd-side-listings-list {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin-top: 12px;
+}
+
+.tpd-side-listing-card {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	background: #f8fafc;
+	transition: all 0.2s ease;
+}
+
+.tpd-side-listing-card:hover {
+	background: #ffffff;
+	border-color: #00798c;
+}
+
+.tpd-side-list-img {
+	width: 48px;
+	height: 48px;
+	border-radius: 8px;
+	object-fit: cover;
+	border: 1px solid #e2e8f0;
+	flex-shrink: 0;
+}
+
+.tpd-side-list-info {
+	flex: 1;
+	min-width: 0;
+}
+
+.tpd-side-list-info h4 {
+	font-size: 14px;
+	font-weight: 700;
+	margin: 0 0 4px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.tpd-side-list-info .status-badge {
+	font-size: 10px;
+	font-weight: 700;
+	text-transform: uppercase;
+	padding: 1px 6px;
+	border-radius: 4px;
+	background: #e2e8f0;
+	color: #475569;
+}
+
+.tpd-side-list-info .status-badge.publish {
+	background: #dcfce7;
+	color: #15803d;
+}
+
+.tpd-side-list-btns {
+	display: flex;
+	gap: 6px;
+	margin-top: 6px;
+}
+
+/* Membership Plan Card */
+.tpd-plan-status-card {
+	background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.tpd-psc-header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 16px;
+	padding-bottom: 12px;
+	border-bottom: 1px solid #f1f5f9;
+}
+
+.tpd-psc-icon {
+	width: 42px;
+	height: 42px;
+	border-radius: 10px;
+	background: #fef3c7;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 20px;
+}
+
+.tpd-psc-tier {
+	font-size: 11px;
+	font-weight: 800;
+	letter-spacing: 0.5px;
+	color: #00798c;
+}
+
+.tpd-psc-perks {
+	list-style: none;
+	padding: 0;
+	margin: 0 0 18px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.tpd-psc-perks li {
+	font-size: 13px;
+	color: #334155;
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	line-height: 1.4;
+}
+
+.tpd-psc-perks li.disabled {
+	color: #94a3b8;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 900px) {
+	.tpd-sup-layout,
+	.tpd-acc-grid {
+		grid-template-columns: 1fr;
+	}
+	.tpd-sup-hero-inner {
+		flex-direction: column;
+		text-align: center;
+	}
+	.tpd-sup-location {
+		justify-content: center;
+	}
+	.tpd-sup-hero-actions {
+		width: 100%;
+	}
+	.tpd-acc-hero-card {
+		flex-direction: column;
+		text-align: center;
+	}
+	.tpd-acc-pill-row {
+		justify-content: center;
+	}
+}

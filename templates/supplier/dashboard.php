@@ -53,6 +53,11 @@ $position_title = get_user_meta( $current_user_id, 'tpd_position_title', true ) 
 $rep_phone      = get_user_meta( $current_user_id, 'tpd_phone', true ) ?: ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_primary_rep_phone', true ) : '' );
 $headshot_url   = get_user_meta( $current_user_id, 'tpd_headshot_url', true ) ?: ( $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_rep_headshot_url', true ) : '' );
 $avatar_src     = $headshot_url ?: 'https://ui-avatars.com/api/?name=' . rawurlencode( $full_name ) . '&background=0284c7&color=fff&size=128';
+$rep_bio        = $user ? $user->description : get_user_meta( $current_user_id, 'tpd_bio', true );
+$rep_add_phone  = get_user_meta( $current_user_id, 'tpd_additional_phone', true );
+$rep_linkedin   = get_user_meta( $current_user_id, 'tpd_social_linkedin', true );
+$rep_twitter    = get_user_meta( $current_user_id, 'tpd_social_twitter', true );
+$rep_website    = get_user_meta( $current_user_id, 'tpd_website', true );
 
 // Listing Showcase fields
 $tagline                = $supplier_post_id ? get_post_meta( $supplier_post_id, 'tpd_tagline', true ) : '';
@@ -234,8 +239,11 @@ $all_directory_listings = get_posts( array(
 		</nav>
 
 		<div class="tpd-sb-bottom-actions">
-			<a href="<?php echo esc_url( $public_url ); ?>" target="_blank" class="tpd-btn tpd-btn-outline-white tpd-btn-sm tpd-btn-block mb-3" style="text-decoration:none; text-align:center;">
+			<a href="<?php echo esc_url( $public_url ); ?>" target="_blank" class="tpd-btn tpd-btn-outline-white tpd-btn-sm tpd-btn-block mb-2" style="text-decoration:none; text-align:center;">
 				<i class="fa-solid fa-arrow-up-right-from-square"></i> <?php esc_html_e( 'View My Public Listing', 'tpd-tool' ); ?>
+			</a>
+			<a href="<?php echo esc_url( home_url( '/supplier-profile/?user_id=' . $current_user_id ) ); ?>" target="_blank" class="tpd-btn tpd-btn-teal tpd-btn-sm tpd-btn-block mb-3" style="text-decoration:none; text-align:center;">
+				<i class="fa-solid fa-user-tie"></i> <?php esc_html_e( 'View Public Rep Profile', 'tpd-tool' ); ?>
 			</a>
 			<div class="tpd-sb-help-prompt tpd-tab-link" data-view="supp-help" style="cursor:pointer;">
 				<i class="fa-regular fa-circle-question"></i>
@@ -1363,8 +1371,20 @@ $all_directory_listings = get_posts( array(
 			<!-- VIEW 5: PROFILE & PLAN SETTINGS (Edit Representative Details, Upgrade Plan, Password Security, Delete Account) -->
 			<div id="tpd-supp-settings" class="tpd-tab-panel">
 				<div class="tpd-card-box mb-4">
-					<h3><i class="fa-solid fa-user-gear"></i> <?php esc_html_e( 'Representative Profile Details', 'tpd-tool' ); ?></h3>
-					<p class="text-muted"><?php esc_html_e( 'Update your personal representative details, position/title, company name, and country.', 'tpd-tool' ); ?></p>
+					<div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+						<div>
+							<h3 style="margin:0;"><i class="fa-solid fa-user-gear"></i> <?php esc_html_e( 'Representative Profile Details', 'tpd-tool' ); ?></h3>
+							<p class="text-muted" style="margin:4px 0 0;"><?php esc_html_e( 'Update your personal representative details, position/title, bio, and contact channels for travel advisors.', 'tpd-tool' ); ?></p>
+						</div>
+						<div style="display:flex; gap:8px;">
+							<a href="<?php echo esc_url( home_url( '/supplier-profile/?user_id=' . $current_user_id ) ); ?>" target="_blank" class="tpd-btn tpd-btn-teal tpd-btn-xs" style="text-decoration:none;">
+								<i class="fa-solid fa-arrow-up-right-from-square"></i> <?php esc_html_e( 'Preview Public Profile', 'tpd-tool' ); ?>
+							</a>
+							<a href="<?php echo esc_url( home_url( '/supplier-account-info/' ) ); ?>" target="_blank" class="tpd-btn tpd-btn-outline tpd-btn-xs" style="text-decoration:none;">
+								<i class="fa-solid fa-id-card"></i> <?php esc_html_e( 'Account Info Page', 'tpd-tool' ); ?>
+							</a>
+						</div>
+					</div>
 
 					<form id="tpd-supplier-rep-profile-form" class="mt-3">
 						<input type="hidden" name="action" value="tpd_save_supplier_rep_profile">
@@ -1411,10 +1431,14 @@ $all_directory_listings = get_posts( array(
 							</div>
 						</div>
 
-						<div class="tpd-form-grid-3">
+						<div class="tpd-form-grid-4" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-bottom:14px;">
 							<div class="tpd-form-group">
-								<label><?php esc_html_e( 'Phone Number *', 'tpd-tool' ); ?></label>
+								<label><?php esc_html_e( 'Direct Phone Number *', 'tpd-tool' ); ?></label>
 								<input type="tel" name="phone" required value="<?php echo esc_attr( $rep_phone ); ?>" class="tpd-input">
+							</div>
+							<div class="tpd-form-group">
+								<label><?php esc_html_e( 'Additional Desk Phone', 'tpd-tool' ); ?></label>
+								<input type="tel" name="additional_phone" value="<?php echo esc_attr( $rep_add_phone ); ?>" class="tpd-input">
 							</div>
 							<div class="tpd-form-group">
 								<label><?php esc_html_e( 'Email Address *', 'tpd-tool' ); ?></label>
@@ -1427,6 +1451,26 @@ $all_directory_listings = get_posts( array(
 										<option value="<?php echo esc_attr( $c_opt ); ?>" <?php selected( $country, $c_opt ); ?>><?php echo esc_html( $c_opt ); ?></option>
 									<?php endforeach; ?>
 								</select>
+							</div>
+						</div>
+
+						<div class="tpd-form-group" style="margin-bottom:14px;">
+							<label><?php esc_html_e( 'About the Representative (Bio)', 'tpd-tool' ); ?></label>
+							<textarea name="bio" rows="3" class="tpd-textarea" placeholder="<?php esc_attr_e( 'Describe your role and how you support travel advisors...', 'tpd-tool' ); ?>"><?php echo esc_textarea( $rep_bio ); ?></textarea>
+						</div>
+
+						<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-bottom:14px;">
+							<div class="tpd-form-group">
+								<label><i class="fa-brands fa-linkedin text-linkedin"></i> <?php esc_html_e( 'LinkedIn URL', 'tpd-tool' ); ?></label>
+								<input type="url" name="linkedin" value="<?php echo esc_attr( $rep_linkedin ); ?>" class="tpd-input" placeholder="https://linkedin.com/in/username">
+							</div>
+							<div class="tpd-form-group">
+								<label><i class="fa-brands fa-x-twitter"></i> <?php esc_html_e( 'Twitter / X URL', 'tpd-tool' ); ?></label>
+								<input type="url" name="twitter" value="<?php echo esc_attr( $rep_twitter ); ?>" class="tpd-input" placeholder="https://x.com/handle">
+							</div>
+							<div class="tpd-form-group">
+								<label><i class="fa-solid fa-link"></i> <?php esc_html_e( 'Company Website', 'tpd-tool' ); ?></label>
+								<input type="url" name="website" value="<?php echo esc_attr( $rep_website ); ?>" class="tpd-input" placeholder="https://company.com">
 							</div>
 						</div>
 

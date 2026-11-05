@@ -161,6 +161,24 @@ class TPD_Tool_Core {
 			}
 		}
 
+		// Public Supplier User / Representative Profile
+		if ( in_array( $uri, array( 'supplier-profile', 'rep-profile', 'supplier-rep-profile' ), true ) || is_page( array( 'supplier-profile', 'rep-profile', 'supplier-rep-profile' ) ) ) {
+			$file = TPD_TOOL_DIR . 'templates/supplier/supplier-user-profile.php';
+			if ( file_exists( $file ) ) {
+				status_header( 200 );
+				return $file;
+			}
+		}
+
+		// Supplier Account Info & Profile Editor
+		if ( in_array( $uri, array( 'supplier-account-info', 'supplier-profile-edit' ), true ) || is_page( array( 'supplier-account-info', 'supplier-profile-edit' ) ) ) {
+			$file = TPD_TOOL_DIR . 'templates/supplier/supplier-account-info.php';
+			if ( file_exists( $file ) ) {
+				status_header( 200 );
+				return $file;
+			}
+		}
+
 		// Single Supplier Listing Profile / Showcase
 		if ( is_singular( 'supplier_listing' ) ) {
 			$theme_file = locate_template( array( 'single-supplier_listing.php', 'single-supplier.php' ) );
