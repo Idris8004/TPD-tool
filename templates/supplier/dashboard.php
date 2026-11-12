@@ -195,6 +195,12 @@ $all_directory_listings = get_posts( array(
 					</a>
 				</li>
 				<li class="tpd-nav-item">
+					<a href="#tpd-supp-resources" class="tpd-tab-link" data-view="supp-resources">
+						<i class="fa-solid fa-graduation-cap"></i>
+						<span><?php esc_html_e( 'Resources & Academy', 'tpd-tool' ); ?></span>
+					</a>
+				</li>
+				<li class="tpd-nav-item">
 					<a href="#tpd-supp-settings" class="tpd-tab-link" data-view="supp-settings">
 						<i class="fa-regular fa-id-card"></i>
 						<span><?php esc_html_e( 'Account Info & Plan', 'tpd-tool' ); ?></span>
@@ -1487,18 +1493,25 @@ $all_directory_listings = get_posts( array(
 						<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:14px; margin-bottom:16px;">
 							<?php foreach ( $all_plans as $p_slug => $p_info ) :
 								$m_price = (float) $p_info['monthly_price'];
+								$y_price = (float) $p_info['yearly_price'];
 							?>
 								<label class="tpd-tier-option" style="border:2px solid <?php echo ( $user_tier === $p_slug ) ? '#2563eb' : '#e2e8f0'; ?>; border-radius:12px; padding:16px; cursor:pointer;">
 									<input type="radio" name="plan_slug" value="<?php echo esc_attr( $p_slug ); ?>" <?php checked( $user_tier, $p_slug ); ?>>
 									<div>
 										<span class="tpd-to-tag"><?php echo esc_html( $p_info['badge'] ); ?></span>
 										<h4 style="margin:4px 0;"><?php echo esc_html( $p_info['name'] ); ?></h4>
-										<strong><?php echo $m_price <= 0 ? 'Free' : '$' . number_format( $m_price, 2 ) . '/mo'; ?></strong>
+										<strong><?php echo $m_price <= 0 ? 'Free' : '$' . number_format( $m_price, 2 ) . '/mo ($' . number_format( $y_price, 0 ) . '/yr)'; ?></strong>
 									</div>
 								</label>
 							<?php endforeach; ?>
 						</div>
-						<button type="submit" class="tpd-btn tpd-btn-darkblue"><?php esc_html_e( 'Update Supplier Plan', 'tpd-tool' ); ?></button>
+						<div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+							<select name="billing_type" class="tpd-select" style="max-width:200px;">
+								<option value="Month"><?php esc_html_e( 'Monthly Billing', 'tpd-tool' ); ?></option>
+								<option value="Year"><?php esc_html_e( 'Annual Billing', 'tpd-tool' ); ?></option>
+							</select>
+							<button type="submit" class="tpd-btn tpd-btn-darkblue"><?php esc_html_e( 'Update Supplier Plan', 'tpd-tool' ); ?></button>
+						</div>
 					</form>
 				</div>
 
@@ -1673,6 +1686,11 @@ $all_directory_listings = get_posts( array(
 					</div>
 				</div>
 			</div>
+
+			<!-- VIEW 8: RESOURCES & ACADEMY -->
+			<div id="tpd-supp-resources" class="tpd-tab-panel">
+				<?php include TPD_TOOL_DIR . 'templates/shared/resources-hub.php'; ?>
+			</div>
 		</main>
 	</div>
 </div>
@@ -1745,6 +1763,8 @@ $all_directory_listings = get_posts( array(
 	});
 })();
 </script>
+
+<?php include TPD_TOOL_DIR . 'templates/shared/checkout-modal.php'; ?>
 
 <?php wp_footer(); ?>
 </body>

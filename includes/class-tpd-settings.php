@@ -49,6 +49,7 @@ class TPD_Tool_Settings {
 		// User Self-Service Actions (Upgrade Plan, Change Password, Delete Own Account)
 		add_action( 'wp_ajax_tpd_user_upgrade_plan', array( __CLASS__, 'ajax_user_upgrade_plan' ) );
 		add_action( 'wp_ajax_tpd_user_update_account_security', array( __CLASS__, 'ajax_user_update_account_security' ) );
+		add_action( 'wp_ajax_tpd_update_user_password', array( __CLASS__, 'ajax_user_update_account_security' ) );
 		add_action( 'wp_ajax_tpd_delete_own_account', array( __CLASS__, 'ajax_delete_own_account' ) );
 		add_action( 'wp_ajax_tpd_user_delete_own_account', array( __CLASS__, 'ajax_delete_own_account' ) );
 	}
@@ -974,6 +975,7 @@ class TPD_Tool_Settings {
 			'stripe_enabled'         => ! empty( $_POST['stripe_enabled'] ) ? 1 : 0,
 			'stripe_publishable_key' => isset( $_POST['stripe_publishable_key'] ) ? sanitize_text_field( wp_unslash( $_POST['stripe_publishable_key'] ) ) : '',
 			'stripe_secret_key'      => isset( $_POST['stripe_secret_key'] ) ? sanitize_text_field( wp_unslash( $_POST['stripe_secret_key'] ) ) : '',
+			'stripe_webhook_secret'  => isset( $_POST['stripe_webhook_secret'] ) ? sanitize_text_field( wp_unslash( $_POST['stripe_webhook_secret'] ) ) : '',
 			'paypal_enabled'         => ! empty( $_POST['paypal_enabled'] ) ? 1 : 0,
 			'paypal_client_id'       => isset( $_POST['paypal_client_id'] ) ? sanitize_text_field( wp_unslash( $_POST['paypal_client_id'] ) ) : '',
 			'paypal_secret'          => isset( $_POST['paypal_secret'] ) ? sanitize_text_field( wp_unslash( $_POST['paypal_secret'] ) ) : '',
@@ -1311,10 +1313,23 @@ class TPD_Tool_Settings {
 		$billing_type = isset( $_POST['billing_type'] ) ? sanitize_text_field( wp_unslash( $_POST['billing_type'] ) ) : 'Month';
 		$gateway      = isset( $_POST['gateway'] ) ? sanitize_text_field( wp_unslash( $_POST['gateway'] ) ) : 'Stripe';
 
+		$plan      = self::get_plan( $plan_slug );
+		$is_yearly = ( false !== stripos( $billing_type, 'year' ) || false !== stripos( $billing_type, 'annual' ) );
+		$price     = $is_yearly ? (float) ( $plan['yearly_price'] ?? 0 ) : (float) ( $plan['monthly_price'] ?? 0 );
+		$payments  = self::get_payment_settings();
+		$is_live   = ( isset( $payments['mode'] ) && 'live' === $payments['mode'] );
+
+		if ( $price > 0 && $is_live ) {
+			wp_send_json_error( array( 'message' => __( 'Paid plan upgrades must be completed via the Checkout flow.', 'tpd-tool' ) ) );
+		}
+
 		$updated_tier = TPD_Tool_Tiers::set_user_tier( $user_id, $plan_slug );
 		self::record_subscription( $user_id, $updated_tier, $billing_type, $gateway );
 
-		$plan = self::get_plan( $updated_tier );
+		if ( class_exists( 'TPD_Tool_Financial' ) ) {
+			TPD_Tool_Financial::log_plan_transaction( $user_id, $updated_tier, $billing_type, $is_live ? 'free' : 'test' );
+		}
+
 		wp_send_json_success( array(
 			'message' => sprintf( 'Your membership has been updated to %s (%sly billing)!', $plan['name'], $billing_type ),
 			'tier'    => $updated_tier,

@@ -15,6 +15,10 @@ if ( is_user_logged_in() && ! isset( $_GET['preview_login'] ) && ! TPD_Tool_Role
 		wp_safe_redirect( home_url( '/supplier-dashboard/' ) );
 		exit;
 	}
+	if ( TPD_Tool_Roles::is_advisor( $uid ) ) {
+		wp_safe_redirect( home_url( '/advisor-dashboard/' ) );
+		exit;
+	}
 }
 
 $initial_notice = '';
