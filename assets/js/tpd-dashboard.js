@@ -1547,19 +1547,27 @@
 			});
 		});
 
-		// 11. User Self-Service Plan Upgrade / Change
+		// 11. User Self-Service Plan Upgrade / Change (Routes through Unified TPD Checkout Modal)
 		$('#tpd-user-upgrade-plan-form').on('submit', function(e) {
 			e.preventDefault();
 			var $form = $(this);
+			var planSlug = $form.find('input[name="plan_slug"]:checked').val() || 'basic';
+			var billingType = $form.find('select[name="billing_type"]').val() || 'Month';
+			var prefGateway = ($form.find('select[name="gateway"]').val() || '').toLowerCase();
+
+			if (typeof window.tpdOpenCheckoutModal === 'function') {
+				window.tpdOpenCheckoutModal('plan', planSlug, billingType, prefGateway);
+				return;
+			}
+
 			var $btn = $form.find('button[type="submit"]');
 			var origHtml = $btn.html();
-
 			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Updating Plan...');
 
 			$.ajax({
 				url: (typeof tpd_data !== 'undefined') ? tpd_data.ajax_url : '/wp-admin/admin-ajax.php',
 				type: 'POST',
-				data: $form.serialize(),
+				data: $form.serialize() + '&action=tpd_user_upgrade_plan&nonce=' + encodeURIComponent(typeof tpd_data !== 'undefined' ? tpd_data.nonce : ''),
 				success: function(res) {
 					$btn.prop('disabled', false).html(origHtml);
 					if (res.success) {
@@ -1585,12 +1593,20 @@
 			var $btn = $form.find('button[type="submit"]');
 			var origHtml = $btn.html();
 
+			var postData = $form.serialize();
+			if (postData.indexOf('action=') === -1) {
+				postData += '&action=tpd_user_update_account_security';
+			}
+			if (postData.indexOf('nonce=') === -1) {
+				postData += '&nonce=' + encodeURIComponent(typeof tpd_data !== 'undefined' ? tpd_data.nonce : '');
+			}
+
 			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Updating...');
 
 			$.ajax({
 				url: (typeof tpd_data !== 'undefined') ? tpd_data.ajax_url : '/wp-admin/admin-ajax.php',
 				type: 'POST',
-				data: $form.serialize(),
+				data: postData,
 				success: function(res) {
 					$btn.prop('disabled', false).html(origHtml);
 					if (res.success) {
@@ -1943,6 +1959,344 @@
 			$(this).html('<i class="fa-solid fa-check"></i> Added to Calendar').prop('disabled', true);
 			showToast('<i class="fa-solid fa-calendar-check"></i> Event saved to your calendar!');
 		});
+
+		// 23. Resources & Tools Hub (My Resources / All Resources, Filtering, SSO Launch, Sync)
+		function switchResourcesSubtab(subtab) {
+			subtab = (subtab === 'all') ? 'all' : 'my';
+			$('.tpd-res-subtab').each(function() {
+				var $b = $(this);
+				var isMatch = ($b.data('subtab') === subtab);
+				$b.toggleClass('active', isMatch);
+				if (isMatch) {
+					$b.css({ background: '#00798c', color: '#ffffff', borderColor: '#00798c' });
+					$b.find('.tpd-res-pill-count').css({ background: 'rgba(255,255,255,0.22)', color: '#ffffff' });
+				} else {
+					$b.css({ background: '#f8fafc', color: '#334155', borderColor: '#cbd5e1' });
+					$b.find('.tpd-res-pill-count').css({ background: '#e2e8f0', color: '#0f172a' });
+				}
+			});
+			$('.tpd-res-pane').hide().removeClass('active');
+			$('#tpd-res-pane-' + subtab).fadeIn(160).addClass('active');
+		}
+
+		$(document).on('click', '.tpd-res-subtab, .tpd-switch-res-subtab', function(e) {
+			e.preventDefault();
+			switchResourcesSubtab($(this).data('subtab'));
+		});
+
+		function filterResourcesCards() {
+			var query = ($('#tpd-res-search-input').val() || '').toLowerCase().trim();
+			var filterType = $('#tpd-res-type-filter').val() || 'all';
+
+			$('.tpd-res-filter-card').each(function() {
+				var $card = $(this);
+				var cType = $card.data('type') || '';
+				var cPrice = $card.data('price-kind') || '';
+				var cSearch = String($card.data('search') || '').toLowerCase();
+
+				var matchesText = (query === '' || cSearch.indexOf(query) !== -1);
+				var matchesType = true;
+				if (filterType === 'lms_course' || filterType === 'resource') {
+					matchesType = (cType === filterType);
+				} else if (filterType === 'free') {
+					matchesType = (cPrice === 'free' || cPrice === 'owned');
+				} else if (filterType === 'paid') {
+					matchesType = (cPrice === 'paid');
+				}
+
+				$card.toggle(matchesText && matchesType);
+			});
+		}
+
+		$(document).on('keyup input', '#tpd-res-search-input', filterResourcesCards);
+		$(document).on('change', '#tpd-res-type-filter', filterResourcesCards);
+
+		// 1-Click Fresh Signed SSO Launch
+		$(document).on('click', '.tpd-btn-sso-launch', function(e) {
+			e.preventDefault();
+			var $btn = $(this);
+			var redirectPath = $btn.data('redirect') || '/courses';
+			var origHtml = $btn.html();
+			var ssoWin = window.open('about:blank', '_blank');
+
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Launching...');
+
+			$.ajax({
+				url: (typeof tpd_data !== 'undefined') ? tpd_data.ajax_url : '/wp-admin/admin-ajax.php',
+				type: 'POST',
+				data: {
+					action: 'tpd_get_lms_sso_url',
+					redirect: redirectPath,
+					nonce: (typeof tpd_data !== 'undefined' ? tpd_data.nonce : '')
+				},
+				success: function(res) {
+					$btn.prop('disabled', false).html(origHtml);
+					if (res && res.success && res.data && res.data.sso_url) {
+						if (ssoWin && !ssoWin.closed) {
+							ssoWin.location.href = res.data.sso_url;
+						} else {
+							window.location.href = res.data.sso_url;
+						}
+					} else {
+						if (ssoWin && !ssoWin.closed) ssoWin.close();
+						alert((res && res.data && res.data.message) ? res.data.message : 'Unable to generate LMS SSO link.');
+					}
+				},
+				error: function() {
+					$btn.prop('disabled', false).html(origHtml);
+					if (ssoWin && !ssoWin.closed) ssoWin.close();
+					alert('Connection error generating SSO session.');
+				}
+			});
+		});
+
+		// Refresh Enrollments & Catalog Cache
+		$(document).on('click', '#tpd-btn-sync-my-resources', function(e) {
+			e.preventDefault();
+			var $btn = $(this);
+			var origHtml = $btn.html();
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Syncing...');
+
+			$.ajax({
+				url: (typeof tpd_data !== 'undefined') ? tpd_data.ajax_url : '/wp-admin/admin-ajax.php',
+				type: 'POST',
+				data: {
+					action: 'tpd_get_resources_data',
+					force: 1,
+					nonce: (typeof tpd_data !== 'undefined' ? tpd_data.nonce : '')
+				},
+				success: function(res) {
+					$btn.prop('disabled', false).html(origHtml);
+					if (res && res.success) {
+						showToast('Resources & LMS progress synced!');
+						setTimeout(function() {
+							window.location.reload();
+						}, 650);
+					} else {
+						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to sync LMS resources.');
+					}
+				},
+				error: function() {
+					$btn.prop('disabled', false).html(origHtml);
+					alert('Connection error syncing resources.');
+				}
+			});
+		});
+
+		// 24. Unified TPD Checkout Modal Controller (Plans, LMS Courses, Toolkits)
+		var tpdCheckoutNeedsReload = false;
+
+		function closeTpdCheckoutModal() {
+			$('#tpd-checkout-modal').fadeOut(160);
+			if (tpdCheckoutNeedsReload) {
+				window.location.href = window.location.href.split('?')[0];
+			}
+		}
+
+		function showTpdCheckoutStatus(msg, isError) {
+			var $box = $('#tpd-co-status-msg');
+			$box.css({
+				background: isError ? '#fef2f2' : '#f0fdf4',
+				color: isError ? '#b91c1c' : '#166534',
+				border: '1px solid ' + (isError ? '#fecaca' : '#bbf7d0')
+			}).text(msg).show();
+		}
+
+		function openTpdCheckoutModal(itemType, itemId, billingCycle, preferredGateway) {
+			var $modal = $('#tpd-checkout-modal');
+			if (!$modal.length) return;
+
+			tpdCheckoutNeedsReload = false;
+			$('#tpd-co-status-msg').hide().text('');
+			$('#tpd-checkout-success').hide();
+			$('#tpd-co-launch-sso-btn').hide().attr('href', '#');
+			$('#tpd-checkout-content').hide();
+			$('#tpd-checkout-loading').show();
+			$modal.css('display', 'flex').hide().fadeIn(160);
+
+			$.ajax({
+				url: (typeof tpd_data !== 'undefined') ? tpd_data.ajax_url : '/wp-admin/admin-ajax.php',
+				type: 'POST',
+				data: {
+					action: 'tpd_get_checkout_preview',
+					item_type: itemType,
+					item_id: itemId,
+					billing_cycle: billingCycle || 'once',
+					nonce: (typeof tpd_data !== 'undefined' ? tpd_data.nonce : '')
+				},
+				success: function(res) {
+					$('#tpd-checkout-loading').hide();
+					if (!res || !res.success || !res.data || !res.data.item) {
+						$modal.fadeOut(150);
+						alert((res && res.data && res.data.message) ? res.data.message : 'Could not load checkout pricing.');
+						return;
+					}
+
+					var item = res.data.item;
+					var sym = $('#tpd-co-item-price').data('symbol') || '$';
+					var badgeMap = {
+						plan: 'MEMBERSHIP PLAN',
+						lms_course: 'LMS TRAINING COURSE',
+						resource: 'PARTNER RESOURCE'
+					};
+
+					$('#tpd-co-item-badge').text(badgeMap[item.item_type] || 'ORDER ITEM');
+					$('#tpd-co-item-title').text(item.item_title);
+					$('#tpd-co-item-desc').text(item.description || '');
+					$('#tpd-co-item-price').text(item.amount <= 0 ? 'Free' : (sym + parseFloat(item.amount).toFixed(2)));
+
+					$('#tpd_co_item_type').val(item.item_type);
+					$('#tpd_co_item_id').val(item.item_id);
+					$('#tpd_co_billing_cycle').val(item.billing_cycle || 'once');
+
+					if (parseFloat(item.amount) <= 0) {
+						$('#tpd-co-gateways-wrap').hide();
+						$('#tpd-co-submit-btn').html('<i class="fa-solid fa-bolt"></i> Confirm Free Activation');
+					} else {
+						$('#tpd-co-gateways-wrap').show();
+						$('#tpd-co-submit-btn').html('<i class="fa-solid fa-lock"></i> Confirm & Pay');
+						if (preferredGateway) {
+							var $prefRadio = $('input[name="tpd_co_gateway"][value="' + preferredGateway + '"]');
+							if ($prefRadio.length) {
+								$prefRadio.prop('checked', true);
+							}
+						}
+					}
+
+					$('#tpd-checkout-content').fadeIn(140);
+				},
+				error: function() {
+					$('#tpd-checkout-loading').hide();
+					$modal.fadeOut(150);
+					alert('Connection error fetching checkout summary.');
+				}
+			});
+		}
+
+		window.tpdOpenCheckoutModal = openTpdCheckoutModal;
+
+		$(document).on('click', '.tpd-open-checkout-btn', function(e) {
+			e.preventDefault();
+			var $btn = $(this);
+			openTpdCheckoutModal(
+				$btn.data('item-type'),
+				$btn.data('item-id'),
+				$btn.data('billing-cycle') || 'once',
+				''
+			);
+		});
+
+		$(document).on('click', '#tpd-close-checkout-modal, #tpd-co-cancel-btn, #tpd-co-done-btn', function(e) {
+			e.preventDefault();
+			closeTpdCheckoutModal();
+		});
+
+		$(document).on('click', '#tpd-co-submit-btn', function(e) {
+			e.preventDefault();
+			var $btn = $(this);
+			var origHtml = $btn.html();
+			var gateway = $('input[name="tpd_co_gateway"]:checked').val() || 'test';
+			var cleanReturnUrl = window.location.href.split('#')[0];
+
+			$('#tpd-co-status-msg').hide();
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Processing...');
+
+			$.ajax({
+				url: (typeof tpd_data !== 'undefined') ? tpd_data.ajax_url : '/wp-admin/admin-ajax.php',
+				type: 'POST',
+				data: {
+					action: 'tpd_initiate_checkout',
+					item_type: $('#tpd_co_item_type').val(),
+					item_id: $('#tpd_co_item_id').val(),
+					billing_cycle: $('#tpd_co_billing_cycle').val(),
+					gateway: gateway,
+					return_url: cleanReturnUrl,
+					nonce: (typeof tpd_data !== 'undefined' ? tpd_data.nonce : '')
+				},
+				success: function(res) {
+					$btn.prop('disabled', false).html(origHtml);
+					if (!res || !res.success || !res.data) {
+						showTpdCheckoutStatus((res && res.data && res.data.message) ? res.data.message : 'Checkout failed.', true);
+						return;
+					}
+
+					if (res.data.status === 'redirect' && res.data.checkout_url) {
+						$btn.prop('disabled', true).html('<i class="fa-solid fa-arrow-up-right-from-square"></i> Redirecting...');
+						window.location.href = res.data.checkout_url;
+						return;
+					}
+
+					tpdCheckoutNeedsReload = Boolean(res.data.reload || res.data.refresh_resources);
+					$('#tpd-checkout-content').hide();
+					$('#tpd-co-success-text').text(res.data.message || 'Purchase confirmed!');
+					if (res.data.sso_url) {
+						$('#tpd-co-launch-sso-btn').attr('href', res.data.sso_url).attr('target', '_blank').show();
+					}
+					$('#tpd-checkout-success').fadeIn(180);
+					showToast(res.data.message || 'Order completed!');
+				},
+				error: function() {
+					$btn.prop('disabled', false).html(origHtml);
+					showTpdCheckoutStatus('Network error processing checkout.', true);
+				}
+			});
+		});
+
+		// Verify Stripe / PayPal Return Query Parameters on Load
+		if (window.location.search) {
+			var urlParams = new URLSearchParams(window.location.search);
+			if (urlParams.get('tpd_checkout_return') === '1' && urlParams.get('tx_ref')) {
+				var txRef = urlParams.get('tx_ref');
+				var sessionId = urlParams.get('session_id') || '';
+				var ppToken = urlParams.get('token') || '';
+
+				if ($('#tpd-checkout-modal').length) {
+					$('#tpd-checkout-content, #tpd-checkout-success').hide();
+					$('#tpd-checkout-loading').show().find('p').text('Verifying payment confirmation...');
+					$('#tpd-checkout-modal').css('display', 'flex').show();
+				}
+
+				$.ajax({
+					url: (typeof tpd_data !== 'undefined') ? tpd_data.ajax_url : '/wp-admin/admin-ajax.php',
+					type: 'POST',
+					data: {
+						action: 'tpd_verify_checkout_return',
+						tx_ref: txRef,
+						session_id: sessionId,
+						token: ppToken,
+						nonce: (typeof tpd_data !== 'undefined' ? tpd_data.nonce : '')
+					},
+					success: function(res) {
+						$('#tpd-checkout-loading').hide();
+						if (history.replaceState) {
+							history.replaceState(null, '', window.location.pathname + window.location.hash);
+						}
+						if (res && res.success && res.data) {
+							tpdCheckoutNeedsReload = true;
+							$('#tpd-co-success-text').text(res.data.message || 'Payment confirmed and unlocked!');
+							if (res.data.sso_url) {
+								$('#tpd-co-launch-sso-btn').attr('href', res.data.sso_url).attr('target', '_blank').show();
+							}
+							$('#tpd-checkout-success').fadeIn(180);
+							showToast(res.data.message || 'Payment confirmed!');
+						} else {
+							$('#tpd-checkout-modal').hide();
+							alert((res && res.data && res.data.message) ? res.data.message : 'Could not verify payment return.');
+						}
+					},
+					error: function() {
+						$('#tpd-checkout-loading').hide();
+						$('#tpd-checkout-modal').hide();
+						alert('Connection error verifying payment.');
+					}
+				});
+			} else if (urlParams.get('tpd_checkout_cancel') === '1') {
+				if (history.replaceState) {
+					history.replaceState(null, '', window.location.pathname + window.location.hash);
+				}
+				showToast('Checkout cancelled.');
+			}
+		}
 	});
 
 })(jQuery);

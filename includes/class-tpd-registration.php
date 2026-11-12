@@ -606,7 +606,7 @@ class TPD_Tool_Registration {
 		$login_input = isset( $_POST['username'] ) ? sanitize_text_field( wp_unslash( $_POST['username'] ) ) : '';
 		$password    = isset( $_POST['password'] ) ? (string) wp_unslash( $_POST['password'] ) : '';
 		$remember    = ! empty( $_POST['remember'] );
-		$portal_type = isset( $_POST['portal_type'] ) ? sanitize_key( wp_unslash( $_POST['portal_type'] ) ) : 'advisor';
+		$portal_type = isset( $_POST['portal_type'] ) ? sanitize_key( wp_unslash( $_POST['portal_type'] ) ) : 'unified';
 
 		if ( empty( $login_input ) || empty( $password ) ) {
 			wp_send_json_error( array( 'message' => __( 'Please enter both your username/email and password.', 'tpd-tool' ) ) );
@@ -623,17 +623,29 @@ class TPD_Tool_Registration {
 			) );
 		}
 
-		// 2. Resolve User by Email, Portal-Specific Username, or Primary WP Username
+		// 2. Resolve User by Email, WP Username, or Portal-Specific Alias (Unified Pro + Supplier)
 		$user = null;
 		if ( is_email( $login_input ) ) {
 			$user = get_user_by( 'email', $login_input );
 		}
 
 		if ( ! $user ) {
-			$portal_meta_key = ( 'supplier' === $portal_type ) ? 'tpd_supplier_username' : 'tpd_advisor_username';
-			$matched_users   = get_users( array(
-				'meta_key'   => $portal_meta_key,
-				'meta_value' => $login_input,
+			$user = get_user_by( 'login', $login_input );
+		}
+
+		if ( ! $user && 'admin' !== $portal_type ) {
+			$matched_users = get_users( array(
+				'meta_query' => array(
+					'relation' => 'OR',
+					array(
+						'key'   => 'tpd_advisor_username',
+						'value' => $login_input,
+					),
+					array(
+						'key'   => 'tpd_supplier_username',
+						'value' => $login_input,
+					),
+				),
 				'number'     => 1,
 			) );
 			if ( ! empty( $matched_users ) ) {
@@ -642,28 +654,15 @@ class TPD_Tool_Registration {
 		}
 
 		if ( ! $user ) {
-			$user = get_user_by( 'login', $login_input );
-		}
-
-		if ( ! $user ) {
 			set_transient( $rate_key, $failed_count + 1, self::LOCKOUT_SECONDS );
 			wp_send_json_error( array( 'message' => __( 'Invalid username or password', 'tpd-tool' ) ) );
 		}
 
 		// 3. Verify Password using WordPress Cryptographic Hash Check (wp_check_password)
-		$password_valid   = false;
-		$portal_hash_meta = ( 'supplier' === $portal_type ) ? 'tpd_supplier_password_hash' : 'tpd_advisor_password_hash';
-		$portal_pwd_hash  = get_user_meta( $user->ID, $portal_hash_meta, true );
-
-		if ( ! empty( $portal_pwd_hash ) ) {
-			// Check portal-specific password hash first, or primary WP password hash
-			if ( wp_check_password( $password, $portal_pwd_hash, $user->ID ) || wp_check_password( $password, $user->user_pass, $user->ID ) ) {
-				$password_valid = true;
-			}
+		if ( 'admin' === $portal_type ) {
+			$password_valid = wp_check_password( $password, $user->user_pass, $user->ID );
 		} else {
-			if ( wp_check_password( $password, $user->user_pass, $user->ID ) ) {
-				$password_valid = true;
-			}
+			$password_valid = self::verify_existing_user_password( $user, $password );
 		}
 
 		if ( ! $password_valid ) {
@@ -679,7 +678,7 @@ class TPD_Tool_Registration {
 			) );
 		}
 
-		// 5. Enforce Strict Role Isolation per Portal
+		// 5. Enforce Super Admin Segregation vs Unified Pro/Supplier Routing
 		$is_admin = TPD_Tool_Roles::is_admin( $user->ID );
 		$is_adv   = TPD_Tool_Roles::is_advisor( $user->ID );
 		$is_supp  = TPD_Tool_Roles::is_supplier( $user->ID );
@@ -690,43 +689,9 @@ class TPD_Tool_Registration {
 					'message' => __( 'Access denied: Super Administrator privileges are required to log in here.', 'tpd-tool' ),
 				) );
 			}
-		}
-
-		if ( 'advisor' === $portal_type && ! $is_adv && ! $is_admin ) {
-			if ( $is_supp ) {
-				wp_send_json_error( array(
-					'message'        => __( 'Your account is registered as a Supplier Partner only, not a Travel Advisor. Would you like to also register as a Travel Advisor with this email?', 'tpd-tool' ),
-					'cross_role_url' => add_query_arg(
-						array(
-							'cross_role'       => '1',
-							'cross_role_email' => rawurlencode( $user->user_email ),
-						),
-						home_url( '/advisor-registration/' )
-					),
-					'cross_role_btn' => __( 'Continue & Register as Travel Advisor Also', 'tpd-tool' ),
-				) );
-			}
+		} elseif ( ! $is_adv && ! $is_supp && ! $is_admin ) {
 			wp_send_json_error( array(
-				'message' => __( 'Access denied: A Travel Advisor account is required to sign in here.', 'tpd-tool' ),
-			) );
-		}
-
-		if ( 'supplier' === $portal_type && ! $is_supp && ! $is_admin ) {
-			if ( $is_adv ) {
-				wp_send_json_error( array(
-					'message'        => __( 'Your account is registered as a Travel Advisor only, not a Supplier Partner. Would you like to also register as a Supplier Partner with this email?', 'tpd-tool' ),
-					'cross_role_url' => add_query_arg(
-						array(
-							'cross_role'       => '1',
-							'cross_role_email' => rawurlencode( $user->user_email ),
-						),
-						home_url( '/supplier-registration/' )
-					),
-					'cross_role_btn' => __( 'Continue & Register as Supplier Partner Also', 'tpd-tool' ),
-				) );
-			}
-			wp_send_json_error( array(
-				'message' => __( 'Access denied: A Supplier Partner account is required to sign in here.', 'tpd-tool' ),
+				'message' => __( 'Access denied: A Travel Advisor or Supplier Partner account is required to sign in.', 'tpd-tool' ),
 			) );
 		}
 
@@ -736,12 +701,20 @@ class TPD_Tool_Registration {
 		wp_set_current_user( $user->ID );
 		wp_set_auth_cookie( $user->ID, $remember, is_ssl() );
 
+		$requested_redirect = ! empty( $_POST['redirect_to'] ) ? wp_validate_redirect( esc_url_raw( wp_unslash( $_POST['redirect_to'] ) ), '' ) : '';
+
 		if ( 'admin' === $portal_type ) {
-			$redirect_url = ! empty( $_POST['redirect_to'] ) ? esc_url_raw( wp_unslash( $_POST['redirect_to'] ) ) : home_url( '/tpd-admin/' );
-		} elseif ( 'supplier' === $portal_type ) {
+			$redirect_url = $requested_redirect ?: home_url( '/tpd-admin/' );
+		} elseif ( ! empty( $requested_redirect ) ) {
+			$redirect_url = $requested_redirect;
+		} elseif ( $is_adv && $is_supp ) {
+			$redirect_url = ( 'supplier' === $portal_type ) ? home_url( '/supplier-dashboard/' ) : home_url( '/advisor-dashboard/' );
+		} elseif ( $is_supp && ! $is_adv ) {
 			$redirect_url = home_url( '/supplier-dashboard/' );
-		} else {
+		} elseif ( $is_adv ) {
 			$redirect_url = home_url( '/advisor-dashboard/' );
+		} else {
+			$redirect_url = home_url( '/tpd-admin/' );
 		}
 
 		wp_send_json_success( array(

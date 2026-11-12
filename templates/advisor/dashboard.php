@@ -1504,24 +1504,9 @@ $news_posts = get_posts( array(
 				</div>
 			</div>
 
-			<!-- VIEW 8: RESOURCES & TOOLS -->
+			<!-- VIEW 8: RESOURCES & TOOLS (My Resources & All Resources + LMS Academy) -->
 			<div id="tpd-view-resources" class="tpd-tab-panel">
-				<div class="tpd-card-box">
-					<h3><i class="fa-solid fa-book-open"></i> <?php esc_html_e( 'Advisor Sales Toolkits & Brochures', 'tpd-tool' ); ?></h3>
-					<p class="text-muted"><?php esc_html_e( 'Download partner commission guides, deck plans, and grab-and-go social media assets.', 'tpd-tool' ); ?></p>
-					<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; margin-top:18px;">
-						<div style="border:1px solid #e2e8f0; border-radius:12px; padding:18px;">
-							<i class="fa-regular fa-file-pdf text-red fa-2x" style="margin-bottom:10px;"></i>
-							<h4 style="margin:0 0 6px;">2026 Luxury River Cruise Charter Guide</h4>
-							<p style="font-size:12px; color:#64748b;">Complete commission protection tiers and group policy reference.</p>
-						</div>
-						<div style="border:1px solid #e2e8f0; border-radius:12px; padding:18px;">
-							<i class="fa-regular fa-file-pdf text-blue fa-2x" style="margin-bottom:10px;"></i>
-							<h4 style="margin:0 0 6px;">Preferred Resort Amenities Directory</h4>
-							<p style="font-size:12px; color:#64748b;">VIP client perks, room upgrade priority, and resort credit matrix.</p>
-						</div>
-					</div>
-				</div>
+				<?php include TPD_TOOL_DIR . 'templates/shared/resources-hub.php'; ?>
 			</div>
 
 			<!-- VIEW 9 & 10: CRUISE COMPARISON & TARC CONNECT -->
@@ -1701,6 +1686,8 @@ $news_posts = get_posts( array(
 </div>
 
 <div id="tpd-chat-drawer-container" style="display:none;"></div>
+
+<?php include TPD_TOOL_DIR . 'templates/shared/checkout-modal.php'; ?>
 
 <?php wp_footer(); ?>
 </body>

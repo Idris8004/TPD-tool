@@ -880,6 +880,330 @@
 			});
 		});
 
+		// Helper to resolve front/user nonce alongside adminNonce
+		var userNonce = (typeof tpd_data !== 'undefined' && tpd_data.nonce) ? tpd_data.nonce : '';
+
+		// ---------------------------------------------------------------------
+		// 16. Financial Ledger Filtering & Transaction Actions
+		// ---------------------------------------------------------------------
+		function filterFinancialTable() {
+			var q = ($('#tpd-fin-search').val() || '').toLowerCase().trim();
+			var itemType = $('#tpd-fin-type-filter').val() || 'all';
+			var status = $('#tpd-fin-status-filter').val() || 'all';
+
+			$('#tpd-fin-table tbody tr').each(function() {
+				var $tr = $(this);
+				if (!$tr.attr('data-item-type')) return;
+				var rType = $tr.attr('data-item-type') || '';
+				var rStatus = $tr.attr('data-status') || '';
+				var txt = $tr.text().toLowerCase();
+
+				var okQ = (q === '' || txt.indexOf(q) !== -1);
+				var okType = (itemType === 'all' || rType === itemType);
+				var okStatus = (status === 'all' || rStatus === status);
+
+				$tr.toggle(okQ && okType && okStatus);
+			});
+		}
+
+		$(document).on('keyup input', '#tpd-fin-search', filterFinancialTable);
+		$(document).on('change', '#tpd-fin-type-filter, #tpd-fin-status-filter', filterFinancialTable);
+
+		$(document).on('click', '.tpd-tx-status-btn', function(e) {
+			e.preventDefault();
+			var $btn = $(this);
+			var txId = $btn.data('id');
+			var nextStatus = $btn.data('status');
+			var confirmMsg = (nextStatus === 'paid')
+				? 'Mark this transaction as PAID and run automatic plan/LMS fulfillment?'
+				: 'Mark this transaction as REFUNDED?';
+			if (!confirm(confirmMsg)) return;
+
+			var origHtml = $btn.html();
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
+
+			$.ajax({
+				url: ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'tpd_admin_update_tx_status',
+					tx_id: txId,
+					status: nextStatus,
+					nonce: adminNonce
+				},
+				success: function(res) {
+					$btn.prop('disabled', false).html(origHtml);
+					if (res && res.success) {
+						showAdminToast(res.data.message || 'Transaction updated.');
+						window.location.hash = 'sa-financial';
+						setTimeout(function() { window.location.reload(); }, 700);
+					} else {
+						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to update transaction.');
+					}
+				},
+				error: function() {
+					$btn.prop('disabled', false).html(origHtml);
+					alert('Network error updating transaction.');
+				}
+			});
+		});
+
+		// ---------------------------------------------------------------------
+		// 17. LMS Studio & Custom TPD Resources Controller
+		// ---------------------------------------------------------------------
+		$(document).on('click', '.tpd-sa-lms-subtab', function(e) {
+			e.preventDefault();
+			var tab = $(this).data('lmstab') || 'studio';
+			$('.tpd-sa-lms-subtab').each(function() {
+				var active = ($(this).data('lmstab') === tab);
+				$(this).toggleClass('active', active);
+				if (active) {
+					$(this).css({ background: '#164e87', color: '#ffffff', borderColor: '#164e87' });
+				} else {
+					$(this).css({ background: '#f8fafc', color: '#334155', borderColor: '#cbd5e1' });
+				}
+			});
+			$('.tpd-sa-lms-panel').hide().removeClass('active');
+			$('#tpd-sa-lms-tab-' + tab).fadeIn(140).addClass('active');
+		});
+
+		$(document).on('submit', '#tpd-sa-lms-settings-form', function(e) {
+			e.preventDefault();
+			var $form = $(this);
+			var $btn = $form.find('button[type="submit"]');
+			var origHtml = $btn.html();
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Saving...');
+
+			var payload = $form.serialize() + '&action=tpd_admin_save_lms_settings&nonce=' + encodeURIComponent(adminNonce);
+
+			$.ajax({
+				url: ajaxUrl,
+				type: 'POST',
+				data: payload,
+				success: function(res) {
+					$btn.prop('disabled', false).html(origHtml);
+					if (res && res.success) {
+						showAdminToast(res.data.message || 'LMS settings saved!');
+						window.location.hash = 'sa-lms-studio';
+						setTimeout(function() { window.location.reload(); }, 750);
+					} else {
+						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to save LMS settings.');
+					}
+				},
+				error: function() {
+					$btn.prop('disabled', false).html(origHtml);
+					alert('Network error saving LMS settings.');
+				}
+			});
+		});
+
+		$(document).on('click', '#tpd-sa-test-lms-btn', function(e) {
+			e.preventDefault();
+			var $btn = $(this);
+			var origHtml = $btn.html();
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Testing...');
+
+			$.ajax({
+				url: ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'tpd_admin_test_lms_connection',
+					nonce: adminNonce
+				},
+				success: function(res) {
+					$btn.prop('disabled', false).html(origHtml);
+					if (res && res.success) {
+						showAdminToast(res.data.message || 'LMS connection healthy!');
+					} else {
+						alert((res && res.data && res.data.message) ? res.data.message : 'LMS health check failed.');
+					}
+				},
+				error: function() {
+					$btn.prop('disabled', false).html(origHtml);
+					alert('Network error testing LMS connection.');
+				}
+			});
+		});
+
+		$(document).on('click', '#tpd-sa-sync-lms-btn', function(e) {
+			e.preventDefault();
+			var $btn = $(this);
+			var origHtml = $btn.html();
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Syncing...');
+
+			$.ajax({
+				url: ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'tpd_admin_sync_lms_cache',
+					nonce: adminNonce
+				},
+				success: function(res) {
+					$btn.prop('disabled', false).html(origHtml);
+					if (res && res.success) {
+						showAdminToast(res.data.message || 'LMS cache synced!');
+						window.location.hash = 'sa-lms-studio';
+						setTimeout(function() { window.location.reload(); }, 700);
+					} else {
+						alert((res && res.data && res.data.message) ? res.data.message : 'LMS sync failed.');
+					}
+				},
+				error: function() {
+					$btn.prop('disabled', false).html(origHtml);
+					alert('Network error syncing LMS cache.');
+				}
+			});
+		});
+
+		$(document).on('click', '.tpd-lms-toggle-publish-btn', function(e) {
+			e.preventDefault();
+			var $btn = $(this);
+			var slug = $btn.data('slug');
+			var origHtml = $btn.html();
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
+
+			$.ajax({
+				url: ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'tpd_admin_toggle_course_publish',
+					course_slug: slug,
+					nonce: adminNonce
+				},
+				success: function(res) {
+					$btn.prop('disabled', false);
+					if (res && res.success && res.data) {
+						var isPub = (res.data.status === 'published');
+						var $pill = $('.tpd-lms-status-pill[data-slug="' + slug + '"]');
+						$pill.toggleClass('active', isPub).toggleClass('inactive', !isPub).text(isPub ? 'PUBLISHED' : 'DRAFT');
+						$btn.html('<i class="fa-solid fa-power-off"></i> ' + (isPub ? 'Set Draft' : 'Publish'));
+						showAdminToast(res.data.message || 'Course status updated.');
+					} else {
+						$btn.html(origHtml);
+						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to toggle course status.');
+					}
+				},
+				error: function() {
+					$btn.prop('disabled', false).html(origHtml);
+					alert('Network error updating course status.');
+				}
+			});
+		});
+
+		function fetchAdminLmsSsoUrl(redirectPath, onSuccess, onError) {
+			$.ajax({
+				url: ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'tpd_get_lms_sso_url',
+					redirect: redirectPath || '/studio',
+					nonce: userNonce
+				},
+				success: function(res) {
+					if (res && res.success && res.data && res.data.sso_url) {
+						onSuccess(res.data.sso_url);
+					} else if (onError) {
+						onError((res && res.data && res.data.message) ? res.data.message : 'Could not build SSO URL.');
+					}
+				},
+				error: function() {
+					if (onError) onError('Network error generating LMS SSO token.');
+				}
+			});
+		}
+
+		$(document).on('click', '#tpd-sa-load-lms-iframe', function(e) {
+			e.preventDefault();
+			var $btn = $(this);
+			var origHtml = $btn.html();
+			var route = $('#tpd-sa-lms-route').val() || '/studio';
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Connecting SSO...');
+
+			fetchAdminLmsSsoUrl(route, function(ssoUrl) {
+				$btn.prop('disabled', false).html(origHtml);
+				$('#tpd-sa-lms-iframe-placeholder').hide();
+				$('#tpd-sa-lms-iframe').attr('src', ssoUrl).show();
+				showAdminToast('LMS Studio SSO session loaded.');
+			}, function(errMsg) {
+				$btn.prop('disabled', false).html(origHtml);
+				alert(errMsg);
+			});
+		});
+
+		$(document).on('click', '#tpd-sa-open-lms-tab, .tpd-sa-sso-jump', function(e) {
+			e.preventDefault();
+			var route = $(this).data('redirect') || $('#tpd-sa-lms-route').val() || '/studio';
+			var tab = window.open('about:blank', '_blank');
+
+			fetchAdminLmsSsoUrl(route, function(ssoUrl) {
+				if (tab && !tab.closed) {
+					tab.location.href = ssoUrl;
+				} else {
+					window.open(ssoUrl, '_blank');
+				}
+			}, function(errMsg) {
+				if (tab && !tab.closed) tab.close();
+				alert(errMsg);
+			});
+		});
+
+		$(document).on('submit', '#tpd-sa-resource-form', function(e) {
+			e.preventDefault();
+			var $form = $(this);
+			var $btn = $form.find('button[type="submit"]');
+			var origHtml = $btn.html();
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Saving...');
+
+			var payload = $form.serialize() + '&action=tpd_admin_save_custom_resource&nonce=' + encodeURIComponent(adminNonce);
+
+			$.ajax({
+				url: ajaxUrl,
+				type: 'POST',
+				data: payload,
+				success: function(res) {
+					$btn.prop('disabled', false).html(origHtml);
+					if (res && res.success) {
+						showAdminToast(res.data.message || 'TPD Resource published!');
+						window.location.hash = 'sa-lms-studio';
+						setTimeout(function() { window.location.reload(); }, 700);
+					} else {
+						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to save resource.');
+					}
+				},
+				error: function() {
+					$btn.prop('disabled', false).html(origHtml);
+					alert('Network error saving resource.');
+				}
+			});
+		});
+
+		$(document).on('click', '.tpd-sa-delete-resource-btn', function(e) {
+			e.preventDefault();
+			var resId = $(this).data('id');
+			if (!confirm('Delete this TPD resource/toolkit?')) return;
+
+			$.ajax({
+				url: ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'tpd_admin_delete_custom_resource',
+					resource_id: resId,
+					nonce: adminNonce
+				},
+				success: function(res) {
+					if (res && res.success) {
+						$('#sa-res-row-' + resId).fadeOut(250, function() { $(this).remove(); });
+						showAdminToast(res.data.message || 'Resource deleted.');
+					} else {
+						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to delete resource.');
+					}
+				},
+				error: function() {
+					alert('Network error deleting resource.');
+				}
+			});
+		});
+
 		function showAdminToast(msg) {
 			var $toast = $('<div class="tpd-admin-toast"><i class="fa-solid fa-circle-check" style="color:#4ade80;"></i> ' + msg + '</div>');
 			$('body').append($toast);

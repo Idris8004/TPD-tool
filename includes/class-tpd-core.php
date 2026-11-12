@@ -277,6 +277,12 @@ class TPD_Tool_Core {
 		TPD_Tool_Roles::register_roles();
 		TPD_Tool_CPT::register_all();
 		TPD_Tool_Tiers::ensure_default_permissions();
+		if ( class_exists( 'TPD_Tool_Financial' ) ) {
+			TPD_Tool_Financial::create_table();
+		}
+		if ( class_exists( 'TPD_Tool_LMS' ) ) {
+			TPD_Tool_LMS::ensure_defaults();
+		}
 		TPD_Tool_Seeder::seed_all();
 		flush_rewrite_rules();
 	}

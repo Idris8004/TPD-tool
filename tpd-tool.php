@@ -27,6 +27,8 @@ require_once TPD_TOOL_DIR . 'includes/class-tpd-updater.php';
 require_once TPD_TOOL_DIR . 'includes/class-tpd-roles.php';
 require_once TPD_TOOL_DIR . 'includes/class-tpd-settings.php';
 require_once TPD_TOOL_DIR . 'includes/class-tpd-tiers.php';
+require_once TPD_TOOL_DIR . 'includes/class-tpd-lms.php';
+require_once TPD_TOOL_DIR . 'includes/class-tpd-financial.php';
 require_once TPD_TOOL_DIR . 'includes/class-tpd-cpt.php';
 require_once TPD_TOOL_DIR . 'includes/class-tpd-analytics.php';
 require_once TPD_TOOL_DIR . 'includes/class-tpd-chat.php';

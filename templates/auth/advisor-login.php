@@ -15,6 +15,10 @@ if ( is_user_logged_in() && ! isset( $_GET['preview_login'] ) && ! TPD_Tool_Role
 		wp_safe_redirect( home_url( '/advisor-dashboard/' ) );
 		exit;
 	}
+	if ( TPD_Tool_Roles::is_supplier( $uid ) ) {
+		wp_safe_redirect( home_url( '/supplier-dashboard/' ) );
+		exit;
+	}
 }
 
 $initial_notice = '';
@@ -241,6 +245,7 @@ if ( $is_standalone ) {
 <div class="tpd-member-login-hero">
 	<div class="tpd-member-login-box">
 		<h1 class="tpd-ml-title"><span>Member</span> Login</h1>
+		<p style="margin:-16px 0 24px; font-size:14px; color:#cbd5e1;"><?php esc_html_e( 'Unified sign-in for Pro Advisors & Supplier Partners — we route you straight to your dashboard.', 'tpd-tool' ); ?></p>
 
 		<div id="tpd-advisor-login-error" class="tpd-ml-error-pill" style="<?php echo ! empty( $initial_notice ) ? 'display:block;' : ''; ?>">
 			<?php echo ! empty( $initial_notice ) ? esc_html( $initial_notice ) : esc_html__( 'Invalid username or password', 'tpd-tool' ); ?>
@@ -249,7 +254,7 @@ if ( $is_standalone ) {
 
 		<form id="tpd-advisor-login-form" method="post" novalidate>
 			<input type="hidden" name="action" value="tpd_user_login">
-			<input type="hidden" name="portal_type" value="advisor">
+			<input type="hidden" name="portal_type" value="unified">
 			<input type="hidden" name="nonce" value="<?php echo esc_attr( wp_create_nonce( 'tpd_nonce' ) ); ?>">
 
 			<div class="tpd-ml-inputs-row">
