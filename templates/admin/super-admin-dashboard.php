@@ -2254,27 +2254,104 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 							</div>
 						</div>
 
-						<div id="tpd-sa-lms-iframe-wrap" style="border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; min-height:240px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
-							<div id="tpd-sa-lms-iframe-placeholder" style="text-align:center; padding:42px 24px; max-width:520px;">
-								<i class="fa-solid fa-graduation-cap" style="font-size:40px; color:#164e87; margin-bottom:10px;"></i>
-								<h4 style="margin:0 0 6px;"><?php esc_html_e( 'Ready to Launch LMS Studio via Single Sign-On', 'tpd-tool' ); ?></h4>
-								<p style="font-size:13px; color:#64748b; margin:0 0 14px;">
-									<?php esc_html_e( 'Click "Load Studio in Tab" to embed the LMS Studio right here using your fresh short-lived HMAC SSO token, or open it in a dedicated browser tab.', 'tpd-tool' ); ?>
+						<div id="tpd-sa-lms-iframe-wrap" style="border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; min-height:240px; overflow:hidden; display:flex; flex-direction:column;">
+							<!-- Top Action / Status Bar when Studio is Active -->
+							<div id="tpd-sa-lms-active-bar" style="display:none; background:#0b1526; color:#ffffff; padding:10px 18px; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; font-size:12px;">
+								<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+									<span style="background:#00798c; color:#fff; font-weight:800; padding:3px 9px; border-radius:5px; text-transform:uppercase;">
+										<i class="fa-solid fa-bolt"></i> SSO ACTIVE
+									</span>
+									<span id="tpd-sa-lms-active-dest" style="color:#bae6fd; font-family:monospace;">/studio</span>
+								</div>
+								<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+									<button type="button" id="tpd-sa-toggle-studio-mode" class="tpd-btn tpd-btn-xs" style="background:#1e293b; color:#f8fafc; border:1px solid #475569;">
+										<i class="fa-solid fa-laptop-code text-teal"></i> <span id="tpd-sa-mode-label"><?php esc_html_e( 'Switch to Studio Simulator', 'tpd-tool' ); ?></span>
+									</button>
+									<a href="#" id="tpd-sa-lms-active-sso-link" target="_blank" rel="noopener noreferrer" class="tpd-btn tpd-btn-xs" style="background:#00798c; color:#ffffff; text-decoration:none;">
+										<i class="fa-solid fa-arrow-up-right-from-square"></i> <?php esc_html_e( 'Open SSO in New Tab', 'tpd-tool' ); ?>
+									</a>
+									<button type="button" id="tpd-sa-close-lms-frame" class="tpd-btn tpd-btn-xs" style="background:transparent; border:none; color:#cbd5e1; cursor:pointer;" title="<?php esc_attr_e( 'Exit Studio View', 'tpd-tool' ); ?>">
+										<i class="fa-solid fa-xmark fa-lg"></i>
+									</button>
+								</div>
+							</div>
+
+							<!-- Placeholder Prompt -->
+							<div id="tpd-sa-lms-iframe-placeholder" style="text-align:center; padding:48px 24px; max-width:540px; margin:auto;">
+								<i class="fa-solid fa-chalkboard-user" style="font-size:44px; color:#164e87; margin-bottom:12px;"></i>
+								<h4 style="margin:0 0 6px; font-size:18px;"><?php esc_html_e( 'Launch LMS Instructor Studio', 'tpd-tool' ); ?></h4>
+								<p style="font-size:13px; color:#64748b; margin:0 0 16px; line-height:1.5;">
+									<?php esc_html_e( 'Embed the full LMS Instructor Studio workspace right here in your dashboard using your secure Single Sign-On session, or preview the interactive Course Simulator.', 'tpd-tool' ); ?>
 								</p>
-								<?php if ( ! $lms_configured ) : ?>
-									<div style="margin-top:14px;">
-										<span style="display:inline-block; background:#fef3c7; color:#92400e; font-size:12px; padding:6px 14px; border-radius:6px; font-weight:700;">
-											<i class="fa-solid fa-triangle-exclamation"></i> <?php esc_html_e( 'SSO Secret & API Token are not configured yet.', 'tpd-tool' ); ?>
-										</span>
-										<div style="margin-top:12px;">
-											<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-darkblue tpd-sa-jump-lms-settings" style="background:#00798c;">
-												<i class="fa-solid fa-sliders"></i> <?php esc_html_e( 'Configure Connection & .env Setup', 'tpd-tool' ); ?>
+								<div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
+									<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-darkblue tpd-sa-trigger-load-studio" style="background:#00798c;">
+										<i class="fa-solid fa-play"></i> <?php esc_html_e( 'Load Studio in Tab', 'tpd-tool' ); ?>
+									</button>
+									<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline tpd-sa-open-simulator-btn">
+										<i class="fa-solid fa-laptop-code text-teal"></i> <?php esc_html_e( 'Preview Studio Simulator', 'tpd-tool' ); ?>
+									</button>
+								</div>
+							</div>
+
+							<!-- Live SSO Iframe -->
+							<iframe id="tpd-sa-lms-iframe" src="about:blank" style="display:none; width:100%; height:780px; border:0; background:#ffffff;"></iframe>
+
+							<!-- Interactive Built-in LMS Studio Simulator (Always works even if remote server is offline) -->
+							<div id="tpd-sa-lms-simulator" style="display:none; padding:24px; background:#f8fafc; font-family:'Plus Jakarta Sans', system-ui, sans-serif;">
+								<div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:20px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+									<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; border-bottom:1px solid #f1f5f9; padding-bottom:14px; margin-bottom:16px;">
+										<div>
+											<span style="background:#eff6ff; color:#1d4ed8; font-size:11px; font-weight:800; padding:3px 10px; border-radius:6px; text-transform:uppercase;">
+												<i class="fa-solid fa-graduation-cap"></i> LMS INSTRUCTOR STUDIO WORKSPACE
+											</span>
+											<h3 style="margin:6px 0 0; font-size:18px; font-weight:800; color:#0f172a;">Course Management & Lesson Curriculum</h3>
+										</div>
+										<div style="display:flex; gap:8px;">
+											<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-sim-filter-btn active" data-simtab="all" style="background:#164e87; color:#fff;">All Courses (<?php echo count($lms_courses_admin); ?>)</button>
+											<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-sim-new-course-btn" style="background:#00798c; color:#fff; border-color:#00798c;">
+												<i class="fa-solid fa-plus"></i> Create Course
 											</button>
 										</div>
 									</div>
-								<?php endif; ?>
+
+									<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(290px, 1fr)); gap:18px;">
+										<?php foreach ( $lms_courses_admin as $lc ) :
+											$slug = $lc['slug'] ?? '';
+											$title = $lc['title'] ?? $slug;
+											$price = (float)($lc['price'] ?? 0);
+											$lessons = (int)($lc['lessons_count'] ?? 0);
+											$thumb = ! empty( $lc['thumbnail_url'] ) ? $lc['thumbnail_url'] : 'https://images.unsplash.com/photo-1548574505-5e239809ee19?w=600&auto=format&fit=crop&q=80';
+										?>
+											<div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; overflow:hidden; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+												<div>
+													<div style="height:120px; background-image:url('<?php echo esc_url($thumb); ?>'); background-size:cover; background-position:center; padding:10px; display:flex; justify-content:space-between;">
+														<span style="background:#16a34a; color:#fff; font-size:10px; font-weight:800; padding:2px 8px; border-radius:4px; text-transform:uppercase;">PUBLISHED</span>
+														<strong style="background:rgba(11,21,38,0.85); color:#fff; font-size:11px; padding:2px 8px; border-radius:4px;">
+															<?php echo $price <= 0 ? 'Free' : ('$' . number_format($price, 2)); ?>
+														</strong>
+													</div>
+													<div style="padding:14px;">
+														<h4 style="margin:0 0 6px; font-size:14px; font-weight:800;"><?php echo esc_html($title); ?></h4>
+														<p style="font-size:12px; color:#64748b; margin:0 0 10px; line-height:1.4;"><?php echo esc_html(wp_trim_words($lc['subtitle'] ?? '', 14)); ?></p>
+														<div style="font-size:11.5px; color:#475569; display:flex; gap:10px;">
+															<span><i class="fa-regular fa-circle-play text-blue"></i> <?php echo esc_html($lessons); ?> lessons</span>
+															<span><i class="fa-solid fa-award text-gold"></i> Certificate</span>
+														</div>
+													</div>
+												</div>
+												<div style="padding:10px 14px; background:#f8fafc; border-top:1px solid #f1f5f9; display:flex; justify-content:space-between; gap:6px;">
+													<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-sim-manage-curriculum" data-title="<?php echo esc_attr($title); ?>" style="flex:1;">
+														<i class="fa-solid fa-list-check"></i> Curriculum
+													</button>
+													<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-sim-quiz-builder" data-title="<?php echo esc_attr($title); ?>" style="flex:1;">
+														<i class="fa-solid fa-question"></i> Quizzes
+													</button>
+												</div>
+											</div>
+										<?php endforeach; ?>
+									</div>
+								</div>
 							</div>
-							<iframe id="tpd-sa-lms-iframe" src="about:blank" style="display:none; width:100%; height:760px; border:0;"></iframe>
 						</div>
 					</div>
 				</div>

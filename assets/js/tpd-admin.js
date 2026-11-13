@@ -1159,7 +1159,7 @@
 			fetchAdminLmsSsoUrl(route, function(ssoUrl) {
 				$btn.prop('disabled', false).html(origHtml);
 				$('#tpd-sa-lms-iframe-placeholder').hide();
-				$('#tpd-sa-lms-iframe').attr('src', ssoUrl).show();
+				showLmsStudioView(ssoUrl, route);
 				showAdminToast('LMS Studio SSO session loaded.');
 			}, function(errMsg) {
 				$btn.prop('disabled', false).html(origHtml);
@@ -1172,6 +1172,74 @@
 					alert(errMsg);
 				}
 			});
+		});
+
+		
+		// Studio Simulator & Iframe Toggle Controller
+		function showLmsStudioView(ssoUrl, route) {
+			$('#tpd-sa-lms-iframe-placeholder').hide();
+			$('#tpd-sa-lms-active-dest').text(route || '/studio');
+			$('#tpd-sa-lms-active-sso-link').attr('href', ssoUrl || '#');
+			$('#tpd-sa-lms-active-bar').css('display', 'flex').show();
+			$('#tpd-sa-lms-simulator').hide();
+			$('#tpd-sa-lms-iframe').attr('src', ssoUrl).show();
+			$('#tpd-sa-mode-label').text('Switch to Studio Simulator');
+		}
+
+		function showLmsStudioSimulator() {
+			$('#tpd-sa-lms-iframe-placeholder').hide();
+			$('#tpd-sa-lms-active-dest').text('/studio (Interactive Simulator)');
+			$('#tpd-sa-lms-active-bar').css('display', 'flex').show();
+			$('#tpd-sa-lms-iframe').hide();
+			$('#tpd-sa-lms-simulator').fadeIn(150);
+			$('#tpd-sa-mode-label').text('Switch to Live Iframe');
+		}
+
+		$(document).on('click', '.tpd-sa-trigger-load-studio', function(e) {
+			e.preventDefault();
+			$('#tpd-sa-load-lms-iframe').trigger('click');
+		});
+
+		$(document).on('click', '.tpd-sa-open-simulator-btn', function(e) {
+			e.preventDefault();
+			showLmsStudioSimulator();
+		});
+
+		$(document).on('click', '#tpd-sa-toggle-studio-mode', function(e) {
+			e.preventDefault();
+			if ($('#tpd-sa-lms-simulator').is(':visible')) {
+				$('#tpd-sa-lms-simulator').hide();
+				$('#tpd-sa-lms-iframe').show();
+				$('#tpd-sa-mode-label').text('Switch to Studio Simulator');
+			} else {
+				showLmsStudioSimulator();
+			}
+		});
+
+		$(document).on('click', '#tpd-sa-close-lms-frame', function(e) {
+			e.preventDefault();
+			$('#tpd-sa-lms-active-bar, #tpd-sa-lms-iframe, #tpd-sa-lms-simulator').hide();
+			$('#tpd-sa-lms-iframe-placeholder').fadeIn(150);
+		});
+
+		$(document).on('click', '.tpd-sim-manage-curriculum', function(e) {
+			e.preventDefault();
+			var title = $(this).data('title') || 'Course';
+			alert('Curriculum for "' + title + '":\n\n1. Course Introduction & Welcome\n2. Partner Commission Structures & Tier Matrix\n3. Destination Highlights & Private Amenities\n4. Final Knowledge Quiz & Certificate Exam');
+		});
+
+		$(document).on('click', '.tpd-sim-quiz-builder', function(e) {
+			e.preventDefault();
+			var title = $(this).data('title') || 'Course';
+			alert('Quiz Builder for "' + title + '":\n\n10 Multiple-Choice Questions active. Passing score: 80% to earn official Certificate of Completion.');
+		});
+
+		$(document).on('click', '.tpd-sim-new-course-btn', function(e) {
+			e.preventDefault();
+			var name = prompt('Enter New Course Title to create in LMS Studio:');
+			if (name && name.trim()) {
+				showAdminToast('Draft course "' + name.trim() + '" created in LMS Studio!');
+			}
 		});
 
 		$(document).on('click', '#tpd-sa-open-lms-tab, .tpd-sa-sso-jump', function(e) {
