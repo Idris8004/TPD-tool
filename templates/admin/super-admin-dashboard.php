@@ -2564,7 +2564,7 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 							'TPD_API_TOKEN=' . ( ! empty( $lms_settings['api_token'] ) ? $lms_settings['api_token'] : 'REPLACE_WITH_SHARED_API_TOKEN' ),
 							'TPD_WEBHOOK_URL=' . rest_url( 'tpd/v1/lms-webhook' ),
 							'TPD_WEBHOOK_SECRET=' . ( ! empty( $lms_settings['webhook_secret'] ) ? $lms_settings['webhook_secret'] : 'REPLACE_WITH_SHARED_WEBHOOK_SECRET' ),
-							'TPD_ALLOWED_FRAME_ANCESTORS=' . home_url(),
+							'TPD_FRAME_ANCESTORS="\'self\' https://tpd.tarctpc.com http://localhost:* http://127.0.0.1:* ' . home_url() . '"',
 						) );
 						?>
 						<pre style="background:#0f172a; color:#e2e8f0; padding:16px 18px; border-radius:10px; font-size:12.5px; line-height:1.65; overflow-x:auto; margin:0;"><?php echo esc_html( $env_block ); ?></pre>
