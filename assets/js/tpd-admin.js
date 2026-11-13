@@ -967,6 +967,43 @@
 			$('#tpd-sa-lms-tab-' + tab).fadeIn(140).addClass('active');
 		});
 
+		
+		$(document).on('click', '.tpd-sa-jump-lms-settings', function(e) {
+			e.preventDefault();
+			$('.tpd-sa-lms-subtab[data-lmstab="settings"]').trigger('click');
+			$('input[name="sso_secret"]').focus();
+		});
+
+		function generateSecureHex(byteLength) {
+			byteLength = byteLength || 32;
+			var arr = new Uint8Array(byteLength);
+			if (window.crypto && window.crypto.getRandomValues) {
+				window.crypto.getRandomValues(arr);
+			} else {
+				for (var i = 0; i < byteLength; i++) {
+					arr[i] = Math.floor(Math.random() * 256);
+				}
+			}
+			var hex = '';
+			for (var j = 0; j < arr.length; j++) {
+				hex += arr[j].toString(16).padStart(2, '0');
+			}
+			return hex;
+		}
+
+		$(document).on('click', '#tpd-btn-gen-lms-keys', function(e) {
+			e.preventDefault();
+			var sso = generateSecureHex(32);
+			var api = generateSecureHex(32);
+			var wh = generateSecureHex(32);
+
+			$('input[name="sso_secret"]').attr('type', 'text').val(sso);
+			$('input[name="api_token"]').attr('type', 'text').val(api);
+			$('input[name="webhook_secret"]').attr('type', 'text').val(wh);
+
+			showAdminToast('Secure keys generated! Click "Save LMS Settings" below to apply.');
+		});
+
 		$(document).on('submit', '#tpd-sa-lms-settings-form', function(e) {
 			e.preventDefault();
 			var $form = $(this);
@@ -1126,7 +1163,14 @@
 				showAdminToast('LMS Studio SSO session loaded.');
 			}, function(errMsg) {
 				$btn.prop('disabled', false).html(origHtml);
-				alert(errMsg);
+				if (errMsg && (errMsg.indexOf('not configured') !== -1 || errMsg.indexOf('disabled') !== -1)) {
+					if (confirm(errMsg + '\n\nWould you like to open "Connection & .env Setup" now to configure or generate keys?')) {
+						$('.tpd-sa-lms-subtab[data-lmstab="settings"]').trigger('click');
+						$('input[name="sso_secret"]').focus();
+					}
+				} else {
+					alert(errMsg);
+				}
 			});
 		});
 

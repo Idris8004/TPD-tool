@@ -2262,9 +2262,16 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 									<?php esc_html_e( 'Click "Load Studio in Tab" to embed the LMS Studio right here using your fresh short-lived HMAC SSO token, or open it in a dedicated browser tab.', 'tpd-tool' ); ?>
 								</p>
 								<?php if ( ! $lms_configured ) : ?>
-									<span style="display:inline-block; background:#fef3c7; color:#92400e; font-size:12px; padding:5px 12px; border-radius:6px; font-weight:700;">
-										<?php esc_html_e( 'Configure SSO Secret & API Token under Connection & .env Setup first.', 'tpd-tool' ); ?>
-									</span>
+									<div style="margin-top:14px;">
+										<span style="display:inline-block; background:#fef3c7; color:#92400e; font-size:12px; padding:6px 14px; border-radius:6px; font-weight:700;">
+											<i class="fa-solid fa-triangle-exclamation"></i> <?php esc_html_e( 'SSO Secret & API Token are not configured yet.', 'tpd-tool' ); ?>
+										</span>
+										<div style="margin-top:12px;">
+											<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-darkblue tpd-sa-jump-lms-settings" style="background:#00798c;">
+												<i class="fa-solid fa-sliders"></i> <?php esc_html_e( 'Configure Connection & .env Setup', 'tpd-tool' ); ?>
+											</button>
+										</div>
+									</div>
 								<?php endif; ?>
 							</div>
 							<iframe id="tpd-sa-lms-iframe" src="about:blank" style="display:none; width:100%; height:760px; border:0;"></iframe>
@@ -2457,6 +2464,9 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 							<div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
 								<button type="submit" class="tpd-btn tpd-btn-darkblue" style="background:#164e87;">
 									<i class="fa-solid fa-floppy-disk"></i> <?php esc_html_e( 'Save LMS Settings', 'tpd-tool' ); ?>
+								</button>
+								<button type="button" id="tpd-btn-gen-lms-keys" class="tpd-btn tpd-btn-outline" title="<?php esc_attr_e( 'Auto-generate strong 64-character hex keys', 'tpd-tool' ); ?>">
+									<i class="fa-solid fa-wand-magic-sparkles text-gold"></i> <?php esc_html_e( 'Generate Secure Keys', 'tpd-tool' ); ?>
 								</button>
 								<button type="button" id="tpd-sa-test-lms-btn" class="tpd-btn tpd-btn-outline">
 									<i class="fa-solid fa-heart-pulse"></i> <?php esc_html_e( 'Test LMS Health (/api/tpd/health)', 'tpd-tool' ); ?>
