@@ -138,7 +138,7 @@ class TPD_Tool_Updater {
 		);
 		$info->sections      = array(
 			'description' => 'Enterprise-grade travel marketplace suite featuring Multi-Step Registration Wizards, Dual Portals (Advisor & Supplier Dashboards), Bi-Directional WP CPT + ACF Sync, Dynamic Membership Plan Builder, Stripe/PayPal Checkout, and Super Admin Control Hub.',
-			'changelog'   => '<h4>Latest Release (' . esc_html( $info->version ) . ')</h4><ul><li>Super Admin Portal separation with private /admin-login/ and direct account creation & credential management.</li><li>Supplier User Profile frontend self-service editor with [tpd_supplier_user_profile] shortcode and Elementor widgets.</li><li>Enhanced supplier profile templates with Associations & Conferences, YouTube showcase, and social media icons.</li><li>Removed block theme header/footer deprecation warnings.</li></ul>',
+			'changelog'   => '<h4>Latest Release (' . esc_html( $info->version ) . ')</h4><ul><li>LMS Studio tab in Super Admin Control Hub with HMAC-SHA256 Single Sign-On iframe embedding, live metrics, course catalog control, and interactive Studio Simulator.</li><li>Resources &amp; Tools hub inside Advisor &amp; Supplier dashboards with My Resources vs. All Resources filtering and direct TPD course checkout.</li><li>Auto-initialized secure LMS keys, 1-click key generator, and Laravel .env copy helper.</li><li>Unified login, financial analytics, and offline-resilient course catalog fallback.</li></ul>',
 		);
 
 		return $info;
