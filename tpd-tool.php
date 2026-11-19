@@ -4,6 +4,8 @@
  * Plugin URI: https://github.com/TARC-LLC/dashboard
  * Description: Enterprise-grade travel marketplace suite featuring Multi-Step Registration Wizards, Dual Portals (Advisor & Supplier Dashboards), Bi-Directional WP CPT + ACF Sync, Dynamic Membership Plan Builder, Payment Integration, Real-Time Chat, Analytics Engine, and Super Admin Control Hub.
  * Version: 2.9.0
+ * Requires at least: 6.0
+ * Requires PHP: 7.4
  * Author: Travel Partner Directory (TARC)
  * Author URI: https://github.com/TARC-LLC/dashboard
  * GitHub Plugin URI: TARC-LLC/dashboard
