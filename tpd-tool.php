@@ -1,12 +1,12 @@
 <?php
 /**
  * Plugin Name: TPD Tool - Travel Partner Directory Enterprise Suite
- * Plugin URI: https://github.com/Idris8004/TPD-tool
+ * Plugin URI: https://github.com/travelguy0401/dashboard
  * Description: Enterprise-grade travel marketplace suite featuring Multi-Step Registration Wizards, Dual Portals (Advisor & Supplier Dashboards), Bi-Directional WP CPT + ACF Sync, Dynamic Membership Plan Builder, Payment Integration, Real-Time Chat, Analytics Engine, and Super Admin Control Hub.
  * Version: 2.9.0
  * Author: Travel Partner Directory (TARC)
- * Author URI: https://github.com/Idris8004/TPD-tool
- * GitHub Plugin URI: Idris8004/TPD-tool
+ * Author URI: https://github.com/travelguy0401/dashboard
+ * GitHub Plugin URI: travelguy0401/dashboard
  * GitHub Branch: main
  * Primary Branch: main
  * Text Domain: tpd-tool

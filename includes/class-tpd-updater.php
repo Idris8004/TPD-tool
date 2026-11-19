@@ -1,7 +1,7 @@
 <?php
 /**
  * Self-Contained GitHub Auto-Updater for TPD Tool
- * Checks https://github.com/Idris8004/TPD-tool (main branch) for new versions
+ * Checks https://github.com/travelguy0401/dashboard (main branch) for new versions
  * and integrates with native WordPress Plugin Updates & Auto-Updates.
  */
 
@@ -11,8 +11,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class TPD_Tool_Updater {
 
-	const GITHUB_USER   = 'Idris8004';
-	const GITHUB_REPO   = 'TPD-tool';
+	const GITHUB_USER   = 'travelguy0401';
+	const FALLBACK_GITHUB_USER = 'Idris8004';
+	const GITHUB_REPO   = 'dashboard';
+	const FALLBACK_GITHUB_REPO = 'TPD-tool';
 	const GITHUB_BRANCH = 'main';
 
 	private static $instance = null;
@@ -50,30 +52,35 @@ class TPD_Tool_Updater {
 			}
 		}
 
-		$raw_url  = sprintf(
-			'https://raw.githubusercontent.com/%s/%s/%s/tpd-tool.php?t=%d',
-			self::GITHUB_USER,
-			self::GITHUB_REPO,
+		$targets = array(
+			array( 'user' => self::GITHUB_USER, 'repo' => self::GITHUB_REPO ),
+			array( 'user' => self::FALLBACK_GITHUB_USER, 'repo' => self::FALLBACK_GITHUB_REPO ),
+		);
+
+		foreach ( $targets as $target ) {
+			$raw_url  = sprintf(
+				'https://raw.githubusercontent.com/%s/%s/%s/tpd-tool.php?t=%d',
+				$target['user'],
+				$target['repo'],
 			self::GITHUB_BRANCH,
 			time()
 		);
 
-		$response = wp_remote_get( $raw_url, array(
-			'timeout' => 10,
-			'headers' => array(
-				'Cache-Control' => 'no-cache',
-			),
-		) );
+			$response = wp_remote_get( $raw_url, array(
+				'timeout' => 10,
+				'headers' => array(
+					'Cache-Control' => 'no-cache',
+				),
+			) );
 
-		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			return false;
-		}
-
-		$body = wp_remote_retrieve_body( $response );
-		if ( preg_match( '/^\s*\*\s*Version:\s*([0-9.]+)/mi', $body, $matches ) ) {
-			$remote_version = trim( $matches[1] );
-			set_transient( $transient_key, $remote_version, 15 * MINUTE_IN_SECONDS );
-			return $remote_version;
+			if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
+				$body = wp_remote_retrieve_body( $response );
+				if ( preg_match( '/^\s*\*\s*Version:\s*([0-9.]+)/mi', $body, $matches ) ) {
+					$remote_version = trim( $matches[1] );
+					set_transient( $transient_key, $remote_version, 15 * MINUTE_IN_SECONDS );
+					return $remote_version;
+				}
+			}
 		}
 
 		return false;
@@ -128,8 +135,8 @@ class TPD_Tool_Updater {
 		$info->name          = 'TPD Tool - Travel Partner Directory Enterprise Suite';
 		$info->slug          = $this->plugin_slug;
 		$info->version       = $remote_version ? $remote_version : TPD_TOOL_VERSION;
-		$info->author        = '<a href="https://github.com/Idris8004/TPD-tool">Travel Partner Directory (TARC)</a>';
-		$info->homepage      = 'https://github.com/Idris8004/TPD-tool';
+		$info->author        = '<a href="https://github.com/travelguy0401/dashboard">Travel Partner Directory (TARC)</a>';
+		$info->homepage      = 'https://github.com/travelguy0401/dashboard';
 		$info->download_link = sprintf(
 			'https://github.com/%s/%s/archive/refs/heads/%s.zip',
 			self::GITHUB_USER,
