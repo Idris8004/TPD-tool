@@ -1,7 +1,7 @@
 <?php
 /**
  * Self-Contained GitHub Auto-Updater for TPD Tool
- * Checks https://github.com/travelguy0401/dashboard (main branch) for new versions
+ * Checks https://github.com/TARC-LLC/dashboard (main branch) for new versions
  * and integrates with native WordPress Plugin Updates & Auto-Updates.
  */
 
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class TPD_Tool_Updater {
 
-	const GITHUB_USER   = 'travelguy0401';
+	const GITHUB_USER   = 'TARC-LLC';
 	const FALLBACK_GITHUB_USER = 'Idris8004';
 	const GITHUB_REPO   = 'dashboard';
 	const FALLBACK_GITHUB_REPO = 'TPD-tool';
@@ -54,6 +54,7 @@ class TPD_Tool_Updater {
 
 		$targets = array(
 			array( 'user' => self::GITHUB_USER, 'repo' => self::GITHUB_REPO ),
+			array( 'user' => 'travelguy0401', 'repo' => 'dashboard' ),
 			array( 'user' => self::FALLBACK_GITHUB_USER, 'repo' => self::FALLBACK_GITHUB_REPO ),
 		);
 
@@ -135,8 +136,8 @@ class TPD_Tool_Updater {
 		$info->name          = 'TPD Tool - Travel Partner Directory Enterprise Suite';
 		$info->slug          = $this->plugin_slug;
 		$info->version       = $remote_version ? $remote_version : TPD_TOOL_VERSION;
-		$info->author        = '<a href="https://github.com/travelguy0401/dashboard">Travel Partner Directory (TARC)</a>';
-		$info->homepage      = 'https://github.com/travelguy0401/dashboard';
+		$info->author        = '<a href="https://github.com/TARC-LLC/dashboard">Travel Partner Directory (TARC)</a>';
+		$info->homepage      = 'https://github.com/TARC-LLC/dashboard';
 		$info->download_link = sprintf(
 			'https://github.com/%s/%s/archive/refs/heads/%s.zip',
 			self::GITHUB_USER,

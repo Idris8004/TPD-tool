@@ -106,7 +106,7 @@ wp-content/plugins/tpd-tool/
 1. Copy or clone this repository into your WordPress `wp-content/plugins/` directory:
    ```bash
    cd wp-content/plugins
-   git clone https://github.com/travelguy0401/dashboard.git tpd-tool
+   git clone https://github.com/TARC-LLC/dashboard.git tpd-tool
    ```
 2. Activate the plugin via WP Admin (`Plugins -> Installed Plugins`) or via WP-CLI:
    ```bash
