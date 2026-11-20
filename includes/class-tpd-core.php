@@ -144,6 +144,16 @@ class TPD_Tool_Core {
 			}
 		}
 
+		// TARC Official Dual Gateway Portal Login (Standalone Homepage or /portal-login/)
+		$is_portal_home = ( is_front_page() || is_home() || '' === $uri ) && get_option( 'tpd_enable_homepage_portal_login', 0 );
+		if ( $is_portal_home || in_array( $uri, array( 'portal-login', 'tarc-login', 'portal', 'dual-login', 'gateway' ), true ) || is_page( array( 'portal-login', 'tarc-login', 'portal', 'dual-login' ) ) ) {
+			$file = TPD_TOOL_DIR . 'templates/auth/portal-login.php';
+			if ( file_exists( $file ) ) {
+				status_header( 200 );
+				return $file;
+			}
+		}
+
 		// Advisor / Member Login Page
 		if ( in_array( $uri, array( 'advisor-login', 'member-login', 'tpd-login' ), true ) || is_page( array( 'advisor-login', 'member-login', 'tpd-login' ) ) ) {
 			$file = TPD_TOOL_DIR . 'templates/auth/advisor-login.php';

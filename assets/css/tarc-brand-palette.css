@@ -1,0 +1,65 @@
+/**
+ * TARC Official Brand Design System & Color Palette
+ * Travel Advisor Resource Center (TARC)
+ *
+ * Use these CSS variables across all TARC plugins, widgets, and themes.
+ */
+
+:root {
+  /* ==========================================================================
+     Core TARC Brand Colors
+     ========================================================================== */
+  --tarc-deep-slate-teal: #236a7f;  /* Primary brand color, headers, primary buttons */
+  --tarc-sage-teal:       #64a2ad;  /* Secondary accents, hover states, icons */
+  --tarc-warm-ochre-gold: #c5a059;  /* Luxury highlights, badges, subtle accents */
+  --tarc-warm-alabaster:  #f3f4ee;  /* Main page background, light sections */
+  --tarc-dark-teal:       #15414f;  /* Headings, dark text, footers */
+  --tarc-pure-white:      #ffffff;  /* Cards, clean content containers */
+
+  /* ==========================================================================
+     Extended / Supporting Palette
+     ========================================================================== */
+  --tarc-soft-mist-teal:  #97bcc7;  /* Subtle borders, light teal highlights */
+  --tarc-warm-sand:       #eee4db;  /* Alternate section backgrounds */
+  --tarc-soft-peach:      #f0d1bd;  /* Warm UI accents, callouts */
+
+  /* ==========================================================================
+     Semantic Mappings
+     ========================================================================== */
+  --color-primary:        var(--tarc-deep-slate-teal);
+  --color-primary-hover:  #1d5769;
+  --color-primary-active: var(--tarc-dark-teal);
+  
+  --color-secondary:      var(--tarc-sage-teal);
+  --color-secondary-hover:#4f8c97;
+  
+  --color-accent:         var(--tarc-warm-ochre-gold);
+  --color-accent-light:   #d8b877;
+  
+  --color-bg-page:        var(--tarc-warm-alabaster);
+  --color-bg-card:        var(--tarc-pure-white);
+  --color-bg-muted:       var(--tarc-warm-sand);
+  --color-bg-callout:     var(--tarc-soft-peach);
+  
+  --color-text-heading:   var(--tarc-dark-teal);
+  --color-text-body:      #2c4a54;
+  --color-text-muted:     #5e7a84;
+  --color-text-inverse:   var(--tarc-pure-white);
+  
+  --color-border:         var(--tarc-soft-mist-teal);
+  --color-border-subtle:  rgba(151, 188, 199, 0.4);
+  --color-border-focus:   var(--tarc-deep-slate-teal);
+
+  /* Shadows */
+  --shadow-sm:            0 2px 6px rgba(21, 65, 79, 0.05);
+  --shadow-md:            0 8px 20px rgba(21, 65, 79, 0.08);
+  --shadow-lg:            0 16px 36px rgba(21, 65, 79, 0.12);
+  --shadow-luxury:        0 24px 50px rgba(21, 65, 79, 0.15);
+
+  /* Border Radii */
+  --radius-sm:            6px;
+  --radius-md:            10px;
+  --radius-lg:            16px;
+  --radius-xl:            22px;
+  --radius-full:          9999px;
+}

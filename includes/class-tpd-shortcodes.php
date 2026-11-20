@@ -21,6 +21,9 @@ class TPD_Tool_Shortcodes {
 		add_shortcode( 'tpd_login', array( __CLASS__, 'render_advisor_login' ) );
 		add_shortcode( 'tpd_supplier_login', array( __CLASS__, 'render_supplier_login' ) );
 		add_shortcode( 'tpd_admin_login', array( __CLASS__, 'render_admin_login' ) );
+		add_shortcode( 'tpd_portal_login', array( __CLASS__, 'render_portal_login' ) );
+		add_shortcode( 'tarc_portal_login', array( __CLASS__, 'render_portal_login' ) );
+		add_shortcode( 'tpd_dual_login', array( __CLASS__, 'render_portal_login' ) );
 		add_shortcode( 'tpd_chat_inbox', array( __CLASS__, 'render_chat_inbox' ) );
 		add_shortcode( 'tpd_events_list', array( __CLASS__, 'render_events_list' ) );
 		add_shortcode( 'tpd_upcoming_events', array( __CLASS__, 'render_events_list' ) );
@@ -382,6 +385,15 @@ class TPD_Tool_Shortcodes {
 	public static function render_admin_login( $atts ) {
 		ob_start();
 		$template = TPD_TOOL_DIR . 'templates/auth/admin-login.php';
+		if ( file_exists( $template ) ) {
+			include $template;
+		}
+		return ob_get_clean();
+	}
+
+	public static function render_portal_login( $atts ) {
+		ob_start();
+		$template = TPD_TOOL_DIR . 'templates/auth/portal-login.php';
 		if ( file_exists( $template ) ) {
 			include $template;
 		}
