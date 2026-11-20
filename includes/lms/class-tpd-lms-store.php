@@ -216,6 +216,62 @@ class TPD_LMS_Store {
 		return self::insert( 'chapters', array( 'course_id' => absint( $course_id ), 'title' => $title, 'position' => $next ) );
 	}
 
+	public static function rename_chapter( $chapter_id, $title ) {
+		$title = sanitize_text_field( (string) $title );
+		if ( '' === $title ) {
+			return new WP_Error( 'title_required', __( 'Give the module a title.', 'tpd-tool' ) );
+		}
+		return self::update( 'chapters', $chapter_id, array( 'title' => $title ) );
+	}
+
+	/**
+	 * Save a new curriculum order. Lessons may move between modules of the same course.
+	 *
+	 * @param int   $course_id
+	 * @param array $structure List of array( 'chapter_id' => int, 'lesson_ids' => int[] ), in order.
+	 * @return true|WP_Error
+	 */
+	public static function reorder( $course_id, array $structure ) {
+		global $wpdb;
+		$course_id   = absint( $course_id );
+		$chapter_ids = array_map( 'intval', wp_list_pluck( self::chapters_for_course( $course_id ), 'id' ) );
+		$lesson_ids  = array_map( 'intval', wp_list_pluck( self::lessons_for_course( $course_id ), 'id' ) );
+
+		$seen_chapters = array();
+		$seen_lessons  = array();
+		foreach ( $structure as $entry ) {
+			$cid = isset( $entry['chapter_id'] ) ? (int) $entry['chapter_id'] : 0;
+			if ( ! in_array( $cid, $chapter_ids, true ) || isset( $seen_chapters[ $cid ] ) ) {
+				return new WP_Error( 'bad_order', __( 'The new order does not match this course. Reload the page and try again.', 'tpd-tool' ) );
+			}
+			$seen_chapters[ $cid ] = true;
+			foreach ( (array) ( isset( $entry['lesson_ids'] ) ? $entry['lesson_ids'] : array() ) as $lid ) {
+				$lid = (int) $lid;
+				if ( ! in_array( $lid, $lesson_ids, true ) || isset( $seen_lessons[ $lid ] ) ) {
+					return new WP_Error( 'bad_order', __( 'The new order does not match this course. Reload the page and try again.', 'tpd-tool' ) );
+				}
+				$seen_lessons[ $lid ] = true;
+			}
+		}
+		if ( count( $seen_chapters ) !== count( $chapter_ids ) || count( $seen_lessons ) !== count( $lesson_ids ) ) {
+			return new WP_Error( 'bad_order', __( 'The new order does not match this course. Reload the page and try again.', 'tpd-tool' ) );
+		}
+
+		$cpos = 1;
+		foreach ( $structure as $entry ) {
+			$wpdb->update( TPD_LMS_Schema::t( 'chapters' ), array( 'position' => $cpos++ ), array( 'id' => (int) $entry['chapter_id'] ) );
+			$lpos = 1;
+			foreach ( (array) ( isset( $entry['lesson_ids'] ) ? $entry['lesson_ids'] : array() ) as $lid ) {
+				$wpdb->update(
+					TPD_LMS_Schema::t( 'lessons' ),
+					array( 'chapter_id' => (int) $entry['chapter_id'], 'position' => $lpos++ ),
+					array( 'id' => (int) $lid, 'course_id' => $course_id )
+				);
+			}
+		}
+		return true;
+	}
+
 	public static function delete_chapter( $chapter_id ) {
 		global $wpdb;
 		$lesson_ids = $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM ' . TPD_LMS_Schema::t( 'lessons' ) . ' WHERE chapter_id = %d', absint( $chapter_id ) ) );
@@ -404,19 +460,12 @@ class TPD_LMS_Store {
 		$type   = isset( $data['type'] ) ? sanitize_key( $data['type'] ) : 'single';
 		$type   = in_array( $type, self::QUESTION_TYPES, true ) ? $type : 'single';
 		$prompt = wp_kses_post( isset( $data['prompt'] ) ? (string) $data['prompt'] : '' );
-		if ( '' === trim( wp_strip_all_tags( $prompt ) ) ) {
-			return new WP_Error( 'prompt_required', __( 'Write the question before saving it.', 'tpd-tool' ) );
-		}
-		if ( 'short' !== $type ) {
-			$correct = array_filter( $options, function ( $o ) {
-				return ! empty( $o['is_correct'] );
-			} );
-			if ( count( $options ) < 2 || ! $correct ) {
-				return new WP_Error( 'options_required', __( 'Add at least two answers and mark the correct one.', 'tpd-tool' ) );
-			}
+		$error  = self::validate_question( $type, $prompt, $data, $options );
+		if ( $error ) {
+			return $error;
 		}
 
-		$position    = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COALESCE(MAX(position), 0) + 1 FROM ' . TPD_LMS_Schema::t( 'questions' ) . ' WHERE quiz_id = %d', absint( $quiz_id ) ) );
+		$position   = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COALESCE(MAX(position), 0) + 1 FROM ' . TPD_LMS_Schema::t( 'questions' ) . ' WHERE quiz_id = %d', absint( $quiz_id ) ) );
 		$question_id = self::insert( 'questions', array(
 			'quiz_id'          => absint( $quiz_id ),
 			'topic'            => isset( $data['topic'] ) && '' !== trim( (string) $data['topic'] ) ? self::normalize_topic( $data['topic'] ) : null,
@@ -433,6 +482,9 @@ class TPD_LMS_Store {
 		if ( 'short' !== $type ) {
 			$pos = 1;
 			foreach ( $options as $o ) {
+				if ( '' === trim( (string) ( isset( $o['text'] ) ? $o['text'] : '' ) ) ) {
+					continue;
+				}
 				self::insert( 'question_options', array(
 					'question_id' => $question_id,
 					'text'        => sanitize_text_field( (string) ( isset( $o['text'] ) ? $o['text'] : '' ) ),
@@ -442,6 +494,78 @@ class TPD_LMS_Store {
 			}
 		}
 		return $question_id;
+	}
+
+	/**
+	 * Replace a question's fields and options. The type can change.
+	 */
+	public static function update_question( $question_id, array $data, array $options = array() ) {
+		global $wpdb;
+		$question = self::find( 'questions', $question_id );
+		if ( ! $question ) {
+			return new WP_Error( 'question_missing', __( 'That question no longer exists.', 'tpd-tool' ) );
+		}
+		$type   = isset( $data['type'] ) ? sanitize_key( $data['type'] ) : $question->type;
+		$type   = in_array( $type, self::QUESTION_TYPES, true ) ? $type : 'single';
+		$prompt = wp_kses_post( isset( $data['prompt'] ) ? (string) $data['prompt'] : $question->prompt );
+		$error  = self::validate_question( $type, $prompt, $data, $options );
+		if ( $error ) {
+			return $error;
+		}
+
+		self::update( 'questions', $question_id, array(
+			'topic'            => isset( $data['topic'] ) && '' !== trim( (string) $data['topic'] ) ? self::normalize_topic( $data['topic'] ) : null,
+			'type'             => $type,
+			'prompt'           => $prompt,
+			'explanation'      => isset( $data['explanation'] ) ? wp_kses_post( (string) $data['explanation'] ) : null,
+			'accepted_answers' => 'short' === $type && isset( $data['accepted_answers'] ) ? sanitize_textarea_field( (string) $data['accepted_answers'] ) : null,
+			'points'           => isset( $data['points'] ) ? max( 1, min( 100, absint( $data['points'] ) ) ) : (int) $question->points,
+		) );
+
+		$wpdb->delete( TPD_LMS_Schema::t( 'question_options' ), array( 'question_id' => absint( $question_id ) ), array( '%d' ) );
+		if ( 'short' !== $type ) {
+			$pos = 1;
+			foreach ( $options as $o ) {
+				if ( '' === trim( (string) ( isset( $o['text'] ) ? $o['text'] : '' ) ) ) {
+					continue;
+				}
+				self::insert( 'question_options', array(
+					'question_id' => absint( $question_id ),
+					'text'        => sanitize_text_field( (string) ( isset( $o['text'] ) ? $o['text'] : '' ) ),
+					'is_correct'  => empty( $o['is_correct'] ) ? 0 : 1,
+					'position'    => $pos++,
+				), false );
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * @return WP_Error|null Null when the question is valid.
+	 */
+	private static function validate_question( $type, $prompt, array $data, array $options ) {
+		if ( '' === trim( wp_strip_all_tags( $prompt ) ) ) {
+			return new WP_Error( 'prompt_required', __( 'Write the question before saving it.', 'tpd-tool' ) );
+		}
+		if ( 'short' === $type ) {
+			if ( '' === trim( isset( $data['accepted_answers'] ) ? (string) $data['accepted_answers'] : '' ) ) {
+				return new WP_Error( 'answers_required', __( 'Add at least one accepted answer.', 'tpd-tool' ) );
+			}
+			return null;
+		}
+		$options = array_filter( $options, function ( $o ) {
+			return '' !== trim( (string) ( isset( $o['text'] ) ? $o['text'] : '' ) );
+		} );
+		$correct = array_filter( $options, function ( $o ) {
+			return ! empty( $o['is_correct'] );
+		} );
+		if ( count( $options ) < 2 || ! $correct ) {
+			return new WP_Error( 'options_required', __( 'Add at least two answers and mark the correct one.', 'tpd-tool' ) );
+		}
+		if ( 'multiple' !== $type && count( $correct ) > 1 ) {
+			return new WP_Error( 'one_correct', __( 'Mark only one correct answer, or change the type to multiple select.', 'tpd-tool' ) );
+		}
+		return null;
 	}
 
 	public static function delete_question( $question_id ) {

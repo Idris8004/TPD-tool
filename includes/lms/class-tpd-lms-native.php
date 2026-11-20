@@ -16,6 +16,7 @@ require_once __DIR__ . '/class-tpd-lms-schema.php';
 require_once __DIR__ . '/class-tpd-lms-store.php';
 require_once __DIR__ . '/class-tpd-lms-progress.php';
 require_once __DIR__ . '/class-tpd-lms-quiz.php';
+require_once __DIR__ . '/class-tpd-lms-admin.php';
 
 class TPD_LMS_Native {
 
@@ -31,6 +32,7 @@ class TPD_LMS_Native {
 		}
 
 		add_action( 'init', array( 'TPD_LMS_Schema', 'maybe_upgrade' ), 4 );
+		TPD_LMS_Admin::init();
 	}
 
 	/**

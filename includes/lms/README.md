@@ -21,6 +21,11 @@ wp tpd-lms disable   # switch off; data is kept
 | `class-tpd-lms-store.php` | Courses, modules (chapters), lessons, quizzes, questions |
 | `class-tpd-lms-progress.php` | Enrollment, lesson locks, completion, certificates |
 | `class-tpd-lms-quiz.php` | Attempts, question-bank draws, grading, deadlines |
+| `class-tpd-lms-admin.php` | Course builder AJAX actions (`tpd_lms_*`, super admins only) |
+| `templates/lms/admin/studio.php` | Builder shell, shown in Super Admin → LMS Studio when the module is on |
+| `assets/js/tpd-lms-admin.js`, `assets/css/tpd-lms.css` | Builder views and styles, loaded only on the super admin page when the module is on |
+
+When the module is off, Super Admin → LMS Studio shows the existing bridge pane unchanged.
 
 Students and instructors are WordPress users. Payments stay in `{prefix}tpd_transactions`; `enrollments.tx_id` links the transaction that paid for a seat.
 
