@@ -103,60 +103,15 @@ if ( $is_standalone ) {
 
 	.tarc-admin-card {
 		background: var(--tarc-pure-white);
-		max-width: 490px;
+		max-width: 580px;
 		width: 100%;
 		border-radius: 24px;
 		border: 1px solid rgba(151, 188, 199, 0.45);
 		box-shadow: 0 20px 50px rgba(21, 65, 79, 0.1), 0 2px 8px rgba(0, 0, 0, 0.04);
-		padding: 44px 42px;
+		padding: 48px 46px;
 		box-sizing: border-box;
 		position: relative;
 		text-align: left;
-	}
-
-	/* Card Top Branding */
-	.tarc-admin-brand {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-		margin-bottom: 22px;
-	}
-
-	.tarc-admin-emblem {
-		width: 44px;
-		height: 44px;
-		border-radius: 12px;
-		background: rgba(21, 65, 79, 0.08);
-		border: 1.5px solid var(--tarc-warm-ochre-gold);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: var(--tarc-warm-ochre-gold);
-		font-size: 20px;
-		flex-shrink: 0;
-	}
-
-	.tarc-admin-brand-text {
-		display: flex;
-		flex-direction: column;
-	}
-
-	.tarc-admin-brand-title {
-		font-family: var(--tarc-font-heading);
-		font-size: 16px;
-		font-weight: 700;
-		color: var(--tarc-dark-teal);
-		line-height: 1.2;
-		letter-spacing: -0.01em;
-	}
-
-	.tarc-admin-brand-sub {
-		font-size: 10.5px;
-		font-weight: 800;
-		color: var(--tarc-warm-ochre-gold);
-		text-transform: uppercase;
-		letter-spacing: 0.12em;
-		margin-top: 2px;
 	}
 
 	/* Card Header */
@@ -179,27 +134,6 @@ if ( $is_standalone ) {
 		color: #5e7a84;
 		margin: 0;
 		line-height: 1.5;
-	}
-
-	/* Security Shield Callout */
-	.tarc-security-tag {
-		display: inline-flex;
-		align-items: center;
-		gap: 6px;
-		padding: 4px 10px;
-		border-radius: 6px;
-		background: rgba(197, 160, 89, 0.12);
-		border: 1px solid rgba(197, 160, 89, 0.35);
-		font-size: 11px;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		color: var(--tarc-dark-teal);
-		margin-bottom: 22px;
-	}
-
-	.tarc-security-tag i {
-		color: var(--tarc-warm-ochre-gold);
 	}
 
 	/* Notice Message */
@@ -246,39 +180,31 @@ if ( $is_standalone ) {
 		position: relative;
 		display: flex;
 		align-items: center;
-	}
-
-	.tarc-input-icon {
-		position: absolute;
-		left: 16px;
-		color: var(--tarc-sage-teal);
-		font-size: 15px;
-		pointer-events: none;
-		transition: color 0.2s ease;
+		width: 100%;
 	}
 
 	.tarc-form-input {
-		width: 100%;
-		height: 50px;
-		padding: 0 44px 0 44px;
-		border: 1.5px solid var(--tarc-soft-mist-teal);
-		border-radius: 12px;
-		font-size: 14.5px;
-		font-family: var(--tarc-font-body);
-		color: var(--tarc-dark-teal);
-		background: var(--tarc-pure-white);
-		transition: all 0.2s ease;
-		box-sizing: border-box;
+		width: 100% !important;
+		height: 52px !important;
+		padding: 0 16px !important;
+		border: 1.5px solid var(--tarc-soft-mist-teal) !important;
+		border-radius: 12px !important;
+		font-size: 15px !important;
+		font-family: var(--tarc-font-body) !important;
+		color: var(--tarc-dark-teal) !important;
+		background: var(--tarc-pure-white) !important;
+		transition: all 0.2s ease !important;
+		box-sizing: border-box !important;
 	}
 
-	.tarc-form-input::placeholder {
-		color: #9ab4be;
+	.tarc-form-input.has-eye-toggle {
+		padding-right: 48px !important;
 	}
 
 	.tarc-form-input:focus {
-		outline: none;
-		border-color: var(--tarc-dark-teal);
-		box-shadow: 0 0 0 4px rgba(21, 65, 79, 0.14);
+		outline: none !important;
+		border-color: var(--tarc-dark-teal) !important;
+		box-shadow: 0 0 0 4px rgba(21, 65, 79, 0.14) !important;
 	}
 
 	.tarc-toggle-pass {
@@ -484,16 +410,7 @@ if ( $is_standalone ) {
 <div class="tarc-admin-login-wrapper">
 	<div class="tarc-admin-card">
 
-		<!-- Top Branding -->
-		<div class="tarc-admin-brand">
-			<div class="tarc-admin-emblem">
-				<i class="fa-solid fa-shield-halved"></i>
-			</div>
-			<div class="tarc-admin-brand-text">
-				<span class="tarc-admin-brand-title"><?php esc_html_e( 'Travel Advisor Resource Center', 'tpd-tool' ); ?></span>
-				<span class="tarc-admin-brand-sub"><?php esc_html_e( 'Control Operations', 'tpd-tool' ); ?></span>
-			</div>
-		</div>
+		
 
 		<!-- Card Header -->
 		<div class="tarc-admin-header">
@@ -501,9 +418,7 @@ if ( $is_standalone ) {
 			<p><?php esc_html_e( 'Enter your administrator credentials to access the TPD Super Admin Hub.', 'tpd-tool' ); ?></p>
 		</div>
 
-		<div class="tarc-security-tag">
-			<i class="fa-solid fa-lock"></i> <?php esc_html_e( 'Restricted Access • Administrator Authentication', 'tpd-tool' ); ?>
-		</div>
+		
 
 		<!-- Status / Notice Alerts -->
 		<div id="tarcAdminNotice" class="tarc-notice-msg <?php echo ! empty( $initial_notice ) ? 'error' : ''; ?>">
@@ -521,14 +436,12 @@ if ( $is_standalone ) {
 			<div class="tarc-form-group">
 				<label class="tarc-form-label" for="tarcAdminUserField"><?php esc_html_e( 'Administrator Email or Username', 'tpd-tool' ); ?></label>
 				<div class="tarc-input-wrap">
-					<i class="fa-solid fa-user-shield tarc-input-icon"></i>
 					<input 
 						type="text" 
 						id="tarcAdminUserField" 
 						name="username" 
 						required 
-						class="tarc-form-input" 
-						placeholder="admin@domain.com"
+						class="tarc-form-input"
 						autocomplete="username">
 				</div>
 			</div>
@@ -537,14 +450,12 @@ if ( $is_standalone ) {
 			<div class="tarc-form-group">
 				<label class="tarc-form-label" for="tarcAdminPassField"><?php esc_html_e( 'Security Password', 'tpd-tool' ); ?></label>
 				<div class="tarc-input-wrap">
-					<i class="fa-solid fa-key tarc-input-icon"></i>
 					<input 
 						type="password" 
 						id="tarcAdminPassField" 
 						name="password" 
 						required 
-						class="tarc-form-input" 
-						placeholder="••••••••••••"
+						class="tarc-form-input has-eye-toggle"
 						autocomplete="current-password">
 					<button type="button" class="tarc-toggle-pass" onclick="tarcToggleAdminPass()" title="<?php esc_attr_e( 'Toggle password visibility', 'tpd-tool' ); ?>">
 						<i class="fa-solid fa-eye" id="tarcAdminEyeIcon"></i>
@@ -576,7 +487,7 @@ if ( $is_standalone ) {
 			<h4><?php esc_html_e( 'Reset Administrator Password', 'tpd-tool' ); ?></h4>
 			<p><?php esc_html_e( 'Enter your administrator email and we will dispatch a password recovery link.', 'tpd-tool' ); ?></p>
 			<div class="tarc-reset-flex">
-				<input type="text" id="tarcAdminResetInput" placeholder="admin@domain.com">
+				<input type="text" id="tarcAdminResetInput">
 				<button type="button" id="tarcAdminResetBtn" onclick="tarcSendAdminReset()"><?php esc_html_e( 'Send Link', 'tpd-tool' ); ?></button>
 			</div>
 			<div id="tarcAdminResetStatus" style="font-size:12px; margin-top:8px; display:none;"></div>

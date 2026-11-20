@@ -126,60 +126,15 @@ if ( $is_standalone ) {
 
 	.tarc-exec-card {
 		background: var(--tarc-pure-white);
-		max-width: 490px;
+		max-width: 580px;
 		width: 100%;
 		border-radius: 24px;
 		border: 1px solid rgba(151, 188, 199, 0.45);
 		box-shadow: 0 20px 50px rgba(21, 65, 79, 0.08), 0 2px 8px rgba(0, 0, 0, 0.03);
-		padding: 44px 42px;
+		padding: 48px 46px;
 		box-sizing: border-box;
 		position: relative;
 		text-align: left;
-	}
-
-	/* Card Top Branding */
-	.tarc-exec-brand {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-		margin-bottom: 22px;
-	}
-
-	.tarc-exec-emblem {
-		width: 44px;
-		height: 44px;
-		border-radius: 12px;
-		background: rgba(35, 106, 127, 0.08);
-		border: 1.5px solid var(--tarc-warm-ochre-gold);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: var(--tarc-warm-ochre-gold);
-		font-size: 20px;
-		flex-shrink: 0;
-	}
-
-	.tarc-exec-brand-text {
-		display: flex;
-		flex-direction: column;
-	}
-
-	.tarc-exec-brand-title {
-		font-family: var(--tarc-font-heading);
-		font-size: 16px;
-		font-weight: 700;
-		color: var(--tarc-dark-teal);
-		line-height: 1.2;
-		letter-spacing: -0.01em;
-	}
-
-	.tarc-exec-brand-sub {
-		font-size: 10.5px;
-		font-weight: 700;
-		color: var(--tarc-sage-teal);
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		margin-top: 2px;
 	}
 
 	/* Card Title & Subtitle */
@@ -302,39 +257,31 @@ if ( $is_standalone ) {
 		position: relative;
 		display: flex;
 		align-items: center;
-	}
-
-	.tarc-input-icon {
-		position: absolute;
-		left: 16px;
-		color: var(--tarc-sage-teal);
-		font-size: 15px;
-		pointer-events: none;
-		transition: color 0.2s ease;
+		width: 100%;
 	}
 
 	.tarc-form-input {
-		width: 100%;
-		height: 50px;
-		padding: 0 44px 0 44px;
-		border: 1.5px solid var(--tarc-soft-mist-teal);
-		border-radius: 12px;
-		font-size: 14.5px;
-		font-family: var(--tarc-font-body);
-		color: var(--tarc-dark-teal);
-		background: var(--tarc-pure-white);
-		transition: all 0.2s ease;
-		box-sizing: border-box;
+		width: 100% !important;
+		height: 52px !important;
+		padding: 0 16px !important;
+		border: 1.5px solid var(--tarc-soft-mist-teal) !important;
+		border-radius: 12px !important;
+		font-size: 15px !important;
+		font-family: var(--tarc-font-body) !important;
+		color: var(--tarc-dark-teal) !important;
+		background: var(--tarc-pure-white) !important;
+		transition: all 0.2s ease !important;
+		box-sizing: border-box !important;
 	}
 
-	.tarc-form-input::placeholder {
-		color: #9ab4be;
+	.tarc-form-input.has-eye-toggle {
+		padding-right: 48px !important;
 	}
 
 	.tarc-form-input:focus {
-		outline: none;
-		border-color: var(--tarc-deep-slate-teal);
-		box-shadow: 0 0 0 4px rgba(35, 106, 127, 0.12);
+		outline: none !important;
+		border-color: var(--tarc-deep-slate-teal) !important;
+		box-shadow: 0 0 0 4px rgba(35, 106, 127, 0.12) !important;
 	}
 
 	.tarc-toggle-pass {
@@ -562,16 +509,7 @@ if ( $is_standalone ) {
 <div class="tarc-exec-login-wrapper">
 	<div class="tarc-exec-card">
 
-		<!-- Top Branding -->
-		<div class="tarc-exec-brand">
-			<div class="tarc-exec-emblem">
-				<i class="fa-solid fa-compass"></i>
-			</div>
-			<div class="tarc-exec-brand-text">
-				<span class="tarc-exec-brand-title"><?php esc_html_e( 'Travel Advisor Resource Center', 'tpd-tool' ); ?></span>
-				<span class="tarc-exec-brand-sub"><?php esc_html_e( 'TARC Official Gateway', 'tpd-tool' ); ?></span>
-			</div>
-		</div>
+		
 
 		<!-- Card Title -->
 		<div class="tarc-exec-header">
@@ -620,14 +558,12 @@ if ( $is_standalone ) {
 					<?php echo 'supplier' === $default_portal ? esc_html__( 'Supplier Email Address or Username', 'tpd-tool' ) : esc_html__( 'Advisor Email Address or Username', 'tpd-tool' ); ?>
 				</label>
 				<div class="tarc-input-wrap">
-					<i class="fa-solid fa-envelope tarc-input-icon"></i>
 					<input 
 						type="text" 
 						id="tarcUserField" 
 						name="username" 
 						required 
-						class="tarc-form-input" 
-						placeholder="<?php echo 'supplier' === $default_portal ? 'partner@resortluxury.com' : 'advisor@agency.com'; ?>"
+						class="tarc-form-input"
 						autocomplete="username">
 				</div>
 			</div>
@@ -636,14 +572,12 @@ if ( $is_standalone ) {
 			<div class="tarc-form-group">
 				<label class="tarc-form-label" for="tarcPassField"><?php esc_html_e( 'Password', 'tpd-tool' ); ?></label>
 				<div class="tarc-input-wrap">
-					<i class="fa-solid fa-lock tarc-input-icon"></i>
 					<input 
 						type="password" 
 						id="tarcPassField" 
 						name="password" 
 						required 
-						class="tarc-form-input" 
-						placeholder="••••••••••••"
+						class="tarc-form-input has-eye-toggle"
 						autocomplete="current-password">
 					<button type="button" class="tarc-toggle-pass" onclick="tarcTogglePass()" title="<?php esc_attr_e( 'Toggle password visibility', 'tpd-tool' ); ?>">
 						<i class="fa-solid fa-eye" id="tarcEyeIcon"></i>
@@ -733,7 +667,7 @@ if ( $is_standalone ) {
 			subBtn.className = 'tarc-btn-submit';
 			subTxt.textContent = '<?php echo esc_js( __( 'Sign In to Advisor Portal', 'tpd-tool' ) ); ?>';
 			usrLbl.textContent = '<?php echo esc_js( __( 'Advisor Email Address or Username', 'tpd-tool' ) ); ?>';
-			usrInp.placeholder = 'advisor@agency.com';
+			
 
 			if (regAdv) regAdv.style.display = 'block';
 			if (regSup) regSup.style.display = 'none';
@@ -747,7 +681,7 @@ if ( $is_standalone ) {
 			subBtn.className = 'tarc-btn-submit supplier-active';
 			subTxt.textContent = '<?php echo esc_js( __( 'Sign In to Supplier Portal', 'tpd-tool' ) ); ?>';
 			usrLbl.textContent = '<?php echo esc_js( __( 'Supplier Email Address or Username', 'tpd-tool' ) ); ?>';
-			usrInp.placeholder = 'partner@resortluxury.com';
+			
 
 			if (regAdv) regAdv.style.display = 'none';
 			if (regSup) regSup.style.display = 'block';
