@@ -28,6 +28,7 @@ class TPD_LMS_Admin {
 		'question_save',
 		'question_delete',
 		'question_import',
+		'settings_save',
 	);
 
 	/** Largest question file accepted for import, in bytes. */
@@ -150,7 +151,24 @@ class TPD_LMS_Admin {
 		foreach ( TPD_LMS_Store::list_courses( 'all' ) as $course ) {
 			$out[] = self::course_summary( $course );
 		}
-		return array( 'courses' => $out );
+		return array(
+			'courses'  => $out,
+			'settings' => array(
+				'issuer_name' => TPD_LMS_Native::issuer_name(),
+				'verify_url'  => home_url( '/' . TPD_LMS_Student::CERT_PATH . '/' ),
+			),
+		);
+	}
+
+	private static function action_settings_save( $p ) {
+		$name = sanitize_text_field( isset( $p['issuer_name'] ) ? (string) $p['issuer_name'] : '' );
+		if ( '' === $name ) {
+			return new WP_Error( 'issuer_required', __( 'Enter the name to print on certificates.', 'tpd-tool' ) );
+		}
+		$settings                = (array) get_option( TPD_LMS_Native::OPT_SETTINGS, array() );
+		$settings['issuer_name'] = substr( $name, 0, 120 );
+		update_option( TPD_LMS_Native::OPT_SETTINGS, $settings, false );
+		return self::action_course_list();
 	}
 
 	private static function action_course_get( $p ) {

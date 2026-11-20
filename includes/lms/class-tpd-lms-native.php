@@ -18,6 +18,7 @@ require_once __DIR__ . '/class-tpd-lms-progress.php';
 require_once __DIR__ . '/class-tpd-lms-quiz.php';
 require_once __DIR__ . '/class-tpd-lms-importer.php';
 require_once __DIR__ . '/class-tpd-lms-admin.php';
+require_once __DIR__ . '/class-tpd-lms-student.php';
 
 class TPD_LMS_Native {
 
@@ -34,6 +35,7 @@ class TPD_LMS_Native {
 
 		add_action( 'init', array( 'TPD_LMS_Schema', 'maybe_upgrade' ), 4 );
 		TPD_LMS_Admin::init();
+		TPD_LMS_Student::init();
 	}
 
 	/**
@@ -61,6 +63,16 @@ class TPD_LMS_Native {
 		$settings            = (array) get_option( self::OPT_SETTINGS, array() );
 		$settings['enabled'] = 0;
 		update_option( self::OPT_SETTINGS, $settings, false );
+	}
+
+	/**
+	 * Organisation named on certificates. Defaults to TARC's full name, because
+	 * the dashboard's WordPress site name ("Dashboard") isn't meant for learners.
+	 */
+	public static function issuer_name() {
+		$settings = get_option( self::OPT_SETTINGS, array() );
+		$name     = is_array( $settings ) && ! empty( $settings['issuer_name'] ) ? (string) $settings['issuer_name'] : '';
+		return '' !== trim( $name ) ? $name : 'Travel Advisor Resource Center';
 	}
 
 	/**

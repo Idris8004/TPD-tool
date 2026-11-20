@@ -155,6 +155,7 @@
 		$root.html('<div class="tpd-sa-card tpd-lms-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading courses…</div>');
 		api('course_list').then(function (data) {
 			state.courses = data.courses;
+			state.settings = data.settings;
 			renderList();
 		}, function (msg) {
 			$root.html('<div class="tpd-sa-card">' + esc(msg) + '</div>');
@@ -192,6 +193,12 @@
 			'<div class="tpd-lms-form-actions"><button type="submit" class="tpd-btn tpd-btn-sm tpd-btn-darkblue">Create course</button> ' +
 			'<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline" data-cancel-new>Cancel</button></div>' +
 			'<p class="tpd-lms-help">New courses start as drafts. Advisors see a course only once you publish it.</p>' +
+			'</form></div>' +
+			'<div class="tpd-sa-card"><h3 class="tpd-sa-card-title">Certificates</h3>' +
+			'<form class="tpd-lms-form tpd-lms-inline-settings" data-form="settings">' +
+			field('Name printed on certificates', '<input type="text" name="issuer_name" class="tpd-input" required maxlength="120" value="' + esc(state.settings ? state.settings.issuer_name : '') + '">') +
+			'<div class="tpd-lms-form-actions"><button type="submit" class="tpd-btn tpd-btn-sm tpd-btn-outline"><i class="fa-solid fa-floppy-disk"></i> Save</button></div>' +
+			(state.settings ? '<p class="tpd-lms-help">Anyone can check a certificate at <a href="' + esc(state.settings.verify_url) + '" target="_blank" rel="noopener">' + esc(state.settings.verify_url) + '</a>.</p>' : '') +
 			'</form></div>'
 		);
 	}
@@ -642,6 +649,17 @@
 					state.tree = tree;
 					notify('Course created as a draft. Add a module to start the curriculum.');
 					renderCourse();
+				}, function (msg) { busy($b, false); notify(msg, 'error'); });
+			})
+			.on('submit', '[data-form=settings]', function (e) {
+				e.preventDefault();
+				var $f = $(this), $b = $f.find('[type=submit]');
+				busy($b, true);
+				api('settings_save', formData($f)).then(function (data) {
+					state.courses = data.courses;
+					state.settings = data.settings;
+					notify('Saved. New and existing certificates show this name.');
+					renderList();
 				}, function (msg) { busy($b, false); notify(msg, 'error'); });
 			})
 			.on('submit', '[data-form=course]', function (e) {

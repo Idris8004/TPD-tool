@@ -25,7 +25,24 @@ wp tpd-lms disable   # switch off; data is kept
 | `templates/lms/admin/studio.php` | Builder shell, shown in Super Admin → LMS Studio when the module is on |
 | `assets/js/tpd-lms-admin.js`, `assets/css/tpd-lms.css` | Builder views and styles, loaded only on the super admin page when the module is on |
 
-When the module is off, Super Admin → LMS Studio shows the existing bridge pane unchanged.
+| `class-tpd-lms-importer.php` | Question import: .xlsx, .csv, .docx, .txt, pasted text |
+| `class-tpd-lms-student.php` | Advisor side: hub data, lesson player actions (`tpd_lms_s_*`), checkout hooks, downloads, certificate page |
+| `assets/js/tpd-lms-student.js` | Lesson player inside Resources & Tools (advisor and supplier dashboards) |
+| `templates/lms/certificate.php` | Public certificate page at `/certificate-verify/{CODE}/` |
+
+When the module is off:
+- Super Admin → LMS Studio shows the existing bridge pane unchanged.
+- Resources & Tools renders byte for byte as before.
+- Checkout uses the bridge.
+
+When it's on:
+- Resources & Tools reads courses from the native tables.
+- "Start course" opens the player in the dashboard.
+- `TPD_Tool_Financial` prices and fulfils `lms_course` items natively. Course access included in a membership plan costs 0, and paying again after access ends renews it.
+
+The name printed on certificates is set in LMS Studio (default "Travel Advisor Resource Center").
+
+Known limitation: lesson files live in the WordPress media library. The download button streams them only to advisors who can open the lesson, but the media file URL itself is public if someone knows it.
 
 Students and instructors are WordPress users. Payments stay in `{prefix}tpd_transactions`; `enrollments.tx_id` links the transaction that paid for a seat.
 

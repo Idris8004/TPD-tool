@@ -11,9 +11,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $uid             = get_current_user_id();
 $lms_cfg         = class_exists( 'TPD_Tool_LMS' ) ? TPD_Tool_LMS::get_settings() : array();
-$lms_configured  = class_exists( 'TPD_Tool_LMS' ) && TPD_Tool_LMS::is_configured();
-$lms_catalog     = $lms_configured ? TPD_Tool_LMS::get_catalog( false, 'published' ) : array();
-$lms_enrollments = $lms_configured ? TPD_Tool_LMS::get_user_enrollments( $uid, false ) : array();
+// Native LMS (includes/lms): courses come from TPD itself and open in the in-dashboard player.
+$lms_native      = class_exists( 'TPD_LMS_Native' ) && TPD_LMS_Native::is_enabled();
+$lms_launch      = $lms_native ? 'tpd-lms-launch' : 'tpd-btn-sso-launch';
+$lms_configured  = $lms_native || ( class_exists( 'TPD_Tool_LMS' ) && TPD_Tool_LMS::is_configured() );
+$lms_catalog     = $lms_native ? TPD_LMS_Student::hub_catalog( $uid ) : ( $lms_configured ? TPD_Tool_LMS::get_catalog( false, 'published' ) : array() );
+$lms_enrollments = $lms_native ? TPD_LMS_Student::hub_enrollments( $uid ) : ( $lms_configured ? TPD_Tool_LMS::get_user_enrollments( $uid, false ) : array() );
 $tpd_resources   = class_exists( 'TPD_Tool_LMS' ) ? array_values( TPD_Tool_LMS::get_custom_resources( false ) ) : array();
 $pay_cfg         = class_exists( 'TPD_Tool_Settings' ) ? TPD_Tool_Settings::get_payment_settings() : array();
 $sym             = ! empty( $pay_cfg['currency_symbol'] ) ? $pay_cfg['currency_symbol'] : '$';
@@ -51,7 +54,7 @@ $all_total_count = count( $lms_catalog ) + count( $tpd_resources );
 				</span>
 				<h2 style="margin:0 0 6px; font-size:22px; font-weight:800; color:#ffffff;"><?php esc_html_e( 'Resources, Courses & Sales Tools', 'tpd-tool' ); ?></h2>
 				<p style="margin:0; font-size:13.5px; color:#cbd5e1; max-width:650px; line-height:1.5;">
-					<?php esc_html_e( 'Browse certified training courses and partner toolkits, check out inside your dashboard, and launch your active courses directly with 1-click Single Sign-On.', 'tpd-tool' ); ?>
+					<?php $lms_native ? esc_html_e( 'Browse TARC courses and partner toolkits, check out inside your dashboard, and learn right here.', 'tpd-tool' ) : esc_html_e( 'Browse certified training courses and partner toolkits, check out inside your dashboard, and launch your active courses directly with 1-click Single Sign-On.', 'tpd-tool' ); ?>
 				</p>
 			</div>
 
@@ -111,7 +114,7 @@ $all_total_count = count( $lms_catalog ) + count( $tpd_resources );
 					<option value="free"><?php esc_html_e( 'Free Only', 'tpd-tool' ); ?></option>
 					<option value="paid"><?php esc_html_e( 'Paid Only', 'tpd-tool' ); ?></option>
 				</select>
-				<?php if ( $lms_configured ) : ?>
+				<?php if ( $lms_configured && ! $lms_native ) : ?>
 					<button type="button" id="tpd-btn-sync-my-resources" class="tpd-btn tpd-btn-xs tpd-btn-outline" title="<?php esc_attr_e( 'Refresh progress and courses from LMS', 'tpd-tool' ); ?>" style="padding:9px 12px; border-radius:8px;">
 						<i class="fa-solid fa-arrows-rotate"></i> <?php esc_html_e( 'Refresh', 'tpd-tool' ); ?>
 					</button>
@@ -129,11 +132,13 @@ $all_total_count = count( $lms_catalog ) + count( $tpd_resources );
 				<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
 					<div>
 						<h3 style="margin:0; font-size:17px;"><i class="fa-solid fa-play-circle text-blue"></i> <?php esc_html_e( 'My Active LMS Courses', 'tpd-tool' ); ?></h3>
-						<span style="font-size:12.5px; color:#64748b;"><?php esc_html_e( 'Launch any enrolled course seamlessly — no extra LMS sign-in needed.', 'tpd-tool' ); ?></span>
+						<span style="font-size:12.5px; color:#64748b;"><?php $lms_native ? esc_html_e( 'Pick up where you left off.', 'tpd-tool' ) : esc_html_e( 'Launch any enrolled course seamlessly — no extra LMS sign-in needed.', 'tpd-tool' ); ?></span>
 					</div>
+<?php if ( ! $lms_native ) : ?>
 					<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-btn-sso-launch" data-redirect="/courses">
 						<i class="fa-solid fa-arrow-up-right-from-square"></i> <?php esc_html_e( 'Open Learning Portal', 'tpd-tool' ); ?>
 					</button>
+<?php endif; ?>
 				</div>
 
 				<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(290px, 1fr)); gap:18px;">
@@ -177,10 +182,14 @@ $all_total_count = count( $lms_catalog ) + count( $tpd_resources );
 							</div>
 
 							<div style="padding:12px 16px 16px; display:flex; gap:8px; flex-wrap:wrap; border-top:1px solid #f1f5f9;">
-								<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-darkblue tpd-btn-sso-launch" data-redirect="<?php echo esc_attr( $learn_path ); ?>" style="flex:1; background:#00798c; border-color:#00798c;">
+								<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-darkblue <?php echo esc_attr( $lms_launch ); ?>" data-redirect="<?php echo esc_attr( $learn_path ); ?>" style="flex:1; background:#00798c; border-color:#00798c;">
 									<i class="fa-solid fa-play"></i> <?php echo $progress > 0 ? esc_html__( 'Resume Course', 'tpd-tool' ) : esc_html__( 'Start Course', 'tpd-tool' ); ?>
 								</button>
-								<?php if ( $cert && ! empty( $cert['path'] ) ) : ?>
+								<?php if ( $cert && ! empty( $cert['path'] ) && $lms_native ) : ?>
+									<a href="<?php echo esc_url( $cert['path'] ); ?>" target="_blank" rel="noopener" class="tpd-btn tpd-btn-sm tpd-btn-outline" title="<?php esc_attr_e( 'View your certificate', 'tpd-tool' ); ?>" aria-label="<?php esc_attr_e( 'View your certificate', 'tpd-tool' ); ?>" style="text-decoration:none;">
+										<i class="fa-solid fa-certificate text-gold"></i>
+									</a>
+								<?php elseif ( $cert && ! empty( $cert['path'] ) ) : ?>
 									<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline tpd-btn-sso-launch" data-redirect="<?php echo esc_attr( $cert['path'] ); ?>" title="<?php esc_attr_e( 'View Official Certificate', 'tpd-tool' ); ?>">
 										<i class="fa-solid fa-certificate text-gold"></i>
 									</button>
@@ -241,7 +250,7 @@ $all_total_count = count( $lms_catalog ) + count( $tpd_resources );
 				<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
 					<div>
 						<h3 style="margin:0; font-size:17px;"><i class="fa-solid fa-graduation-cap text-blue"></i> <?php esc_html_e( 'Training Courses & Certifications (LMS Catalog)', 'tpd-tool' ); ?></h3>
-						<span style="font-size:12.5px; color:#64748b;"><?php esc_html_e( 'Purchase or enroll directly here — courses unlock instantly in My Resources with Single Sign-On.', 'tpd-tool' ); ?></span>
+						<span style="font-size:12.5px; color:#64748b;"><?php $lms_native ? esc_html_e( 'Enroll here and the course opens right in your dashboard.', 'tpd-tool' ) : esc_html_e( 'Purchase or enroll directly here — courses unlock instantly in My Resources with Single Sign-On.', 'tpd-tool' ); ?></span>
 					</div>
 				</div>
 
@@ -297,8 +306,8 @@ $all_total_count = count( $lms_catalog ) + count( $tpd_resources );
 										<span style="font-size:11.5px; font-weight:700; color:#16a34a;">
 											<i class="fa-solid fa-circle-check"></i> <?php esc_html_e( 'Enrolled', 'tpd-tool' ); ?> (<?php echo esc_html( (int) ( $enrolled['progress_percent'] ?? 0 ) ); ?>%)
 										</span>
-										<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-darkblue tpd-btn-sso-launch" data-redirect="<?php echo esc_attr( $enrolled['learn_path'] ?? '/courses' ); ?>" style="background:#00798c; border-color:#00798c;">
-											<i class="fa-solid fa-arrow-up-right-from-square"></i> <?php esc_html_e( 'Launch', 'tpd-tool' ); ?>
+										<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-darkblue <?php echo esc_attr( $lms_launch ); ?>" data-redirect="<?php echo esc_attr( $enrolled['learn_path'] ?? '/courses' ); ?>" style="background:#00798c; border-color:#00798c;">
+											<i class="fa-solid <?php echo $lms_native ? 'fa-play' : 'fa-arrow-up-right-from-square'; ?>"></i> <?php $lms_native ? esc_html_e( 'Open course', 'tpd-tool' ) : esc_html_e( 'Launch', 'tpd-tool' ); ?>
 										</button>
 									</div>
 								<?php else : ?>
@@ -309,12 +318,19 @@ $all_total_count = count( $lms_catalog ) + count( $tpd_resources );
 										data-item-title="<?php echo esc_attr( $title ); ?>"
 										data-item-price="<?php echo esc_attr( $price ); ?>"
 										style="background:<?php echo $is_free ? '#00798c' : '#164e87'; ?>; border-color:transparent;">
-										<?php if ( $is_free ) : ?>
-											<i class="fa-solid fa-bolt"></i> <?php esc_html_e( 'Enroll Free & Launch', 'tpd-tool' ); ?>
+										<?php if ( $is_free && ! empty( $course['included_with_plan'] ) ) : ?>
+											<i class="fa-solid fa-crown"></i> <?php esc_html_e( 'Included with your plan: enroll', 'tpd-tool' ); ?>
+										<?php elseif ( $is_free ) : ?>
+											<i class="fa-solid fa-bolt"></i> <?php $lms_native ? esc_html_e( 'Enroll free', 'tpd-tool' ) : esc_html_e( 'Enroll Free & Launch', 'tpd-tool' ); ?>
 										<?php else : ?>
 											<i class="fa-solid fa-cart-shopping"></i> <?php printf( esc_html__( 'Buy & Checkout — %s', 'tpd-tool' ), esc_html( $price_txt ) ); ?>
 										<?php endif; ?>
 									</button>
+<?php if ( $lms_native ) : ?>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-btn-block tpd-lms-launch" data-redirect="<?php echo esc_attr( $slug ); ?>" style="margin-top:8px;">
+										<i class="fa-solid fa-eye"></i> <?php esc_html_e( 'See what’s inside', 'tpd-tool' ); ?>
+									</button>
+<?php endif; ?>
 								<?php endif; ?>
 							</div>
 						</div>
@@ -378,4 +394,7 @@ $all_total_count = count( $lms_catalog ) + count( $tpd_resources );
 			</div>
 		<?php endif; ?>
 	</div>
+<?php if ( $lms_native ) : ?>
+	<div id="tpd-lms-player" class="tpd-lms-player" hidden></div>
+<?php endif; ?>
 </div>
