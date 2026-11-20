@@ -180,7 +180,9 @@
 		$root.html(
 			'<div class="tpd-sa-card">' +
 			'<div class="tpd-lms-bar"><h3 class="tpd-sa-card-title">Courses</h3>' +
-			'<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-darkblue" id="tpd-lms-new-course"><i class="fa-solid fa-plus"></i> New course</button></div>' +
+			'<span class="tpd-lms-bar-actions"><button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline" data-go="coupons"><i class="fa-solid fa-tag"></i> Coupons</button> ' +
+			'<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline" data-go="proctoring"><i class="fa-solid fa-user-shield"></i> Proctoring' + (state.settings && state.settings.pending_proctor ? ' <span class="tpd-lms-count">' + state.settings.pending_proctor + '</span>' : '') + '</button> ' +
+			'<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-darkblue" id="tpd-lms-new-course"><i class="fa-solid fa-plus"></i> New course</button></span></div>' +
 			(state.courses.length ?
 				'<div class="tpd-lms-table-wrap"><table class="tpd-lms-table"><thead><tr><th>Course</th><th>Status</th><th>Lessons</th><th>Students</th><th>Price</th><th aria-label="Actions"></th></tr></thead><tbody>' + rows + '</tbody></table></div>' :
 				'<div class="tpd-lms-empty"><i class="fa-solid fa-book-open"></i><p>No courses yet. Create the first one, then add modules and lessons.</p></div>') +
@@ -194,12 +196,56 @@
 			'<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline" data-cancel-new>Cancel</button></div>' +
 			'<p class="tpd-lms-help">New courses start as drafts. Advisors see a course only once you publish it.</p>' +
 			'</form></div>' +
-			'<div class="tpd-sa-card"><h3 class="tpd-sa-card-title">Certificates</h3>' +
+			'<div class="tpd-sa-card"><h3 class="tpd-sa-card-title">Certificates and emails</h3>' +
 			'<form class="tpd-lms-form tpd-lms-inline-settings" data-form="settings">' +
 			field('Name printed on certificates', '<input type="text" name="issuer_name" class="tpd-input" required maxlength="120" value="' + esc(state.settings ? state.settings.issuer_name : '') + '">') +
+			field('Support email', '<input type="email" name="support_email" class="tpd-input" maxlength="190" value="' + esc(state.settings ? state.settings.support_email : '') + '">', 'Gets new proctor requests and problem reports. Learner emails list it as the reply-to address.') +
 			'<div class="tpd-lms-form-actions"><button type="submit" class="tpd-btn tpd-btn-sm tpd-btn-outline"><i class="fa-solid fa-floppy-disk"></i> Save</button></div>' +
 			(state.settings ? '<p class="tpd-lms-help">Anyone can check a certificate at <a href="' + esc(state.settings.verify_url) + '" target="_blank" rel="noopener">' + esc(state.settings.verify_url) + '</a>.</p>' : '') +
 			'</form></div>'
+		);
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* View: coupons                                                       */
+	/* ------------------------------------------------------------------ */
+
+	function showCoupons() {
+		removeEditors();
+		state.view = 'coupons';
+		crumbs([{ label: 'Courses', go: 'list' }, { label: 'Coupons' }]);
+		$root.html('<div class="tpd-sa-card tpd-lms-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading coupons…</div>');
+		api('coupon_list').then(renderCoupons, function (msg) { notify(msg, 'error'); showList(); });
+	}
+
+	function renderCoupons(data) {
+		var rows = data.coupons.map(function (c) {
+			return '<tr><td><strong>' + esc(c.code) + '</strong></td><td>' + esc(c.label) + '</td><td>' + esc(c.course) + '</td>' +
+				'<td>' + c.uses + (c.max_uses !== null ? ' of ' + c.max_uses : '') + '</td><td>' + esc(c.expires_at || 'Never') + '</td>' +
+				'<td><span class="tpd-lms-badge ' + (c.active ? 'is-published' : 'is-draft') + '">' + (c.active ? 'Active' : 'Off') + '</span></td>' +
+				'<td class="tpd-lms-actions"><button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" data-coupon-toggle="' + c.id + '">' + (c.active ? 'Turn off' : 'Turn on') + '</button> ' +
+				'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-lms-danger" data-coupon-delete="' + c.id + '" data-code="' + esc(c.code) + '"><i class="fa-solid fa-trash"></i></button></td></tr>';
+		}).join('');
+		var courses = '<option value="">All courses</option>' + data.courses.map(function (c) { return '<option value="' + c.id + '">' + esc(c.title) + '</option>'; }).join('');
+		$root.html(
+			'<div class="tpd-lms-grid">' +
+			'<div class="tpd-sa-card"><h3 class="tpd-sa-card-title">Coupons</h3>' +
+			(rows ? '<div class="tpd-lms-table-wrap"><table class="tpd-lms-table"><thead><tr><th>Code</th><th>Discount</th><th>Course</th><th>Used</th><th>Expires</th><th>Status</th><th aria-label="Actions"></th></tr></thead><tbody>' + rows + '</tbody></table></div>' :
+				'<div class="tpd-lms-empty"><i class="fa-solid fa-tag"></i><p>No coupons yet. Advisors enter a code at checkout.</p></div>') +
+			'</div>' +
+			'<div class="tpd-sa-card"><h3 class="tpd-sa-card-title">New coupon</h3><form class="tpd-lms-form" data-form="coupon">' +
+			field('Code', '<input type="text" name="code" class="tpd-input" required maxlength="60" placeholder="e.g. WELCOME20" style="text-transform:uppercase">', 'Letters, numbers, dashes. Advisors type it at checkout.') +
+			'<div class="tpd-form-grid-2">' +
+			field('Discount type', '<select name="type" class="tpd-input"><option value="percent">Percent off</option><option value="fixed">Amount off (USD)</option></select>') +
+			field('Discount', '<input type="number" name="value" class="tpd-input" required min="0.01" step="0.01" placeholder="20">') +
+			'</div>' +
+			field('Course', '<select name="course_id" class="tpd-input">' + courses + '</select>') +
+			'<div class="tpd-form-grid-2">' +
+			field('Use limit', '<input type="number" name="max_uses" class="tpd-input" min="1" placeholder="No limit">') +
+			field('Last day it works', '<input type="date" name="expires_at" class="tpd-input">') +
+			'</div>' +
+			'<div class="tpd-lms-form-actions"><button type="submit" class="tpd-btn tpd-btn-sm tpd-btn-darkblue"><i class="fa-solid fa-plus"></i> Create coupon</button></div>' +
+			'</form></div></div>'
 		);
 	}
 
@@ -227,14 +273,7 @@
 
 		$root.html(
 			'<div class="tpd-lms-grid">' +
-			'<div class="tpd-sa-card tpd-lms-curriculum">' +
-			'<div class="tpd-lms-bar"><h3 class="tpd-sa-card-title">Curriculum</h3>' +
-			'<span class="tpd-lms-badge is-' + esc(c.status) + '">' + (c.status === 'published' ? 'Published' : 'Draft') + '</span></div>' +
-			renderCurriculum() +
-			'<form class="tpd-lms-inline-form" data-form="new-chapter">' +
-			'<input type="text" name="title" class="tpd-input" required maxlength="255" placeholder="New module title, e.g. Module 1: Welcome to the travel industry" aria-label="New module title">' +
-			'<button type="submit" class="tpd-btn tpd-btn-sm tpd-btn-outline"><i class="fa-solid fa-plus"></i> Add module</button>' +
-			'</form></div>' +
+			renderCourseShellCurriculum() +
 			'<div class="tpd-sa-card tpd-lms-settings">' + renderCourseSettings(c) + '</div>' +
 			'</div>'
 		);
@@ -367,7 +406,9 @@
 		var c = state.tree.course;
 		return '<div class="tpd-sa-card tpd-lms-curriculum">' +
 			'<div class="tpd-lms-bar"><h3 class="tpd-sa-card-title">Curriculum</h3>' +
-			'<span class="tpd-lms-badge is-' + esc(c.status) + '">' + (c.status === 'published' ? 'Published' : 'Draft') + '</span></div>' +
+			'<span class="tpd-lms-bar-actions"><button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" data-go="students"><i class="fa-solid fa-users"></i> Students (' + c.student_count + ')</button>' +
+			'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" data-go="quiz_report"><i class="fa-solid fa-chart-column"></i> Quiz results</button>' +
+			'<span class="tpd-lms-badge is-' + esc(c.status) + '">' + (c.status === 'published' ? 'Published' : 'Draft') + '</span></span></div>' +
 			renderCurriculum() +
 			'<form class="tpd-lms-inline-form" data-form="new-chapter">' +
 			'<input type="text" name="title" class="tpd-input" required maxlength="255" placeholder="New module title, e.g. Module 1: Welcome to the travel industry" aria-label="New module title">' +
@@ -456,7 +497,156 @@
 			checkbox('show_answers', 'Show correct answers after submitting', q.show_answers) +
 			(q.is_final ? checkbox('require_all_lessons', 'Open only after every other lesson is done', q.require_all_lessons) : '') +
 			'<div class="tpd-lms-form-actions"><button type="submit" class="tpd-btn tpd-btn-sm tpd-btn-darkblue"><i class="fa-solid fa-floppy-disk"></i> Save settings</button></div>' +
+			'</form></div>' +
+			'<div class="tpd-sa-card"><h3 class="tpd-sa-card-title">Who can start it</h3>' +
+			'<form class="tpd-lms-form" data-form="access">' +
+			'<label class="tpd-lms-check"><input type="radio" name="access_mode" value="open"' + (q.access_mode === 'open' ? ' checked' : '') + '> <span>Anyone enrolled<small>No password or code.</small></span></label>' +
+			'<label class="tpd-lms-check"><input type="radio" name="access_mode" value="password"' + (q.access_mode === 'password' ? ' checked' : '') + '> <span>Shared password<small>One password for everyone, given out by proctors. Case-sensitive.</small></span></label>' +
+			'<div data-password-wrap' + (q.access_mode === 'password' ? '' : ' hidden') + '>' + field('Password', '<input type="text" name="access_password" class="tpd-input" maxlength="120" autocomplete="off" value="' + esc(q.access_password) + '">') + '</div>' +
+			'<label class="tpd-lms-check"><input type="radio" name="access_mode" value="code"' + (q.access_mode === 'code' ? ' checked' : '') + '> <span>One-time codes with a proctor<small>Students request a proctor; you approve it in Proctoring and the proctor gets a code that works once.</small></span></label>' +
+			'<p class="tpd-lms-help">The check applies when starting a new attempt, not when resuming one. Five wrong tries lock a student out for 15 minutes. You skip it when previewing.</p>' +
+			'<div class="tpd-lms-form-actions"><button type="submit" class="tpd-btn tpd-btn-sm tpd-btn-darkblue"><i class="fa-solid fa-floppy-disk"></i> Save access</button></div>' +
 			'</form></div>';
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Views: students, one student, quiz results                          */
+	/* ------------------------------------------------------------------ */
+
+	function fmtDate(utc) {
+		if (!utc) return '—';
+		var d = new Date(utc.replace(' ', 'T') + 'Z');
+		return isNaN(d) ? utc : d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+	}
+
+	function showStudents() {
+		removeEditors();
+		var c = state.tree.course;
+		crumbs([{ label: 'Courses', go: 'list' }, { label: c.title, go: 'course' }, { label: 'Students' }]);
+		$root.html('<div class="tpd-sa-card tpd-lms-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading students…</div>');
+		api('students', { course_id: c.id }).then(renderStudents, function (msg) { notify(msg, 'error'); renderCourse(); });
+	}
+
+	function renderStudents(data) {
+		state.view = 'students';
+		var rows = data.students.map(function (s) {
+			return '<tr><td><button type="button" class="tpd-lms-link" data-open-student="' + s.enrollment_id + '">' + esc(s.name) + '</button><div class="tpd-lms-muted">' + esc(s.email) + '</div></td>' +
+				'<td><div class="tpd-lms-mini-bar"><span style="width:' + s.progress + '%"></span></div> ' + s.progress + '%</td>' +
+				'<td>' + fmtDate(s.enrolled_at) + (s.paid ? '' : ' <span class="tpd-lms-muted">(free)</span>') + '</td>' +
+				'<td>' + fmtDate(s.last_activity) + '</td>' +
+				'<td>' + (s.certificate ? '<span class="tpd-lms-badge is-published">' + esc(s.certificate) + '</span>' : (s.expired ? '<span class="tpd-lms-badge is-error">Access ended</span>' : '—')) + '</td></tr>';
+		}).join('');
+		$root.html(
+			'<div class="tpd-sa-card"><div class="tpd-lms-bar"><h3 class="tpd-sa-card-title">Students (' + data.students.length + ')</h3></div>' +
+			(rows ? '<div class="tpd-lms-table-wrap"><table class="tpd-lms-table"><thead><tr><th>Student</th><th>Progress</th><th>Enrolled</th><th>Last active</th><th>Certificate</th></tr></thead><tbody>' + rows + '</tbody></table></div>' :
+				'<div class="tpd-lms-empty"><i class="fa-solid fa-users"></i><p>No one is enrolled yet.</p></div>') +
+			'<form class="tpd-lms-inline-form tpd-lms-pad0" data-form="enroll"><input type="email" name="email" class="tpd-input" required placeholder="Member’s email address" aria-label="Member’s email address">' +
+			'<button type="submit" class="tpd-btn tpd-btn-sm tpd-btn-outline"><i class="fa-solid fa-user-plus"></i> Enroll a member</button></form>' +
+			'<p class="tpd-lms-help">Enrolls an existing TPD member for free and emails them the course link.</p></div>'
+		);
+	}
+
+	function openStudent(id) {
+		$root.html('<div class="tpd-sa-card tpd-lms-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</div>');
+		api('student_detail', { enrollment_id: id }).then(renderStudent, function (msg) { notify(msg, 'error'); showStudents(); });
+	}
+
+	function renderStudent(d, newCode) {
+		state.view = 'student';
+		state.student = d;
+		var c = state.tree.course;
+		crumbs([{ label: 'Courses', go: 'list' }, { label: c.title, go: 'course' }, { label: 'Students', go: 'students' }, { label: d.student.name }]);
+		var lessons = d.lessons.map(function (l) {
+			var attempts = l.attempts.length ? '<div class="tpd-lms-muted">' + l.attempts.map(function (a, i) {
+				return 'Attempt ' + (i + 1) + ': ' + (a.submitted_at ? a.score + '%' + (a.passed ? ' (passed)' : '') : 'in progress');
+			}).join(' · ') + '</div>' : '';
+			return '<li class="' + (l.done ? 'is-done' : '') + '"><i class="fa-solid ' + (l.done ? 'fa-circle-check' : 'fa-circle') + '" aria-hidden="true"></i> <span>' + esc(l.title) +
+				(l.done ? ' <span class="tpd-lms-muted">· ' + fmtDate(l.completed_at) + '</span>' : '') + attempts + '</span></li>';
+		}).join('');
+		var hours = Object.keys(d.valid_for).map(function (h) { return '<option value="' + h + '"' + (h === '72' ? ' selected' : '') + '>' + esc(d.valid_for[h]) + '</option>'; }).join('');
+		var exams = d.exams.map(function (x) {
+			var codes = x.codes.length ? '<table class="tpd-lms-table"><thead><tr><th>Status</th><th>Proctor</th><th>Expires</th><th aria-label="Actions"></th></tr></thead><tbody>' + x.codes.map(function (k) {
+				return '<tr><td><span class="tpd-lms-badge ' + (k.status === 'active' ? 'is-published' : 'is-draft') + '">' + esc(k.status) + '</span></td><td>' + esc(k.proctor || '—') + '</td><td>' + fmtDate(k.expires_at) + '</td>' +
+					'<td>' + (k.status === 'active' ? '<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-lms-danger" data-revoke-code="' + k.id + '">Cancel code</button>' : '') + '</td></tr>';
+			}).join('') + '</tbody></table>' : '<p class="tpd-lms-muted">No codes yet.</p>';
+			return '<div class="tpd-sa-card"><h3 class="tpd-sa-card-title">' + esc(x.title) + ' · ' + (x.access_mode === 'code' ? 'one-time codes' : 'shared password') + '</h3>' +
+				(x.access_mode === 'code' ? codes +
+					'<form class="tpd-lms-form" data-form="code" data-quiz="' + x.quiz_id + '"><h4>Make a code</h4><div class="tpd-form-grid-2">' +
+					field('Valid for', '<select name="valid_hours" class="tpd-input">' + hours + '</select>') +
+					field('Proctor’s email (optional)', '<input type="email" name="proctor_email" class="tpd-input" placeholder="We’ll email them the code and a private link">') +
+					'</div>' + field('Proctor’s name (optional)', '<input type="text" name="proctor_name" class="tpd-input" maxlength="120">') +
+					field('Note for the proctor (optional)', '<textarea name="notes" rows="2" class="tpd-input"></textarea>') +
+					'<div class="tpd-lms-form-actions"><button type="submit" class="tpd-btn tpd-btn-sm tpd-btn-darkblue"><i class="fa-solid fa-key"></i> Make code</button></div></form>'
+					: '<p class="tpd-lms-muted">Everyone uses the shared password set on the exam.</p>') + '</div>';
+		}).join('');
+		$root.html(
+			(newCode ? '<div class="tpd-sa-card tpd-lms-newcode" role="status"><h3 class="tpd-sa-card-title">New code</h3><div class="tpd-lms-code">' + esc(newCode.code) + '</div>' +
+				'<p class="tpd-lms-help">' + (newCode.emailed === true ? 'Emailed to the proctor with their private link. ' : newCode.emailed === false ? 'The email to the proctor could not be sent. Give them the code yourself. ' : '') +
+				'This is the only time the code is shown here. It works once, for this student only. Don’t give it to the student.</p></div>' : '') +
+			'<div class="tpd-lms-grid"><div class="tpd-sa-card"><h3 class="tpd-sa-card-title">' + esc(d.student.name) + '</h3>' +
+			'<p class="tpd-lms-muted">' + esc(d.student.email) + ' · enrolled ' + fmtDate(d.student.enrolled_at) + (d.student.expires_at ? ' · access until ' + fmtDate(d.student.expires_at) : '') + '</p>' +
+			'<p><strong>' + d.student.progress + '% complete</strong></p><ol class="tpd-lms-checklist">' + lessons + '</ol></div>' +
+			'<div>' + (exams || '<div class="tpd-sa-card"><p class="tpd-lms-muted">This course has no exams that need a password or code.</p></div>') + '</div></div>'
+		);
+	}
+
+	function showQuizReport() {
+		removeEditors();
+		var c = state.tree.course;
+		crumbs([{ label: 'Courses', go: 'list' }, { label: c.title, go: 'course' }, { label: 'Quiz results' }]);
+		$root.html('<div class="tpd-sa-card tpd-lms-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading results…</div>');
+		api('quiz_report', { course_id: c.id }).then(function (data) {
+			state.view = 'quiz_report';
+			$root.html(data.quizzes.length ? data.quizzes.map(function (q) {
+				var rows = q.questions.map(function (x) {
+					return '<tr><td>' + esc(x.prompt) + (x.topic ? '<div class="tpd-lms-muted">' + esc(x.topic) + '</div>' : '') + '</td><td>' + x.answers + '</td>' +
+						'<td>' + (x.correct === null ? '—' : '<div class="tpd-lms-mini-bar ' + (x.correct < 50 ? 'is-low' : '') + '"><span style="width:' + x.correct + '%"></span></div> ' + x.correct + '%') + '</td></tr>';
+				}).join('');
+				return '<div class="tpd-sa-card"><h3 class="tpd-sa-card-title">' + esc(q.title) + (q.is_final ? ' <span class="tpd-lms-badge is-draft">Final exam</span>' : '') + '</h3>' +
+					'<p class="tpd-lms-muted">' + q.attempts + ' submitted attempts' + (q.attempts ? ' · ' + q.pass_rate + '% passed · average ' + q.average + '%' : '') + '</p>' +
+					(rows ? '<div class="tpd-lms-table-wrap"><table class="tpd-lms-table"><thead><tr><th>Question (hardest first)</th><th>Answered</th><th>Got it right</th></tr></thead><tbody>' + rows + '</tbody></table></div>' : '') + '</div>';
+			}).join('') : '<div class="tpd-sa-card"><p class="tpd-lms-muted">This course has no quizzes yet.</p></div>');
+		}, function (msg) { notify(msg, 'error'); renderCourse(); });
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* View: proctoring queue                                              */
+	/* ------------------------------------------------------------------ */
+
+	function showProctoring(status) {
+		removeEditors();
+		crumbs([{ label: 'Courses', go: 'list' }, { label: 'Proctoring' }]);
+		$root.html('<div class="tpd-sa-card tpd-lms-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading requests…</div>');
+		api('proctor_list', { status: status || 'pending' }).then(renderProctoring, function (msg) { notify(msg, 'error'); showList(); });
+	}
+
+	function renderProctoring(data) {
+		state.view = 'proctoring';
+		var tabs = ['pending', 'approved', 'declined', 'cancelled'].map(function (s) {
+			var n = data.counts[s] || 0;
+			return '<button type="button" class="tpd-btn tpd-btn-xs ' + (s === data.status ? 'tpd-btn-darkblue' : 'tpd-btn-outline') + '" data-proctor-tab="' + s + '">' + s.charAt(0).toUpperCase() + s.slice(1) + ' (' + n + ')</button>';
+		}).join(' ');
+		var hours = Object.keys(data.valid_for).map(function (h) { return '<option value="' + h + '"' + (h === '72' ? ' selected' : '') + '>' + esc(data.valid_for[h]) + '</option>'; }).join('');
+		var cards = data.requests.map(function (r) {
+			var info = '<dl class="tpd-lms-dl"><dt>Student</dt><dd>' + esc(r.student) + '</dd><dt>Exam</dt><dd>' + esc(r.exam) + '</dd><dt>Proctor</dt><dd>' + esc(r.proctor) + (r.phone ? ' · ' + esc(r.phone) : '') + '</dd>' +
+				(r.relationship ? '<dt>Relationship</dt><dd>' + esc(r.relationship) + '</dd>' : '') + (r.preferred ? '<dt>Preferred</dt><dd>' + esc(r.preferred) + '</dd>' : '') +
+				(r.notes ? '<dt>Student notes</dt><dd>' + esc(r.notes) + '</dd>' : '') + (r.decision ? '<dt>Decision note</dt><dd>' + esc(r.decision) + '</dd>' : '') +
+				(r.code_status ? '<dt>Code</dt><dd>' + esc(r.code_status) + '</dd>' : '') +
+				(r.confirmed ? '<dt>Proctor</dt><dd>' + (r.flagged ? '<span class="tpd-lms-badge is-error">Reported a problem</span> ' + esc(r.report) : '<span class="tpd-lms-badge is-published">Confirmed the session</span>') + '</dd>' : '') + '</dl>';
+			var actions = '';
+			if (data.status === 'pending') {
+				actions = '<form class="tpd-lms-inline-form tpd-lms-pad0" data-form="approve" data-id="' + r.id + '"><select name="valid_hours" class="tpd-input" aria-label="Code valid for">' + hours + '</select>' +
+					'<input type="text" name="note" class="tpd-input" placeholder="Note for proctor and student (optional)" aria-label="Note"><button type="submit" class="tpd-btn tpd-btn-sm tpd-btn-darkblue"><i class="fa-solid fa-check"></i> Approve and email the code</button></form>' +
+					'<form class="tpd-lms-inline-form tpd-lms-pad0" data-form="decline" data-id="' + r.id + '"><input type="text" name="reason" class="tpd-input" required placeholder="Reason, shown to the student" aria-label="Reason for declining">' +
+					'<button type="submit" class="tpd-btn tpd-btn-sm tpd-btn-outline tpd-lms-danger">Decline</button></form>';
+			} else if (data.status === 'approved' && r.code_status === 'active') {
+				actions = '<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" data-proctor-resend="' + r.id + '"><i class="fa-solid fa-paper-plane"></i> Send the proctor a new link</button>';
+			}
+			return '<div class="tpd-sa-card">' + info + actions + '</div>';
+		}).join('');
+		$root.html('<div class="tpd-sa-card"><div class="tpd-lms-bar"><h3 class="tpd-sa-card-title">Proctoring</h3><span class="tpd-lms-bar-actions">' + tabs + '</span></div>' +
+			'<p class="tpd-lms-help">Approving creates a one-time code and emails it to the proctor with a private link. The student is told, but never sees the code.</p></div>' +
+			(cards || '<div class="tpd-sa-card"><div class="tpd-lms-empty"><i class="fa-solid fa-user-shield"></i><p>No ' + esc(data.status) + ' requests.</p></div></div>'));
 	}
 
 	function renderQuestions() {
@@ -624,6 +814,86 @@
 				var go = $(this).data('go');
 				if (go === 'list') showList();
 				if (go === 'course') openCourse(state.tree.course.id);
+				if (go === 'coupons') showCoupons();
+				if (go === 'proctoring') showProctoring();
+				if (go === 'students') showStudents();
+				if (go === 'quiz_report') showQuizReport();
+			})
+			.on('change', '[data-form=access] [name=access_mode]', function () {
+				$(this).closest('form').find('[data-password-wrap]').prop('hidden', $(this).val() !== 'password');
+			})
+			.on('submit', '[data-form=access]', function (e) {
+				e.preventDefault();
+				var $f = $(this), $b = $f.find('[type=submit]');
+				busy($b, true);
+				api('quiz_access_save', { quiz_id: state.lesson.quiz.id, access_mode: $f.find('[name=access_mode]:checked').val(), access_password: $f.find('[name=access_password]').val() }).then(function (detail) {
+					state.lesson = detail;
+					notify('Access saved.');
+					renderLesson();
+				}, function (msg) { busy($b, false); notify(msg, 'error'); });
+			})
+			.on('click', '[data-open-student]', function () { openStudent($(this).data('open-student')); })
+			.on('submit', '[data-form=enroll]', function (e) {
+				e.preventDefault();
+				var $f = $(this), $b = $f.find('[type=submit]');
+				busy($b, true);
+				api('student_enroll', { course_id: state.tree.course.id, email: $f.find('[name=email]').val() }).then(function (data) {
+					notify('Enrolled. They’ve been emailed the course link.');
+					renderStudents(data);
+				}, function (msg) { busy($b, false); notify(msg, 'error'); });
+			})
+			.on('submit', '[data-form=code]', function (e) {
+				e.preventDefault();
+				var $f = $(this), $b = $f.find('[type=submit]');
+				var data = formData($f);
+				data.quiz_id = $f.data('quiz');
+				data.enrollment_id = state.student.enrollment_id;
+				busy($b, true);
+				api('code_create', data).then(function (d) { renderStudent(d, { code: d.code, emailed: d.emailed }); window.scrollTo({ top: $root.offset().top - 100, behavior: 'smooth' }); },
+					function (msg) { busy($b, false); notify(msg, 'error'); });
+			})
+			.on('click', '[data-revoke-code]', function () {
+				if (!window.confirm('Cancel this code? It will stop working right away.')) return;
+				api('code_revoke', { code_id: $(this).data('revoke-code') }).then(function (d) { notify('Code cancelled.'); renderStudent(d); }, function (msg) { notify(msg, 'error'); });
+			})
+			.on('click', '[data-proctor-tab]', function () { showProctoring($(this).data('proctor-tab')); })
+			.on('submit', '[data-form=approve]', function (e) {
+				e.preventDefault();
+				var $f = $(this), $b = $f.find('[type=submit]');
+				busy($b, true);
+				api('proctor_approve', $.extend({ request_id: $f.data('id') }, formData($f))).then(function (d) {
+					notify(d.emails_sent ? 'Approved. The proctor and the student have been emailed.' : 'Approved, but an email could not be sent. Use “Send the proctor a new link” under Approved.', d.emails_sent ? 'ok' : 'error');
+					renderProctoring(d);
+				}, function (msg) { busy($b, false); notify(msg, 'error'); });
+			})
+			.on('submit', '[data-form=decline]', function (e) {
+				e.preventDefault();
+				var $f = $(this), $b = $f.find('[type=submit]');
+				busy($b, true);
+				api('proctor_decline', { request_id: $f.data('id'), reason: $f.find('[name=reason]').val() }).then(function (d) {
+					notify('Declined. The student has been told why.');
+					renderProctoring(d);
+				}, function (msg) { busy($b, false); notify(msg, 'error'); });
+			})
+			.on('click', '[data-proctor-resend]', function () {
+				if (!window.confirm('Send the proctor a new link? The old link stops working.')) return;
+				api('proctor_resend', { request_id: $(this).data('proctor-resend') }).then(function (d) {
+					notify(d.emails_sent ? 'New link sent to the proctor.' : 'The email could not be sent.', d.emails_sent ? 'ok' : 'error');
+					renderProctoring(d);
+				}, function (msg) { notify(msg, 'error'); });
+			})
+			.on('submit', '[data-form=coupon]', function (e) {
+				e.preventDefault();
+				var $f = $(this), $b = $f.find('[type=submit]');
+				busy($b, true);
+				api('coupon_save', formData($f)).then(function (data) { notify('Coupon created.'); renderCoupons(data); }, function (msg) { busy($b, false); notify(msg, 'error'); });
+			})
+			.on('click', '[data-coupon-toggle]', function () {
+				api('coupon_toggle', { coupon_id: $(this).data('coupon-toggle') }).then(renderCoupons, function (msg) { notify(msg, 'error'); });
+			})
+			.on('click', '[data-coupon-delete]', function () {
+				if (!window.confirm('Delete the coupon ' + $(this).data('code') + '? Past orders keep their discount.')) return;
+				api('coupon_delete', { coupon_id: $(this).data('coupon-delete') }).then(renderCoupons, function (msg) { notify(msg, 'error'); });
 			})
 			.on('click', '#tpd-lms-new-course', function () {
 				$('#tpd-lms-new-course-form').prop('hidden', false).find('[name=title]').trigger('focus');

@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class TPD_LMS_Student {
 
-	const ACTIONS = array( 'outline', 'lesson', 'complete', 'quiz_start', 'quiz_save', 'quiz_submit' );
+	const ACTIONS = array( 'outline', 'lesson', 'complete', 'quiz_start', 'quiz_save', 'quiz_submit', 'proctor_request', 'proctor_cancel' );
 
 	/** Public certificate page: /certificate-verify/ and /certificate-verify/{CODE}/ */
 	const CERT_PATH = 'certificate-verify';
@@ -137,7 +137,7 @@ class TPD_LMS_Student {
 	/**
 	 * Server-side price for an LMS course, for TPD_Tool_Financial::resolve_item().
 	 */
-	public static function resolve_checkout_item( $user_id, $item_id, $currency ) {
+	public static function resolve_checkout_item( $user_id, $item_id, $currency, $coupon_code = null ) {
 		$course = TPD_LMS_Store::get_course( $item_id );
 		if ( ! $course || 'published' !== $course->status ) {
 			return new WP_Error( 'course_not_found', __( 'That course isn’t available.', 'tpd-tool' ) );
@@ -147,16 +147,47 @@ class TPD_LMS_Student {
 			return new WP_Error( 'already_enrolled', __( 'You’re already enrolled in this course. Open it from My Resources.', 'tpd-tool' ) );
 		}
 		$price = self::tier_includes( $user_id, $course ) ? 0.0 : (float) $course->price;
-		return array(
+
+		// Coupon from TPD's checkout requests (added by tpd-lms-student.js).
+		if ( null === $coupon_code ) {
+			$coupon_code = isset( $_POST['lms_coupon'] ) ? sanitize_text_field( wp_unslash( $_POST['lms_coupon'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification -- TPD's checkout checks its nonce first.
+		}
+		$extra       = array( 'course_id' => (int) $course->id, 'native' => 1, 'list_price' => round( $price, 2 ) );
+		$coupon_note = '';
+		$item_extra  = array();
+		if ( '' !== trim( (string) $coupon_code ) && $price > 0 ) {
+			$coupon = TPD_LMS_Coupons::find_by_code( $coupon_code );
+			$reason = TPD_LMS_Coupons::unusable_reason( $coupon, $course );
+			if ( null !== $reason ) {
+				// The preview shows the reason next to the field; paying with a bad code is refused.
+				$is_preview = isset( $_POST['action'] ) && 'tpd_get_checkout_preview' === $_POST['action']; // phpcs:ignore WordPress.Security.NonceVerification
+				if ( ! $is_preview ) {
+					return new WP_Error( 'bad_coupon', $reason );
+				}
+				$item_extra['coupon_error'] = $reason;
+			} else {
+				$discount             = TPD_LMS_Coupons::discount_for( $coupon, $price );
+				$price               -= $discount;
+				$extra['coupon_id']   = (int) $coupon->id;
+				$extra['coupon_code'] = $coupon->code;
+				$extra['discount']    = $discount;
+				/* translators: 1: coupon code, 2: discount label like "20% off" */
+				$coupon_note               = sprintf( __( 'Coupon %1$s: %2$s', 'tpd-tool' ), $coupon->code, TPD_LMS_Coupons::label( $coupon ) );
+				$item_extra['coupon_ok']   = $coupon_note;
+				$item_extra['list_amount'] = $extra['list_price'];
+			}
+		}
+
+		return array_merge( array(
 			'item_type'     => 'lms_course',
 			'item_id'       => $course->slug,
 			'item_title'    => $course->title,
 			'billing_cycle' => 'once',
 			'amount'        => round( max( 0.0, $price ), 2 ),
 			'currency'      => $currency,
-			'description'   => '' !== (string) $course->subtitle ? $course->subtitle : __( 'TARC course enrollment', 'tpd-tool' ),
-			'extra'         => array( 'course_id' => (int) $course->id, 'native' => 1 ),
-		);
+			'description'   => trim( ( '' !== (string) $course->subtitle ? $course->subtitle : __( 'TARC course enrollment', 'tpd-tool' ) ) . ( $coupon_note ? ' · ' . $coupon_note : '' ) ),
+			'extra'         => $extra,
+		), $item_extra );
 	}
 
 	/**
@@ -176,10 +207,23 @@ class TPD_LMS_Student {
 				'tx_id'      => (int) $tx->id,
 				'expires_at' => $course->access_days ? TPD_LMS_Native::now( DAY_IN_SECONDS * (int) $course->access_days ) : null,
 			) );
+			self::record_coupon_use( $tx );
 			return array( 'ok' => true );
 		}
 		$enrollment = TPD_LMS_Progress::enroll( (int) $tx->user_id, $course->id, (int) $tx->id );
-		return is_wp_error( $enrollment ) ? array( 'ok' => false, 'error' => $enrollment->get_error_message() ) : array( 'ok' => true );
+		if ( is_wp_error( $enrollment ) ) {
+			return array( 'ok' => false, 'error' => $enrollment->get_error_message() );
+		}
+		self::record_coupon_use( $tx );
+		return array( 'ok' => true );
+	}
+
+	/** Count the coupon on this transaction, once (TPD marks the transaction fulfilled right after). */
+	private static function record_coupon_use( $tx ) {
+		$meta = ! empty( $tx->meta_json ) ? json_decode( (string) $tx->meta_json, true ) : array();
+		if ( ! empty( $meta['extra']['coupon_id'] ) && empty( $meta['fulfilled_at'] ) ) {
+			TPD_LMS_Coupons::record_use( (int) $meta['extra']['coupon_id'] );
+		}
 	}
 
 	/* ------------------------------------------------------------------ */
@@ -364,8 +408,37 @@ class TPD_LMS_Student {
 		if ( ! $enrollment ) {
 			return new WP_Error( 'not_enrolled', __( 'Enroll in the course to take quizzes.', 'tpd-tool' ) );
 		}
-		$attempt = TPD_LMS_Quiz::start( $quiz, $enrollment );
+		$attempt = TPD_LMS_Exam::start( $quiz, $enrollment, $user_id, isset( $p['access_code'] ) ? (string) $p['access_code'] : '' );
 		return is_wp_error( $attempt ) ? $attempt : self::attempt_for_student( $attempt, $quiz );
+	}
+
+	/** Ask for a proctor for a code-locked exam. */
+	private static function action_proctor_request( $user_id, $p ) {
+		$lesson = TPD_LMS_Store::find( 'lessons', isset( $p['lesson_id'] ) ? $p['lesson_id'] : 0 );
+		$check  = self::can_open( $lesson, $user_id );
+		if ( is_wp_error( $check ) ) {
+			return $check;
+		}
+		$quiz       = TPD_LMS_Store::quiz_for_lesson( $lesson->id );
+		$enrollment = TPD_LMS_Progress::get_enrollment( $user_id, (int) $lesson->course_id );
+		if ( ! $quiz || ! $enrollment ) {
+			return new WP_Error( 'not_enrolled', __( 'Enroll in the course first.', 'tpd-tool' ) );
+		}
+		$request = TPD_LMS_Exam::request_proctor( $quiz, $enrollment, $p );
+		return is_wp_error( $request ) ? $request : array( 'quiz' => self::quiz_summary( $quiz, $enrollment ) );
+	}
+
+	private static function action_proctor_cancel( $user_id, $p ) {
+		$request    = TPD_LMS_Store::find( 'proctor_requests', isset( $p['request_id'] ) ? $p['request_id'] : 0 );
+		$enrollment = $request ? TPD_LMS_Store::find( 'enrollments', $request->enrollment_id ) : null;
+		if ( ! $request || ! $enrollment || (int) $enrollment->user_id !== (int) $user_id ) {
+			return new WP_Error( 'request_missing', __( 'That request isn’t available.', 'tpd-tool' ) );
+		}
+		$ok = TPD_LMS_Exam::cancel_request( $request );
+		if ( is_wp_error( $ok ) ) {
+			return $ok;
+		}
+		return array( 'quiz' => self::quiz_summary( TPD_LMS_Store::find( 'quizzes', $request->quiz_id ), $enrollment ) );
 	}
 
 	private static function action_quiz_save( $user_id, $p ) {
@@ -444,7 +517,28 @@ class TPD_LMS_Student {
 		) ) : null;
 		$used = $enrollment ? TPD_LMS_Quiz::attempts_used( $quiz, $enrollment ) : 0;
 		$open = $enrollment ? TPD_LMS_Quiz::open_attempt( $quiz, $enrollment ) : null;
+
+		$request = null;
+		if ( $enrollment && 'code' === $quiz->access_mode ) {
+			$r = TPD_LMS_Exam::latest_request( $quiz->id, $enrollment->id );
+			if ( $r && 'cancelled' !== $r->status ) {
+				$code    = $r->exam_access_code_id ? TPD_LMS_Store::find( 'exam_access_codes', $r->exam_access_code_id ) : null;
+				$request = array(
+					'id'          => (int) $r->id,
+					'status'      => $r->status,
+					'proctor'     => $r->proctor_name,
+					'preferred'   => TPD_LMS_Exam::format_time( $r->preferred_at, $r->timezone ),
+					'note'        => (string) $r->decision_note,
+					'code_status' => $code ? TPD_LMS_Exam::code_status( $code ) : null,
+				);
+			}
+		}
+		$course   = $enrollment ? TPD_LMS_Store::get_course( (int) $enrollment->course_id ) : null;
+		$is_staff = $course && TPD_LMS_Store::can_manage_course( $course, get_current_user_id() );
 		return array(
+			'access_mode'     => $quiz->access_mode,
+			'needs_access'    => TPD_LMS_Exam::needs_check( $quiz ) && ! $is_staff && ! ( $open && ! TPD_LMS_Quiz::is_past_deadline( $open ) ),
+			'proctor_request' => $request,
 			'id'              => (int) $quiz->id,
 			'is_final'        => (bool) $quiz->is_final,
 			'passing_score'   => (int) $quiz->passing_score,

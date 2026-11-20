@@ -29,6 +29,21 @@ class TPD_LMS_Admin {
 		'question_delete',
 		'question_import',
 		'settings_save',
+		'coupon_list',
+		'coupon_save',
+		'coupon_toggle',
+		'coupon_delete',
+		'quiz_access_save',
+		'students',
+		'student_detail',
+		'student_enroll',
+		'code_create',
+		'code_revoke',
+		'quiz_report',
+		'proctor_list',
+		'proctor_approve',
+		'proctor_decline',
+		'proctor_resend',
 	);
 
 	/** Largest question file accepted for import, in bytes. */
@@ -154,10 +169,263 @@ class TPD_LMS_Admin {
 		return array(
 			'courses'  => $out,
 			'settings' => array(
-				'issuer_name' => TPD_LMS_Native::issuer_name(),
+				'issuer_name'   => TPD_LMS_Native::issuer_name(),
+				'support_email' => TPD_LMS_Mail::support_email(),
+				'pending_proctor' => (int) $GLOBALS['wpdb']->get_var( 'SELECT COUNT(*) FROM ' . TPD_LMS_Schema::t( 'proctor_requests' ) . " WHERE status = 'pending'" ),
 				'verify_url'  => home_url( '/' . TPD_LMS_Student::CERT_PATH . '/' ),
 			),
 		);
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Exam access, students, reports, proctoring                          */
+	/* ------------------------------------------------------------------ */
+
+	private static function action_quiz_access_save( $p ) {
+		$quiz = self::quiz_or_error( isset( $p['quiz_id'] ) ? $p['quiz_id'] : 0 );
+		if ( is_wp_error( $quiz ) ) {
+			return $quiz;
+		}
+		$ok = TPD_LMS_Exam::save_access( $quiz->id, isset( $p['access_mode'] ) ? (string) $p['access_mode'] : 'open', isset( $p['access_password'] ) ? (string) $p['access_password'] : null );
+		return is_wp_error( $ok ) ? $ok : self::lesson_detail( TPD_LMS_Store::find( 'lessons', $quiz->lesson_id ) );
+	}
+
+	private static function enrollment_or_error( $enrollment_id ) {
+		$e = TPD_LMS_Store::find( 'enrollments', $enrollment_id );
+		if ( ! $e ) {
+			return new WP_Error( 'enrollment_missing', __( 'That enrollment no longer exists. Reload the page.', 'tpd-tool' ) );
+		}
+		$course = self::course_or_error( $e->course_id );
+		return is_wp_error( $course ) ? $course : $e;
+	}
+
+	private static function action_students( $p ) {
+		$course = self::course_or_error( isset( $p['course_id'] ) ? $p['course_id'] : 0 );
+		if ( is_wp_error( $course ) ) {
+			return $course;
+		}
+		return array( 'course' => self::course_summary( $course ), 'students' => TPD_LMS_Reports::students( $course->id ) );
+	}
+
+	private static function action_student_detail( $p ) {
+		$e = self::enrollment_or_error( isset( $p['enrollment_id'] ) ? $p['enrollment_id'] : 0 );
+		if ( is_wp_error( $e ) ) {
+			return $e;
+		}
+		return array( 'enrollment_id' => (int) $e->id, 'valid_for' => TPD_LMS_Exam::VALID_FOR ) + TPD_LMS_Reports::student( $e );
+	}
+
+	/** Enroll an existing TPD member by email (they get the "you're enrolled" email). */
+	private static function action_student_enroll( $p ) {
+		$course = self::course_or_error( isset( $p['course_id'] ) ? $p['course_id'] : 0 );
+		if ( is_wp_error( $course ) ) {
+			return $course;
+		}
+		$user = get_user_by( 'email', sanitize_email( isset( $p['email'] ) ? (string) $p['email'] : '' ) );
+		if ( ! $user ) {
+			return new WP_Error( 'no_member', __( 'No TPD member has that email address. They need a TPD account first.', 'tpd-tool' ) );
+		}
+		if ( TPD_LMS_Progress::get_enrollment( $user->ID, $course->id ) ) {
+			return new WP_Error( 'already_enrolled', __( 'That member is already enrolled.', 'tpd-tool' ) );
+		}
+		$e = TPD_LMS_Progress::enroll( $user->ID, $course->id );
+		return is_wp_error( $e ) ? $e : self::action_students( array( 'course_id' => $course->id ) );
+	}
+
+	/**
+	 * Staff make a one-time code for one student. The code is shown once here;
+	 * with a proctor email it's also sent to the proctor with the private link.
+	 */
+	private static function action_code_create( $p ) {
+		$e = self::enrollment_or_error( isset( $p['enrollment_id'] ) ? $p['enrollment_id'] : 0 );
+		if ( is_wp_error( $e ) ) {
+			return $e;
+		}
+		$quiz = TPD_LMS_Store::find( 'quizzes', isset( $p['quiz_id'] ) ? $p['quiz_id'] : 0 );
+		$lesson = $quiz ? TPD_LMS_Store::find( 'lessons', $quiz->lesson_id ) : null;
+		if ( ! $quiz || ! $lesson || (int) $lesson->course_id !== (int) $e->course_id ) {
+			return new WP_Error( 'quiz_missing', __( 'That exam isn’t part of this course.', 'tpd-tool' ) );
+		}
+		$email = sanitize_email( isset( $p['proctor_email'] ) ? (string) $p['proctor_email'] : '' );
+		$name  = sanitize_text_field( isset( $p['proctor_name'] ) ? (string) $p['proctor_name'] : '' );
+		if ( '' !== $email && ! is_email( $email ) ) {
+			return new WP_Error( 'bad_email', __( 'Check the proctor’s email address.', 'tpd-tool' ) );
+		}
+		$code = TPD_LMS_Exam::create_code( $quiz->id, $e->id, isset( $p['valid_hours'] ) ? (int) $p['valid_hours'] : 72, array(
+			'name'  => $name,
+			'email' => $email,
+			'notes' => isset( $p['notes'] ) ? (string) $p['notes'] : '',
+		) );
+		if ( is_wp_error( $code ) ) {
+			return $code;
+		}
+		$emailed = null;
+		if ( '' !== $email ) {
+			// Record it as an approved request so the proctor gets the same email and private link.
+			$rid = TPD_LMS_Store::insert( 'proctor_requests', array(
+				'quiz_id'             => (int) $quiz->id,
+				'enrollment_id'       => (int) $e->id,
+				'proctor_name'        => '' !== $name ? $name : __( 'Proctor', 'tpd-tool' ),
+				'proctor_email'       => $email,
+				'status'              => 'pending',
+				'timezone'            => wp_timezone_string(),
+			) );
+			$request = TPD_LMS_Store::find( 'proctor_requests', $rid );
+			TPD_LMS_Store::update( 'proctor_requests', $rid, array(
+				'status'              => 'approved',
+				'decision_note'       => sanitize_textarea_field( isset( $p['notes'] ) ? (string) $p['notes'] : '' ) ?: null,
+				'decided_by'          => get_current_user_id(),
+				'decided_at'          => TPD_LMS_Native::now(),
+				'exam_access_code_id' => (int) $code['id'],
+			) );
+			$res     = TPD_LMS_Exam::resend( TPD_LMS_Store::find( 'proctor_requests', $rid ) );
+			$emailed = ! is_wp_error( $res ) && $res['emails_sent'];
+		}
+		return array( 'code' => $code['code'], 'emailed' => $emailed ) + self::action_student_detail( array( 'enrollment_id' => $e->id ) );
+	}
+
+	private static function action_code_revoke( $p ) {
+		$code = TPD_LMS_Store::find( 'exam_access_codes', isset( $p['code_id'] ) ? $p['code_id'] : 0 );
+		if ( ! $code ) {
+			return new WP_Error( 'code_missing', __( 'That code no longer exists.', 'tpd-tool' ) );
+		}
+		$e = self::enrollment_or_error( $code->enrollment_id );
+		if ( is_wp_error( $e ) ) {
+			return $e;
+		}
+		if ( 'active' === TPD_LMS_Exam::code_status( $code ) ) {
+			TPD_LMS_Exam::revoke_code( $code->id );
+		}
+		return self::action_student_detail( array( 'enrollment_id' => $e->id ) );
+	}
+
+	private static function action_quiz_report( $p ) {
+		$course = self::course_or_error( isset( $p['course_id'] ) ? $p['course_id'] : 0 );
+		return is_wp_error( $course ) ? $course : array( 'course' => self::course_summary( $course ), 'quizzes' => TPD_LMS_Reports::quizzes( $course->id ) );
+	}
+
+	private static function action_proctor_list( $p ) {
+		global $wpdb;
+		$status = isset( $p['status'] ) && in_array( $p['status'], array( 'pending', 'approved', 'declined', 'cancelled' ), true ) ? $p['status'] : 'pending';
+		$rows   = $wpdb->get_results( $wpdb->prepare(
+			'SELECT * FROM ' . TPD_LMS_Schema::t( 'proctor_requests' ) . ' WHERE status = %s ORDER BY created_at DESC LIMIT 200',
+			$status
+		) );
+		$counts = array();
+		foreach ( $wpdb->get_results( 'SELECT status, COUNT(*) AS n FROM ' . TPD_LMS_Schema::t( 'proctor_requests' ) . ' GROUP BY status' ) as $r ) {
+			$counts[ $r->status ] = (int) $r->n;
+		}
+		$out = array();
+		foreach ( $rows as $r ) {
+			$c     = TPD_LMS_Exam::context( $r );
+			$out[] = array(
+				'id'           => (int) $r->id,
+				'student'      => $c['student'] ? $c['student']->display_name . ' <' . $c['student']->user_email . '>' : '?',
+				'exam'         => ( $c['lesson'] ? $c['lesson']->title : '?' ) . ' · ' . ( $c['course'] ? $c['course']->title : '?' ),
+				'proctor'      => $r->proctor_name . ' <' . $r->proctor_email . '>',
+				'phone'        => (string) $r->proctor_phone,
+				'relationship' => (string) $r->proctor_relationship,
+				'preferred'    => TPD_LMS_Exam::format_time( $r->preferred_at, $r->timezone ),
+				'notes'        => (string) $r->student_notes,
+				'decision'     => (string) $r->decision_note,
+				'code_status'  => $c['code'] ? TPD_LMS_Exam::code_status( $c['code'] ) : null,
+				'confirmed'    => (bool) $r->proctor_confirmed_at,
+				'flagged'      => (bool) $r->proctor_flagged,
+				'report'       => (string) $r->proctor_report,
+				'created_at'   => $r->created_at,
+			);
+		}
+		return array( 'status' => $status, 'counts' => $counts, 'requests' => $out, 'valid_for' => TPD_LMS_Exam::VALID_FOR );
+	}
+
+	private static function request_or_error( $id ) {
+		$r = TPD_LMS_Store::find( 'proctor_requests', $id );
+		if ( ! $r ) {
+			return new WP_Error( 'request_missing', __( 'That request no longer exists. Reload the page.', 'tpd-tool' ) );
+		}
+		$e = self::enrollment_or_error( $r->enrollment_id );
+		return is_wp_error( $e ) ? $e : $r;
+	}
+
+	private static function action_proctor_approve( $p ) {
+		$r = self::request_or_error( isset( $p['request_id'] ) ? $p['request_id'] : 0 );
+		if ( is_wp_error( $r ) ) {
+			return $r;
+		}
+		$res = TPD_LMS_Exam::approve( $r, isset( $p['valid_hours'] ) ? (int) $p['valid_hours'] : 72, isset( $p['note'] ) ? (string) $p['note'] : '' );
+		return is_wp_error( $res ) ? $res : $res + self::action_proctor_list( array( 'status' => 'pending' ) );
+	}
+
+	private static function action_proctor_decline( $p ) {
+		$r = self::request_or_error( isset( $p['request_id'] ) ? $p['request_id'] : 0 );
+		if ( is_wp_error( $r ) ) {
+			return $r;
+		}
+		$res = TPD_LMS_Exam::decline( $r, isset( $p['reason'] ) ? (string) $p['reason'] : '' );
+		return is_wp_error( $res ) ? $res : $res + self::action_proctor_list( array( 'status' => 'pending' ) );
+	}
+
+	private static function action_proctor_resend( $p ) {
+		$r = self::request_or_error( isset( $p['request_id'] ) ? $p['request_id'] : 0 );
+		if ( is_wp_error( $r ) ) {
+			return $r;
+		}
+		$res = TPD_LMS_Exam::resend( $r );
+		return is_wp_error( $res ) ? $res : $res + self::action_proctor_list( array( 'status' => 'approved' ) );
+	}
+
+	/* ------------------------------------------------------------------ */
+	/* Coupons                                                             */
+	/* ------------------------------------------------------------------ */
+
+	private static function action_coupon_list() {
+		$courses = array();
+		foreach ( TPD_LMS_Store::list_courses( 'all' ) as $c ) {
+			$courses[ (int) $c->id ] = $c->title;
+		}
+		$out = array();
+		foreach ( TPD_LMS_Coupons::all() as $cp ) {
+			$out[] = array(
+				'id'         => (int) $cp->id,
+				'code'       => $cp->code,
+				'label'      => TPD_LMS_Coupons::label( $cp ),
+				'type'       => $cp->type,
+				'value'      => (float) $cp->value,
+				'course'     => $cp->course_id ? ( isset( $courses[ (int) $cp->course_id ] ) ? $courses[ (int) $cp->course_id ] : __( '(deleted course)', 'tpd-tool' ) ) : __( 'All courses', 'tpd-tool' ),
+				'uses'       => (int) $cp->uses,
+				'max_uses'   => null === $cp->max_uses ? null : (int) $cp->max_uses,
+				'expires_at' => $cp->expires_at,
+				'active'     => (bool) $cp->active,
+			);
+		}
+		$choices = array();
+		foreach ( $courses as $id => $title ) {
+			$choices[] = array( 'id' => $id, 'title' => $title );
+		}
+		return array( 'coupons' => $out, 'courses' => $choices );
+	}
+
+	private static function action_coupon_save( $p ) {
+		$id = TPD_LMS_Coupons::create( $p );
+		return is_wp_error( $id ) ? $id : self::action_coupon_list();
+	}
+
+	private static function action_coupon_toggle( $p ) {
+		$cp = TPD_LMS_Store::find( 'coupons', isset( $p['coupon_id'] ) ? $p['coupon_id'] : 0 );
+		if ( ! $cp ) {
+			return new WP_Error( 'coupon_missing', __( 'That coupon no longer exists.', 'tpd-tool' ) );
+		}
+		TPD_LMS_Store::update( 'coupons', $cp->id, array( 'active' => (int) $cp->active ? 0 : 1 ) );
+		return self::action_coupon_list();
+	}
+
+	private static function action_coupon_delete( $p ) {
+		$cp = TPD_LMS_Store::find( 'coupons', isset( $p['coupon_id'] ) ? $p['coupon_id'] : 0 );
+		if ( ! $cp ) {
+			return new WP_Error( 'coupon_missing', __( 'That coupon no longer exists.', 'tpd-tool' ) );
+		}
+		TPD_LMS_Store::delete( 'coupons', $cp->id );
+		return self::action_coupon_list();
 	}
 
 	private static function action_settings_save( $p ) {
@@ -165,8 +433,15 @@ class TPD_LMS_Admin {
 		if ( '' === $name ) {
 			return new WP_Error( 'issuer_required', __( 'Enter the name to print on certificates.', 'tpd-tool' ) );
 		}
+		$support = sanitize_email( isset( $p['support_email'] ) ? (string) $p['support_email'] : '' );
+		if ( '' !== $support && ! is_email( $support ) ) {
+			return new WP_Error( 'bad_email', __( 'Check the support email address.', 'tpd-tool' ) );
+		}
 		$settings                = (array) get_option( TPD_LMS_Native::OPT_SETTINGS, array() );
 		$settings['issuer_name'] = substr( $name, 0, 120 );
+		if ( '' !== $support ) {
+			$settings['support_email'] = $support;
+		}
 		update_option( TPD_LMS_Native::OPT_SETTINGS, $settings, false );
 		return self::action_course_list();
 	}
@@ -565,6 +840,8 @@ class TPD_LMS_Admin {
 				'shuffle_options'       => (bool) $quiz->shuffle_options,
 				'show_answers'          => (bool) $quiz->show_answers,
 				'require_all_lessons'   => (bool) $quiz->require_all_lessons,
+				'access_mode'           => $quiz->access_mode,
+				'access_password'       => 'password' === $quiz->access_mode ? (string) TPD_LMS_Exam::password_for( $quiz ) : '',
 			);
 			foreach ( TPD_LMS_Store::questions_for_quiz( $quiz->id ) as $q ) {
 				$options = array();

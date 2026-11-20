@@ -100,6 +100,32 @@
 .tpd-lms-option-row .tpd-input { flex: 1; }
 .tpd-lms-correct { display: inline-flex; align-items: center; }
 
+/* Studio: students, reports, proctoring */
+.tpd-lms-mini-bar { display: inline-block; vertical-align: middle; width: 70px; height: 6px; background: var(--lms-line); border-radius: 999px; overflow: hidden; }
+.tpd-lms-mini-bar span { display: block; height: 100%; background: var(--lms-teal); }
+.tpd-lms-mini-bar.is-low span { background: #d97706; }
+.tpd-lms-pad0 { padding: 12px 0 0; }
+.tpd-lms-checklist { list-style: none; margin: 0; padding: 0; }
+.tpd-lms-checklist li { display: flex; gap: 8px; padding: 6px 0; font-size: 14px; border-bottom: 1px solid var(--lms-line); }
+.tpd-lms-checklist li i { color: #cbd5e1; margin-top: 3px; }
+.tpd-lms-checklist li.is-done i { color: var(--lms-teal); }
+.tpd-lms-dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; margin: 0 0 6px; font-size: 14px; }
+.tpd-lms-dl dt { color: var(--lms-muted); }
+.tpd-lms-dl dd { margin: 0; word-break: break-word; }
+.tpd-lms-code { font-size: 30px; font-weight: 800; letter-spacing: .12em; text-align: center; background: var(--lms-soft); border: 2px dashed var(--lms-teal); border-radius: 12px; padding: 14px; font-variant-numeric: tabular-nums; }
+.tpd-lms-newcode { border-color: var(--lms-teal); }
+.tpd-lms-count { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 999px; background: #b91c1c; color: #fff; font-size: 11px; line-height: 18px; text-align: center; }
+.tpd-lms-studio form h4 { margin: 14px 0 10px; color: var(--lms-navy); }
+
+/* Coupon row inside TPD's checkout modal. */
+.tpd-lms-coupon { margin: 0 0 18px; font-size: 13px; }
+.tpd-lms-coupon label { display: block; font-weight: 700; color: #0b1526; margin-bottom: 6px; }
+.tpd-lms-coupon-row { display: flex; gap: 8px; }
+.tpd-lms-coupon-row .tpd-input { flex: 1; min-width: 0; text-transform: uppercase; }
+.tpd-lms-coupon-ok { display: block; margin-top: 6px; color: #166534; font-weight: 600; }
+.tpd-lms-coupon-err { display: block; margin-top: 6px; color: #b91c1c; font-weight: 600; }
+.tpd-lms-was { font-size: 14px; font-weight: 600; color: #94a3b8; }
+
 /* ---------------------------------------------------------------------- */
 /* Lesson player (advisor dashboard)                                       */
 /* ---------------------------------------------------------------------- */
@@ -170,6 +196,16 @@
 .tpd-lms-best.is-pass { color: var(--lms-green); }
 .tpd-lms-quiz-intro .tpd-lms-p-actions { border-top: 0; padding-top: 0; margin-top: 12px; }
 
+.tpd-lms-p-actions-col { flex-direction: column; align-items: flex-start; }
+.tpd-lms-access { width: 100%; max-width: 360px; }
+.tpd-lms-access label, .tpd-lms-proctor label { display: block; font-weight: 700; font-size: 13.5px; color: var(--lms-navy); }
+.tpd-lms-access .tpd-input, .tpd-lms-proctor .tpd-input { width: 100%; margin-top: 6px; font-weight: 400; }
+.tpd-lms-access p { margin: 6px 0 0; }
+.tpd-lms-proctor { border: 1px solid var(--lms-line); border-radius: 10px; padding: 16px 18px; margin-top: 16px; background: var(--lms-soft); }
+.tpd-lms-proctor .tpd-lms-p-h4 { margin-top: 0; }
+.tpd-lms-proctor p { font-size: 14px; margin: 0 0 10px; }
+.tpd-lms-proctor-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 12px; }
+.tpd-lms-block { margin-bottom: 8px; }
 .tpd-lms-timer { font-weight: 800; font-size: 15px; background: var(--lms-soft); border: 1px solid var(--lms-line); border-radius: 999px; padding: 6px 14px; font-variant-numeric: tabular-nums; }
 .tpd-lms-timer.is-low { background: #fee2e2; border-color: #fecaca; color: var(--lms-red); }
 .tpd-lms-q { border: 1px solid var(--lms-line); border-radius: 10px; padding: 14px 16px; margin: 0 0 14px; }

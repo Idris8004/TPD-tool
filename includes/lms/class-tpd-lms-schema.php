@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class TPD_LMS_Schema {
 
-	const DB_VERSION = '1.0';
+	const DB_VERSION = '1.1';
 	const OPT_DB_VER = 'tpd_lms_db_ver';
 
 	/** Short names of every LMS table, without the prefix. */
@@ -253,6 +253,7 @@ class TPD_LMS_Schema {
 			quiz_id BIGINT UNSIGNED NOT NULL,
 			enrollment_id BIGINT UNSIGNED NOT NULL,
 			code_hash VARCHAR(64) NOT NULL,
+			code_enc TEXT NULL,
 			proctor_name VARCHAR(120) NULL,
 			proctor_email VARCHAR(190) NULL,
 			notes TEXT NULL,

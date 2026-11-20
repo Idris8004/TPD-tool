@@ -237,15 +237,55 @@
 		if (!st.outline.enrolled) action = st.outline.preview ? '<p class="tpd-lms-muted">Course team preview: enroll a test account to try the quiz.</p>' : enrollButton();
 		else if (q.question_count === 0) action = '<p class="tpd-lms-muted">This quiz has no questions yet.</p>';
 		else if (!q.can_attempt) action = '<p class="tpd-lms-muted">You’ve used all your attempts.</p>';
-		else action = '<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-darkblue" data-lms-quiz-start style="background:#00798c;border-color:#00798c;"><i class="fa-solid fa-play"></i> ' + (q.has_open ? 'Continue your attempt' : (q.attempts_used ? 'Try again' : (q.is_final ? 'Start the exam' : 'Start the quiz'))) + '</button>';
+		else {
+			var access = '';
+			if (q.needs_access) {
+				var isCode = q.access_mode === 'code';
+				access = '<div class="tpd-lms-access"><label for="tpd-lms-access-code">' + (isCode ? 'One-time exam code' : 'Exam password') + '</label>' +
+					'<input type="' + (isCode ? 'text' : 'password') + '" id="tpd-lms-access-code" class="tpd-input" autocomplete="off"' + (isCode ? ' placeholder="ABCD-EFGH" style="text-transform:uppercase"' : '') + '>' +
+					'<p class="tpd-lms-muted">' + (isCode ? 'Your proctor enters this for you when you’re ready to begin.' : 'Your proctor gives you the password.') + '</p></div>';
+			}
+			action = access + '<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-darkblue" data-lms-quiz-start style="background:#00798c;border-color:#00798c;"><i class="fa-solid fa-play"></i> ' + (q.has_open ? 'Continue your attempt' : (q.attempts_used ? 'Try again' : (q.is_final ? 'Start the exam' : 'Start the quiz'))) + '</button>';
+		}
 		return '<div class="tpd-lms-quiz-intro"><ul class="tpd-lms-facts">' + facts.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' + best +
 			(q.time_limit ? '<p class="tpd-lms-muted">The timer keeps running if you leave the page. Answers are saved as you go.</p>' : '') +
-			'<div class="tpd-lms-p-actions">' + action + '</div></div>';
+			'<div class="tpd-lms-p-actions tpd-lms-p-actions-col">' + action + '</div></div>' +
+			(st.outline.enrolled && q.access_mode === 'code' && q.can_attempt ? renderProctorPanel(q) : '');
+	}
+
+	function renderProctorPanel(q) {
+		var r = q.proctor_request;
+		if (r && r.status === 'pending') {
+			return '<div class="tpd-lms-proctor"><h4 class="tpd-lms-p-h4">Your proctor request</h4>' +
+				'<p><span class="tpd-lms-badge is-draft">Waiting for approval</span> Proctor: <strong>' + esc(r.proctor) + '</strong>' + (r.preferred ? ' · ' + esc(r.preferred) : '') + '</p>' +
+				'<p class="tpd-lms-muted">We’ll email you when the course team decides. Once approved, your proctor gets the code by email.</p>' +
+				'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" data-lms-proctor-cancel="' + r.id + '">Cancel this request</button></div>';
+		}
+		if (r && r.status === 'approved' && r.code_status === 'active') {
+			return '<div class="tpd-lms-proctor"><h4 class="tpd-lms-p-h4">Your proctor</h4>' +
+				'<p><span class="tpd-lms-badge is-published">Approved</span> We emailed <strong>' + esc(r.proctor) + '</strong> your exam code. When you meet, open this exam and they’ll enter it.</p>' +
+				(r.note ? '<p class="tpd-lms-muted">Note from the course team: ' + esc(r.note) + '</p>' : '') + '</div>';
+		}
+		var intro = r && r.status === 'declined' ? '<p><span class="tpd-lms-badge is-error">Not approved</span> ' + esc(r.note) + '</p><p class="tpd-lms-muted">You can send a new request.</p>' :
+			'<p class="tpd-lms-muted">This exam needs a proctor: someone who watches you take it, such as a colleague at your host agency. Tell us who, and we’ll send them a one-time code once approved.</p>';
+		var tz = (Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions().timeZone) || 'UTC';
+		return '<form class="tpd-lms-proctor" data-lms-proctor-form><h4 class="tpd-lms-p-h4">Request a proctor</h4>' + intro +
+			'<div class="tpd-lms-proctor-grid">' +
+			'<label>Proctor’s name<input type="text" name="proctor_name" class="tpd-input" required maxlength="120"></label>' +
+			'<label>Proctor’s email<input type="email" name="proctor_email" class="tpd-input" required maxlength="190"></label>' +
+			'<label>Phone (optional)<input type="tel" name="proctor_phone" class="tpd-input" maxlength="40"></label>' +
+			'<label>How you know them<input type="text" name="proctor_relationship" class="tpd-input" maxlength="120" placeholder="e.g. Colleague at my host agency"></label>' +
+			'<label>Preferred date and time<input type="datetime-local" name="preferred_at" class="tpd-input"></label>' +
+			'<input type="hidden" name="timezone" value="' + esc(tz) + '">' +
+			'</div>' +
+			'<label class="tpd-lms-block">Anything else we should know? (optional)<textarea name="student_notes" class="tpd-input" rows="2" maxlength="1000"></textarea></label>' +
+			'<p class="tpd-lms-muted">Times are in your time zone (' + esc(tz) + ').</p>' +
+			'<button type="submit" class="tpd-btn tpd-btn-sm tpd-btn-darkblue"><i class="fa-solid fa-paper-plane"></i> Send request</button></form>';
 	}
 
 	function startQuiz() {
 		var $b = $player.find('[data-lms-quiz-start]').prop('disabled', true);
-		api('quiz_start', { lesson_id: st.lesson.id }).then(function (attempt) {
+		api('quiz_start', { lesson_id: st.lesson.id, access_code: $player.find('#tpd-lms-access-code').val() || '' }).then(function (attempt) {
 			st.attempt = attempt;
 			renderAttempt();
 		}, function (msg) { $b.prop('disabled', false); flash(msg, 'error'); });
@@ -372,6 +412,66 @@
 	}
 
 	/* ------------------------------------------------------------------ */
+	/* Coupons in TPD's checkout modal (course purchases only)             */
+	/* ------------------------------------------------------------------ */
+
+	// TPD's checkout script stays untouched: the code is added to its own requests here.
+	var coupon = { item: null, code: '' };
+
+	$.ajaxPrefilter(function (options) {
+		if (!coupon.code || typeof options.data !== 'string') return;
+		if (options.data.indexOf('action=tpd_get_checkout_preview') === -1 && options.data.indexOf('action=tpd_initiate_checkout') === -1) return;
+		if (options.data.indexOf('item_type=lms_course') === -1) return;
+		options.data += '&lms_coupon=' + encodeURIComponent(coupon.code);
+	});
+
+	$(document).ajaxSuccess(function (e, xhr, settings) {
+		if (typeof settings.data !== 'string' || settings.data.indexOf('action=tpd_get_checkout_preview') === -1) return;
+		var res = xhr.responseJSON;
+		var item = res && res.success && res.data && res.data.item;
+		$('#tpd-lms-coupon').remove();
+		if (!item || item.item_type !== 'lms_course') return;
+		if (coupon.item !== item.item_id) coupon = { item: item.item_id, code: '' };
+		var listed = item.extra && item.extra.list_price;
+		if (!(listed > 0)) return; // Free or included with the plan: nothing to discount.
+
+		var msg = item.coupon_ok ? '<span class="tpd-lms-coupon-ok"><i class="fa-solid fa-tag"></i> ' + esc(item.coupon_ok) + ' applied</span>' :
+			item.coupon_error ? '<span class="tpd-lms-coupon-err" role="alert">' + esc(item.coupon_error) + '</span>' : '';
+		var $row = $('<div id="tpd-lms-coupon" class="tpd-lms-coupon">' +
+			'<label for="tpd-lms-coupon-code">Coupon code</label>' +
+			'<div class="tpd-lms-coupon-row"><input type="text" id="tpd-lms-coupon-code" class="tpd-input" autocomplete="off" value="' + esc(coupon.code) + '" placeholder="Optional">' +
+			'<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline" data-lms-coupon-apply>' + (item.coupon_ok ? 'Change' : 'Apply') + '</button>' +
+			(coupon.code ? '<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline" data-lms-coupon-clear>Remove</button>' : '') + '</div>' + msg + '</div>');
+		var $gateways = $('#tpd-co-gateways-wrap');
+		if ($gateways.length) $row.insertBefore($gateways); else $row.insertBefore('#tpd-co-status-msg');
+		if (item.coupon_ok && item.list_amount) {
+			var sym = $('#tpd-co-item-price').data('symbol') || '$';
+			$('#tpd-co-item-price').prepend('<s class="tpd-lms-was">' + esc(sym + Number(item.list_amount).toFixed(2)) + '</s> ');
+		}
+		if (item.coupon_error) coupon.code = ''; // Don't send a bad code with the payment.
+	});
+
+	function reloadCheckout() {
+		if (typeof window.tpdOpenCheckoutModal === 'function') window.tpdOpenCheckoutModal('lms_course', coupon.item, 'once', $('input[name="tpd_co_gateway"]:checked').val() || '');
+	}
+
+	$(document)
+		.on('click', '[data-lms-coupon-apply]', function () {
+			coupon.code = $.trim($('#tpd-lms-coupon-code').val());
+			reloadCheckout();
+		})
+		.on('keydown', '#tpd-lms-coupon-code', function (e) {
+			if (e.key === 'Enter') { e.preventDefault(); $('[data-lms-coupon-apply]').trigger('click'); }
+		})
+		.on('click', '[data-lms-coupon-clear]', function () {
+			coupon.code = '';
+			reloadCheckout();
+		})
+		.on('click', '.tpd-open-checkout-btn', function () {
+			if (String($(this).data('item-id')) !== coupon.item) coupon = { item: null, code: '' };
+		});
+
+	/* ------------------------------------------------------------------ */
 	/* Events                                                              */
 	/* ------------------------------------------------------------------ */
 
@@ -400,6 +500,25 @@
 				}, function (msg) { $b.prop('disabled', false); flash(msg, 'error'); });
 			})
 			.on('click', '[data-lms-quiz-start]', startQuiz)
+			.on('keydown', '#tpd-lms-access-code', function (e) { if (e.key === 'Enter') { e.preventDefault(); startQuiz(); } })
+			.on('submit', '[data-lms-proctor-form]', function (e) {
+				e.preventDefault();
+				var $f = $(this), $b = $f.find('[type=submit]').prop('disabled', true);
+				var data = { lesson_id: st.lesson.id };
+				$f.find('[name]').each(function () { data[this.name] = $(this).val(); });
+				api('proctor_request', data).then(function (r) {
+					st.lesson.quiz = r.quiz;
+					renderLesson();
+					flash('Request sent. We’ll email you when it’s decided.');
+				}, function (msg) { $b.prop('disabled', false); flash(msg, 'error'); });
+			})
+			.on('click', '[data-lms-proctor-cancel]', function () {
+				if (!window.confirm('Cancel this proctor request?')) return;
+				api('proctor_cancel', { request_id: $(this).data('lms-proctor-cancel') }).then(function (r) {
+					st.lesson.quiz = r.quiz;
+					renderLesson();
+				}, function (msg) { flash(msg, 'error'); });
+			})
 			.on('change input', '[data-lms-attempt] [data-q]', autosave)
 			.on('submit', '[data-lms-attempt]', function (e) { e.preventDefault(); submitQuiz(false); });
 

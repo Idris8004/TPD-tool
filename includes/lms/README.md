@@ -29,6 +29,11 @@ wp tpd-lms disable   # switch off; data is kept
 | `class-tpd-lms-student.php` | Advisor side: hub data, lesson player actions (`tpd_lms_s_*`), checkout hooks, downloads, certificate page |
 | `assets/js/tpd-lms-student.js` | Lesson player inside Resources & Tools (advisor and supplier dashboards) |
 | `templates/lms/certificate.php` | Public certificate page at `/certificate-verify/{CODE}/` |
+| `class-tpd-lms-coupons.php` | Coupons: percent or fixed, per course or all, expiry, use limit |
+| `class-tpd-lms-exam.php` | Exam password or one-time codes, lockout, proctor requests, proctor page `/proctor/{token}/` |
+| `templates/lms/proctor.php` | The proctor's private page (no account needed) |
+| `class-tpd-lms-reports.php` | Students per course, one student's progress and codes, per-question quiz results |
+| `class-tpd-lms-mail.php` | Plain-text emails: enrolled (with receipt), certificate, proctoring; failures are logged, never fatal |
 
 When the module is off:
 - Super Admin → LMS Studio shows the existing bridge pane unchanged.
@@ -40,7 +45,13 @@ When it's on:
 - "Start course" opens the player in the dashboard.
 - `TPD_Tool_Financial` prices and fulfils `lms_course` items natively. Course access included in a membership plan costs 0, and paying again after access ends renews it.
 
-The name printed on certificates is set in LMS Studio (default "Travel Advisor Resource Center").
+The name printed on certificates is set in LMS Studio (default "Travel Advisor Resource Center"). So is the support email that gets proctor requests (default admin@thetarc.com).
+
+Coupons are typed in TPD's checkout modal. The LMS script adds the field and sends the code with TPD's own checkout requests (`lms_coupon`), so `tpd-dashboard.js` is unchanged. A use is counted once, on a confirmed payment.
+
+Exam passwords and one-time codes are stored encrypted (AES-256-GCM, keyed from the site's WordPress salts). Codes are also hashed for matching.
+
+If the WordPress salts change, saved passwords and unused codes can no longer be read. Set the password again and issue new codes.
 
 Known limitation: lesson files live in the WordPress media library. The download button streams them only to advisors who can open the lesson, but the media file URL itself is public if someone knows it.
 
