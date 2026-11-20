@@ -16,6 +16,7 @@ require_once __DIR__ . '/class-tpd-lms-schema.php';
 require_once __DIR__ . '/class-tpd-lms-store.php';
 require_once __DIR__ . '/class-tpd-lms-progress.php';
 require_once __DIR__ . '/class-tpd-lms-quiz.php';
+require_once __DIR__ . '/class-tpd-lms-importer.php';
 require_once __DIR__ . '/class-tpd-lms-admin.php';
 
 class TPD_LMS_Native {

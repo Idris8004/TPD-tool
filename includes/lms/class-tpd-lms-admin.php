@@ -27,7 +27,11 @@ class TPD_LMS_Admin {
 		'quiz_save',
 		'question_save',
 		'question_delete',
+		'question_import',
 	);
+
+	/** Largest question file accepted for import, in bytes. */
+	const IMPORT_MAX_BYTES = 5242880;
 
 	public static function init() {
 		foreach ( self::ACTIONS as $action ) {
@@ -394,6 +398,54 @@ class TPD_LMS_Admin {
 		}
 		TPD_LMS_Store::delete_question( $question->id );
 		return self::lesson_detail( TPD_LMS_Store::find( 'lessons', $quiz->lesson_id ) );
+	}
+
+	/**
+	 * Preview (default) or import questions from an uploaded file or pasted text.
+	 * Pass commit=1 to save; the same input is parsed again, so nothing is kept between calls.
+	 */
+	private static function action_question_import( $p ) {
+		$quiz = self::quiz_or_error( isset( $p['quiz_id'] ) ? $p['quiz_id'] : 0 );
+		if ( is_wp_error( $quiz ) ) {
+			return $quiz;
+		}
+
+		$file = isset( $_FILES['file'] ) ? $_FILES['file'] : null; // phpcs:ignore WordPress.Security.NonceVerification -- checked in dispatch().
+		if ( $file && ! empty( $file['tmp_name'] ) ) {
+			if ( ! empty( $file['error'] ) || ! is_uploaded_file( $file['tmp_name'] ) ) {
+				return new WP_Error( 'upload_failed', __( 'The file didn’t upload. Try again.', 'tpd-tool' ) );
+			}
+			if ( (int) $file['size'] > self::IMPORT_MAX_BYTES ) {
+				return new WP_Error( 'too_big', __( 'That file is larger than 5 MB. Split it into smaller files.', 'tpd-tool' ) );
+			}
+			$items = TPD_LMS_Importer::parse_file( $file['tmp_name'], sanitize_file_name( wp_unslash( $file['name'] ) ) );
+		} elseif ( isset( $p['text'] ) && '' !== trim( (string) $p['text'] ) ) {
+			try {
+				$items = TPD_LMS_Importer::parse_text( (string) $p['text'] );
+			} catch ( RuntimeException $e ) {
+				$items = new WP_Error( 'unreadable', $e->getMessage() );
+			}
+		} else {
+			return new WP_Error( 'no_input', __( 'Choose a file or paste your questions first.', 'tpd-tool' ) );
+		}
+		if ( is_wp_error( $items ) ) {
+			return $items;
+		}
+		if ( ! $items ) {
+			return new WP_Error( 'no_questions', __( 'No questions were found. Check the format against the template.', 'tpd-tool' ) );
+		}
+
+		$items = TPD_LMS_Importer::apply_default_topic( $items, isset( $p['default_topic'] ) ? $p['default_topic'] : '' );
+
+		if ( empty( $p['commit'] ) ) {
+			$items = TPD_LMS_Importer::mark_duplicates( $quiz->id, $items );
+			return array( 'preview' => $items );
+		}
+
+		list( $added, $skipped ) = TPD_LMS_Importer::import( $quiz->id, $items );
+		$out           = self::lesson_detail( TPD_LMS_Store::find( 'lessons', $quiz->lesson_id ) );
+		$out['import'] = array( 'added' => $added, 'skipped' => $skipped );
+		return $out;
 	}
 
 	/* ------------------------------------------------------------------ */

@@ -48,6 +48,20 @@
 			});
 	}
 
+	/** Same as api(), but sends multipart form data (for file uploads). */
+	function apiForm(action, formData) {
+		formData.append('action', 'tpd_lms_' + action);
+		formData.append('nonce', tpdLmsAdmin.nonce);
+		return $.ajax({ url: tpdLmsAdmin.ajaxUrl, type: 'POST', data: formData, processData: false, contentType: false, dataType: 'json' })
+			.then(function (res) {
+				if (res && res.success) return res.data;
+				return $.Deferred().reject(res && res.data && res.data.message ? res.data.message : 'Something went wrong. Try again.').promise();
+			}, function (xhr) {
+				var msg = xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message;
+				return $.Deferred().reject(msg || 'The server could not be reached. Check your connection and try again.').promise();
+			});
+	}
+
 	function notify(message, kind) {
 		$notice.removeClass('is-error is-ok').addClass(kind === 'error' ? 'is-error' : 'is-ok')
 			.text(message).prop('hidden', false);
@@ -455,9 +469,78 @@
 		}).join('');
 
 		return '<div class="tpd-sa-card"><div class="tpd-lms-bar"><h3 class="tpd-sa-card-title">Questions (' + qs.length + ')</h3>' +
-			'<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-darkblue" data-new-question><i class="fa-solid fa-plus"></i> Add question</button></div>' +
+			'<span class="tpd-lms-bar-actions"><button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline" data-open-import><i class="fa-solid fa-file-import"></i> Import questions</button> ' +
+			'<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-darkblue" data-new-question><i class="fa-solid fa-plus"></i> Add question</button></span></div>' +
+			'<div id="tpd-lms-import"></div>' +
 			(qs.length ? '<ol class="tpd-lms-questions">' + list + '</ol>' : '<div class="tpd-lms-empty"><i class="fa-solid fa-circle-question"></i><p>No questions yet. Advisors can’t start this until it has at least one.</p></div>') +
 			'<div id="tpd-lms-question-editor"></div></div>';
+	}
+
+	/* Question import ---------------------------------------------------- */
+
+	var importInput = null; // The file or text last previewed, sent again on import.
+
+	function renderImportPanel() {
+		importInput = null;
+		$('#tpd-lms-import').html(
+			'<form class="tpd-lms-form tpd-lms-import" data-form="import">' +
+			'<h4>Import questions</h4>' +
+			'<p class="tpd-lms-help">Upload an Excel (.xlsx), CSV, Word (.docx) or text file, or paste questions below. You’ll see a preview before anything is added. Questions already in this quiz are skipped.</p>' +
+			field('File', '<input type="file" name="file" class="tpd-input" accept=".xlsx,.csv,.docx,.txt">') +
+			field('Or paste questions', '<textarea name="text" rows="8" class="tpd-input" placeholder="Topic: Module 1&#10;1. Which body accredits travel agencies to sell airline tickets?&#10;A. IATA&#10;B. CLIA&#10;Answer: A&#10;&#10;2. A host agency supports independent advisors.&#10;Answer: True"></textarea>',
+				'Number each question. Letter the choices A, B, C. Put "Answer:" after the choices: a letter, several letters ("A, C"), True or False, or the accepted text for short answers (alternatives separated by "|"). "Topic:" applies to the questions below it.') +
+			field('Topic for questions without one', '<input type="text" name="default_topic" class="tpd-input" maxlength="120" placeholder="Optional, e.g. Module 3">') +
+			'<div class="tpd-lms-form-actions"><button type="submit" class="tpd-btn tpd-btn-sm tpd-btn-darkblue"><i class="fa-solid fa-eye"></i> Preview</button> ' +
+			'<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline" data-import-template><i class="fa-solid fa-download"></i> Download the spreadsheet template</button> ' +
+			'<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline" data-close-import>Cancel</button></div>' +
+			'</form><div id="tpd-lms-import-preview"></div>'
+		);
+	}
+
+	function importFormData(commit) {
+		var fd = new FormData();
+		fd.append('quiz_id', state.lesson.quiz.id);
+		if (importInput.file) fd.append('file', importInput.file);
+		else fd.append('text', importInput.text);
+		fd.append('default_topic', importInput.defaultTopic || '');
+		if (commit) fd.append('commit', '1');
+		return fd;
+	}
+
+	function renderImportPreview(items) {
+		var ready = items.filter(function (it) { return !it.errors.length && !it.duplicate; }).length;
+		var rows = items.map(function (it) {
+			var status = it.errors.length ? '<span class="tpd-lms-badge is-error">Won’t import</span><ul class="tpd-lms-errors">' + it.errors.map(function (e) { return '<li>' + esc(e) + '</li>'; }).join('') + '</ul>' :
+				it.duplicate ? '<span class="tpd-lms-badge is-draft">Already in quiz</span>' : '<span class="tpd-lms-badge is-published">Ready</span>';
+			var answers = it.type === 'short' ? esc((it.accepted_answers || '').split('\n').join(' · ')) :
+				it.options.map(function (o) { return (o.correct ? '<strong>✓ ' : '') + esc(o.text) + (o.correct ? '</strong>' : ''); }).join('<br>');
+			return '<tr><td class="tpd-lms-muted">' + esc(it.source) + '</td><td>' + esc(it.prompt) + '<div class="tpd-lms-muted">' + esc(QUESTION_TYPES[it.type] || it.type) + (it.topic ? ' · ' + esc(it.topic) : '') + ' · ' + it.points + (it.points === 1 ? ' point' : ' points') + '</div></td><td>' + answers + '</td><td>' + status + '</td></tr>';
+		}).join('');
+		$('#tpd-lms-import-preview').html(
+			'<div class="tpd-lms-bar"><strong>' + items.length + (items.length === 1 ? ' question found' : ' questions found') + ', ' + ready + ' ready to import</strong>' +
+			(ready ? '<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-darkblue" data-commit-import><i class="fa-solid fa-check"></i> Import ' + ready + (ready === 1 ? ' question' : ' questions') + '</button>' : '') + '</div>' +
+			'<div class="tpd-lms-table-wrap"><table class="tpd-lms-table"><thead><tr><th>Where</th><th>Question</th><th>Answers</th><th>Status</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
+		);
+	}
+
+	function downloadTemplate() {
+		var rows = [
+			['Topic', 'Type', 'Question', 'Option A', 'Option B', 'Option C', 'Option D', 'Option E', 'Correct', 'Points', 'Explanation'],
+			['Module 1', 'single', 'Which body accredits travel agencies to sell airline tickets worldwide?', 'IATA', 'CLIA', 'ASTA', 'UNWTO', '', 'A', '1', 'IATA accreditation lets agencies issue airline tickets.'],
+			['Module 4', 'multiple', 'Which of these belong in a client discovery call? Select all that apply.', 'Budget', 'Travel dates', "The advisor's commission rate", 'Who is travelling', '', 'A, B, D', '1', ''],
+			['Module 8', 'true_false', 'A host agency can provide booking tools and supplier relationships to independent advisors.', '', '', '', '', '', 'True', '1', ''],
+			['Module 12', 'short', 'What does the abbreviation FIT stand for in travel?', '', '', '', '', '', 'Flexible independent travel | Free independent traveller', '1', 'Both forms are in common use.']
+		];
+		var csv = rows.map(function (r) {
+			return r.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(',');
+		}).join('\r\n');
+		var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+		var a = document.createElement('a');
+		a.href = URL.createObjectURL(blob);
+		a.download = 'question-import-template.csv';
+		document.body.appendChild(a);
+		a.click();
+		setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
 	}
 
 	function renderQuestionForm(q) {
@@ -674,6 +757,34 @@
 				api('quiz_save', data).then(function (detail) {
 					state.lesson = detail;
 					notify('Settings saved.');
+					renderLesson();
+				}, function (msg) { busy($b, false); notify(msg, 'error'); });
+			})
+			.on('click', '[data-open-import]', function () { renderImportPanel(); $('#tpd-lms-import [name=file]').trigger('focus'); })
+			.on('click', '[data-close-import]', function () { importInput = null; $('#tpd-lms-import').empty(); })
+			.on('click', '[data-import-template]', downloadTemplate)
+			.on('submit', '[data-form=import]', function (e) {
+				e.preventDefault();
+				var $f = $(this), $b = $f.find('[type=submit]');
+				var file = $f.find('[name=file]')[0].files[0];
+				var text = $f.find('[name=text]').val();
+				if (!file && !$.trim(text)) { notify('Choose a file or paste your questions first.', 'error'); return; }
+				importInput = file ? { file: file } : { text: text };
+				importInput.defaultTopic = $f.find('[name=default_topic]').val();
+				busy($b, true);
+				apiForm('question_import', importFormData(false)).then(function (data) {
+					busy($b, false);
+					renderImportPreview(data.preview);
+				}, function (msg) { busy($b, false); $('#tpd-lms-import-preview').empty(); notify(msg, 'error'); });
+			})
+			.on('click', '[data-commit-import]', function () {
+				var $b = $(this);
+				if (!importInput) return;
+				busy($b, true);
+				apiForm('question_import', importFormData(true)).then(function (detail) {
+					state.lesson = detail;
+					var r = detail.import;
+					notify(r.added + (r.added === 1 ? ' question imported.' : ' questions imported.') + (r.skipped ? ' ' + r.skipped + ' skipped.' : ''));
 					renderLesson();
 				}, function (msg) { busy($b, false); notify(msg, 'error'); });
 			})
