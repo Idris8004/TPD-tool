@@ -174,7 +174,7 @@ class TPD_LMS_Store {
 		if ( array_key_exists( 'status', $data ) ) {
 			$row['status'] = 'published' === $data['status'] ? 'published' : 'draft';
 		}
-		foreach ( array( 'sequential', 'drip_enabled', 'certificate_enabled' ) as $flag ) {
+		foreach ( array( 'sequential', 'drip_enabled', 'certificate_enabled', 'exam_card' ) as $flag ) {
 			if ( array_key_exists( $flag, $data ) ) {
 				$row[ $flag ] = empty( $data[ $flag ] ) ? 0 : 1;
 			}

@@ -201,6 +201,7 @@ $all_total_count = count( $lms_catalog ) + count( $tpd_resources );
 			</div>
 		<?php endif; ?>
 
+<?php if ( $lms_native ) : include TPD_TOOL_DIR . 'templates/lms/exam-cards.php'; endif; ?>
 		<?php if ( ! empty( $my_unlocked_resources ) ) : ?>
 			<div class="tpd-card-box mb-4">
 				<h3 style="margin:0 0 14px; font-size:17px;"><i class="fa-solid fa-folder-open text-gold"></i> <?php esc_html_e( 'My Sales Toolkits, Guides & Partner Resources', 'tpd-tool' ); ?></h3>

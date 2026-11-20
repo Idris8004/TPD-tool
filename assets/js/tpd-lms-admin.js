@@ -396,6 +396,7 @@
 			checkbox('sequential', 'Lessons open in order', c.sequential, 'Advisors finish each lesson before the next one opens.') +
 			checkbox('drip_enabled', 'Release lessons over time', c.drip_enabled, 'Set “opens on day” on each lesson.') +
 			checkbox('certificate_enabled', 'Issue a certificate', c.certificate_enabled, 'Given at 100% progress, after the final exam is passed if there is one.') +
+			checkbox('exam_card', 'Show the final exam as a separate card', c.exam_card, 'Advisors see a locked exam card next to the course. It unlocks when they finish every lesson, or when you unlock it (button or unlock key) on their student page.') +
 			'</fieldset>' +
 			field('Status', '<select name="status" class="tpd-input"><option value="draft"' + (c.status === 'draft' ? ' selected' : '') + '>Draft (hidden from advisors)</option><option value="published"' + (c.status === 'published' ? ' selected' : '') + '>Published</option></select>') +
 			'<div class="tpd-lms-form-actions"><button type="submit" class="tpd-btn tpd-btn-sm tpd-btn-darkblue"><i class="fa-solid fa-floppy-disk"></i> Save course</button></div>' +
@@ -856,8 +857,34 @@
 			'<div class="tpd-lms-grid"><div class="tpd-sa-card"><h3 class="tpd-sa-card-title">' + esc(d.student.name) + '</h3>' +
 			'<p class="tpd-lms-muted">' + esc(d.student.email) + ' · enrolled ' + fmtDate(d.student.enrolled_at) + (d.student.expires_at ? ' · access until ' + fmtDate(d.student.expires_at) : '') + '</p>' +
 			'<p><strong>' + d.student.progress + '% complete</strong></p><ol class="tpd-lms-checklist">' + lessons + '</ol></div>' +
-			'<div>' + (exams || '<div class="tpd-sa-card"><p class="tpd-lms-muted">This course has no exams that need a password or code.</p></div>') + '</div></div>'
+			'<div>' + examCardAdmin(d) + (exams || (d.exam_card ? '' : '<div class="tpd-sa-card"><p class="tpd-lms-muted">This course has no exams that need a password or code.</p></div>')) + '</div></div>'
 		);
+	}
+
+	/** The separate exam card for this advisor: status, unlock now, relock, unlock key. */
+	function examCardAdmin(d) {
+		var x = d.exam_card;
+		if (!x) return '';
+		var status;
+		if (x.passed) status = '<span class="tpd-lms-badge is-published">Passed</span> best score ' + x.best_score + '%';
+		else if (!x.locked) status = '<span class="tpd-lms-badge is-published">Unlocked</span> ' + (x.unlocked_at ? 'by ' + esc(x.unlocked_by) + ' on ' + fmtDate(x.unlocked_at) : 'the course is finished');
+		else status = '<span class="tpd-lms-badge is-draft">Locked</span> ' + x.lessons_left + (x.lessons_left === 1 ? ' lesson' : ' lessons') + ' left';
+		var days = Object.keys(x.key_days).map(function (k) { return '<option value="' + k + '"' + (k === '7' ? ' selected' : '') + '>' + esc(x.key_days[k]) + '</option>'; }).join('');
+		return '<div class="tpd-sa-card"><h3 class="tpd-sa-card-title"><i class="fa-solid fa-graduation-cap"></i> ' + esc(x.title) + ' card</h3>' +
+			'<p>' + status + '</p>' +
+			(x.attempts_used ? '<p class="tpd-lms-muted">' + x.attempts_used + (x.max_attempts ? ' of ' + x.max_attempts : '') + ' attempts used</p>' : '') +
+			(d.unlock_key ? '<div class="tpd-lms-newcode" role="status"><p class="tpd-lms-help">New unlock key' + (d.emailed ? ', emailed to the advisor' : '') + '. It is shown only now, works once and only for this advisor:</p><div class="tpd-lms-code">' + esc(d.unlock_key) + '</div></div>' : '') +
+			(x.has_key && !d.unlock_key ? '<p class="tpd-lms-muted">An unused unlock key is valid until ' + fmtDate(x.key_expires) + '. Making a new one replaces it.</p>' : '') +
+			'<div class="tpd-lms-form-actions">' +
+			(x.locked ? '<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-darkblue" data-exam-admin="unlock"><i class="fa-solid fa-lock-open"></i> Unlock exam now</button>' : '') +
+			(x.unlocked_at && !x.passed ? '<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline" data-exam-admin="relock"><i class="fa-solid fa-lock"></i> Lock it again</button>' : '') +
+			'</div>' +
+			(x.locked ? '<form class="tpd-lms-form" data-form="exam-key"><h4>Or send an unlock key</h4><div class="tpd-form-grid-2">' +
+				field('Valid for', '<select name="days" class="tpd-input">' + days + '</select>') +
+				'<div class="tpd-form-group tpd-lms-field"><label>&nbsp;</label>' + checkbox('email', 'Email it to the advisor', true) + '</div></div>' +
+				'<div class="tpd-lms-form-actions"><button type="submit" class="tpd-btn tpd-btn-sm tpd-btn-outline"><i class="fa-solid fa-key"></i> Make unlock key</button></div>' +
+				'<p class="tpd-lms-help">The advisor types the key on the locked exam card. Unlocking emails the advisor.</p></form>' : '') +
+			'</div>';
 	}
 
 	function showQuizReport() {
@@ -1164,6 +1191,24 @@
 				busy($b, true);
 				api('code_create', data).then(function (d) { renderStudent(d, { code: d.code, emailed: d.emailed }); window.scrollTo({ top: $root.offset().top - 100, behavior: 'smooth' }); },
 					function (msg) { busy($b, false); notify(msg, 'error'); });
+			})
+			.on('click', '[data-exam-admin]', function () {
+				var what = $(this).data('exam-admin');
+				if (what === 'unlock' && !window.confirm('Unlock the exam for this advisor now? They will be emailed.')) return;
+				if (what === 'relock' && !window.confirm('Lock the exam again? It unlocks when they finish the course.')) return;
+				api(what === 'unlock' ? 'exam_unlock' : 'exam_relock', { enrollment_id: state.student.enrollment_id }).then(function (d) {
+					notify(what === 'unlock' ? 'Exam unlocked. The advisor has been emailed.' : 'Exam locked again.');
+					renderStudent(d);
+				}, function (msg) { notify(msg, 'error'); });
+			})
+			.on('submit', '[data-form=exam-key]', function (e) {
+				e.preventDefault();
+				var $f = $(this), $b = $f.find('[type=submit]');
+				busy($b, true);
+				api('exam_key', { enrollment_id: state.student.enrollment_id, days: $f.find('[name=days]').val(), email: $f.find('[name=email]').is(':checked') ? 1 : 0 }).then(function (d) {
+					renderStudent(d);
+					window.scrollTo({ top: $root.offset().top - 100, behavior: 'smooth' });
+				}, function (msg) { busy($b, false); notify(msg, 'error'); });
 			})
 			.on('click', '[data-revoke-code]', function () {
 				if (!window.confirm('Cancel this code? It will stop working right away.')) return;
