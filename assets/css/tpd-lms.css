@@ -100,6 +100,12 @@
 .tpd-lms-option-row .tpd-input { flex: 1; }
 .tpd-lms-correct { display: inline-flex; align-items: center; }
 
+/* Editor toolbar: WordPress's icon set has no subscript/superscript icons. */
+.tpd-lms-studio .mce-i-subscript::before, .tpd-lms-studio .mce-i-superscript::before { font-family: Georgia, serif; font-size: 15px; font-weight: 700; line-height: 20px; }
+.tpd-lms-studio .mce-i-subscript::before { content: "x\2082"; }
+.tpd-lms-studio .mce-i-superscript::before { content: "x\00B2"; }
+.tpd-lms-studio .mce-toolbar .mce-btn-group { padding-right: 4px; }
+
 /* Studio: students, reports, proctoring */
 .tpd-lms-mini-bar { display: inline-block; vertical-align: middle; width: 70px; height: 6px; background: var(--lms-line); border-radius: 999px; overflow: hidden; }
 .tpd-lms-mini-bar span { display: block; height: 100%; background: var(--lms-teal); }
@@ -178,6 +184,14 @@
 .tpd-lms-content { font-size: 15px; line-height: 1.7; color: #1e293b; }
 .tpd-lms-content img, .tpd-lms-content iframe { max-width: 100%; height: auto; }
 .tpd-lms-content h2, .tpd-lms-content h3 { color: var(--lms-navy); line-height: 1.3; }
+.tpd-lms-content table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 14px; display: block; overflow-x: auto; }
+.tpd-lms-content th, .tpd-lms-content td { border: 1px solid var(--lms-line); padding: 8px 10px; text-align: left; vertical-align: top; }
+.tpd-lms-content th { background: var(--lms-soft); font-weight: 700; }
+.tpd-lms-content blockquote { border-left: 4px solid var(--lms-teal); background: var(--lms-soft); margin: 14px 0; padding: 10px 16px; border-radius: 0 8px 8px 0; }
+.tpd-lms-content hr { border: 0; border-top: 1px solid var(--lms-line); margin: 20px 0; }
+.tpd-lms-content sub, .tpd-lms-content sup { font-size: 75%; line-height: 0; }
+/* Fonts, sizes and colours chosen in the editor are inline styles, so they show as written. */
+.tpd-lms-player .tpd-lms-q-prompt span, .tpd-lms-content span { line-height: inherit; }
 .tpd-lms-video { position: relative; aspect-ratio: 16 / 9; background: #000; border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
 .tpd-lms-video iframe, .tpd-lms-video video { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .tpd-lms-file { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; border: 1px solid var(--lms-line); background: var(--lms-soft); border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; }

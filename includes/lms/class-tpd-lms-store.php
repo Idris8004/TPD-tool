@@ -3,7 +3,7 @@
  * Native LMS data access: courses, chapters, lessons, quizzes, questions.
  *
  * Every query goes through $wpdb->prepare(). Rich text (descriptions, lesson
- * content, question prompts and explanations) is cleaned with wp_kses_post()
+ * content, question prompts and explanations) is cleaned with self::clean_html()
  * when it is saved; templates must still escape on output.
  */
 
@@ -19,6 +19,23 @@ class TPD_LMS_Store {
 	/* ------------------------------------------------------------------ */
 	/* Generic helpers                                                     */
 	/* ------------------------------------------------------------------ */
+
+	/** CSS properties that could move content out of the lesson box. */
+	const BLOCKED_CSS = array( 'position', 'top', 'right', 'bottom', 'left', 'z-index', 'inset' );
+
+	/**
+	 * Clean editor HTML: WordPress's post allow-list (keeps fonts, sizes, colours,
+	 * highlight, alignment, sub/superscript), minus positioning styles.
+	 */
+	public static function clean_html( $html ) {
+		$block = function ( $props ) {
+			return array_values( array_diff( (array) $props, TPD_LMS_Store::BLOCKED_CSS ) );
+		};
+		add_filter( 'safe_style_css', $block, 99 );
+		$clean = wp_kses_post( (string) $html );
+		remove_filter( 'safe_style_css', $block, 99 );
+		return $clean;
+	}
 
 	public static function find( $short, $id ) {
 		global $wpdb;
@@ -140,7 +157,7 @@ class TPD_LMS_Store {
 			}
 		}
 		if ( array_key_exists( 'description', $data ) ) {
-			$row['description'] = wp_kses_post( (string) $data['description'] );
+			$row['description'] = self::clean_html( (string) $data['description'] );
 		}
 		if ( array_key_exists( 'thumbnail_url', $data ) ) {
 			$row['thumbnail_url'] = esc_url_raw( (string) $data['thumbnail_url'] );
@@ -353,7 +370,7 @@ class TPD_LMS_Store {
 			$row['type'] = in_array( $type, self::LESSON_TYPES, true ) ? $type : 'text';
 		}
 		if ( array_key_exists( 'content', $data ) ) {
-			$row['content'] = wp_kses_post( (string) $data['content'] );
+			$row['content'] = self::clean_html( (string) $data['content'] );
 		}
 		if ( array_key_exists( 'video_url', $data ) ) {
 			$row['video_url'] = esc_url_raw( (string) $data['video_url'] );
@@ -459,7 +476,7 @@ class TPD_LMS_Store {
 		global $wpdb;
 		$type   = isset( $data['type'] ) ? sanitize_key( $data['type'] ) : 'single';
 		$type   = in_array( $type, self::QUESTION_TYPES, true ) ? $type : 'single';
-		$prompt = wp_kses_post( isset( $data['prompt'] ) ? (string) $data['prompt'] : '' );
+		$prompt = self::clean_html( isset( $data['prompt'] ) ? (string) $data['prompt'] : '' );
 		$error  = self::validate_question( $type, $prompt, $data, $options );
 		if ( $error ) {
 			return $error;
@@ -471,7 +488,7 @@ class TPD_LMS_Store {
 			'topic'            => isset( $data['topic'] ) && '' !== trim( (string) $data['topic'] ) ? self::normalize_topic( $data['topic'] ) : null,
 			'type'             => $type,
 			'prompt'           => $prompt,
-			'explanation'      => isset( $data['explanation'] ) ? wp_kses_post( (string) $data['explanation'] ) : null,
+			'explanation'      => isset( $data['explanation'] ) ? self::clean_html( (string) $data['explanation'] ) : null,
 			'accepted_answers' => isset( $data['accepted_answers'] ) ? sanitize_textarea_field( (string) $data['accepted_answers'] ) : null,
 			'points'           => isset( $data['points'] ) ? max( 1, absint( $data['points'] ) ) : 1,
 			'position'         => $position,
@@ -507,7 +524,7 @@ class TPD_LMS_Store {
 		}
 		$type   = isset( $data['type'] ) ? sanitize_key( $data['type'] ) : $question->type;
 		$type   = in_array( $type, self::QUESTION_TYPES, true ) ? $type : 'single';
-		$prompt = wp_kses_post( isset( $data['prompt'] ) ? (string) $data['prompt'] : $question->prompt );
+		$prompt = self::clean_html( isset( $data['prompt'] ) ? (string) $data['prompt'] : $question->prompt );
 		$error  = self::validate_question( $type, $prompt, $data, $options );
 		if ( $error ) {
 			return $error;
@@ -517,7 +534,7 @@ class TPD_LMS_Store {
 			'topic'            => isset( $data['topic'] ) && '' !== trim( (string) $data['topic'] ) ? self::normalize_topic( $data['topic'] ) : null,
 			'type'             => $type,
 			'prompt'           => $prompt,
-			'explanation'      => isset( $data['explanation'] ) ? wp_kses_post( (string) $data['explanation'] ) : null,
+			'explanation'      => isset( $data['explanation'] ) ? self::clean_html( (string) $data['explanation'] ) : null,
 			'accepted_answers' => 'short' === $type && isset( $data['accepted_answers'] ) ? sanitize_textarea_field( (string) $data['accepted_answers'] ) : null,
 			'points'           => isset( $data['points'] ) ? max( 1, min( 100, absint( $data['points'] ) ) ) : (int) $question->points,
 		) );
