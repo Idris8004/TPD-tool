@@ -156,6 +156,10 @@ class TPD_Tool_Financial {
 		}
 
 		if ( 'lms_course' === $item_type ) {
+			// Native LMS (includes/lms): courses live in TPD, not the external platform.
+			if ( class_exists( 'TPD_LMS_Native' ) && TPD_LMS_Native::is_enabled() ) {
+				return TPD_LMS_Student::resolve_checkout_item( $user_id, $item_id, $currency );
+			}
 			if ( ! class_exists( 'TPD_Tool_LMS' ) ) {
 				return new WP_Error( 'lms_unavailable', __( 'LMS integration module is not loaded.', 'tpd-tool' ) );
 			}
@@ -269,6 +273,29 @@ class TPD_Tool_Financial {
 				$plan['name']
 			);
 			$result['reload'] = true;
+
+		} elseif ( 'lms_course' === $tx->item_type && class_exists( 'TPD_LMS_Native' ) && TPD_LMS_Native::is_enabled() ) {
+			// Native LMS: enroll directly. A failure is recorded for retry, never hidden.
+			$enroll_res = TPD_LMS_Student::fulfill( $tx );
+			if ( empty( $enroll_res['ok'] ) ) {
+				$meta['lms_enroll_error'] = $enroll_res['error'];
+				$wpdb->update( self::table_name(), array( 'meta_json' => wp_json_encode( $meta ) ), array( 'id' => (int) $tx->id ), array( '%s' ), array( '%d' ) );
+				return array(
+					'ok'    => false,
+					'error' => sprintf(
+						/* translators: 1: transaction reference, 2: error text */
+						__( 'Payment succeeded (%1$s), but enrollment failed: %2$s', 'tpd-tool' ),
+						$tx->tx_ref,
+						$enroll_res['error']
+					),
+				);
+			}
+			$result['message'] = sprintf(
+				/* translators: %s: course title */
+				__( 'You are now enrolled in "%s"! It is ready in My Resources.', 'tpd-tool' ),
+				$tx->item_title
+			);
+			$result['refresh_resources'] = true;
 
 		} elseif ( 'lms_course' === $tx->item_type ) {
 			if ( class_exists( 'TPD_Tool_LMS' ) ) {

@@ -2174,6 +2174,7 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 			     PANE 14: LMS STUDIO & RESOURCES INTEGRATION HUB
 			     ========================================================================= -->
 			<div id="sa-lms-studio" class="tpd-sa-pane">
+<?php if ( class_exists( 'TPD_LMS_Native' ) && TPD_LMS_Native::is_enabled() ) : include TPD_TOOL_DIR . 'templates/lms/admin/studio.php'; else : ?>
 				<div class="tpd-sa-card" style="padding:16px 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
 					<div style="display:flex; gap:8px; flex-wrap:wrap;">
 						<button type="button" class="tpd-btn tpd-btn-sm tpd-sa-lms-subtab active" data-lmstab="studio" style="background:#164e87; color:#ffffff; border-color:#164e87;">
@@ -2570,6 +2571,7 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 						<pre style="background:#0f172a; color:#e2e8f0; padding:16px 18px; border-radius:10px; font-size:12.5px; line-height:1.65; overflow-x:auto; margin:0;"><?php echo esc_html( $env_block ); ?></pre>
 					</div>
 				</div>
+<?php endif; ?>
 			</div>
 
 		</div>
