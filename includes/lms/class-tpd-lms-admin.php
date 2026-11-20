@@ -44,6 +44,9 @@ class TPD_LMS_Admin {
 		'proctor_approve',
 		'proctor_decline',
 		'proctor_resend',
+		'media_upload',
+		'assignments',
+		'assignment_review',
 	);
 
 	/** Largest question file accepted for import, in bytes. */
@@ -378,6 +381,77 @@ class TPD_LMS_Admin {
 	/* Coupons                                                             */
 	/* ------------------------------------------------------------------ */
 
+	/**
+	 * Upload one file to the media library (used for narration recorded in the
+	 * browser). Audio only, size-limited, through WordPress's own upload checks.
+	 */
+	private static function action_media_upload() {
+		if ( empty( $_FILES['file'] ) || ! current_user_can( 'upload_files' ) ) { // phpcs:ignore WordPress.Security.NonceVerification -- checked in dispatch().
+			return new WP_Error( 'no_file', __( 'No recording was received. Try again.', 'tpd-tool' ) );
+		}
+		$file = $_FILES['file']; // phpcs:ignore WordPress.Security.NonceVerification
+		if ( (int) $file['size'] > 50 * MB_IN_BYTES ) {
+			return new WP_Error( 'too_big', __( 'That recording is larger than 50 MB. Record shorter parts.', 'tpd-tool' ) );
+		}
+		if ( 0 !== strpos( (string) $file['type'], 'audio/' ) && 0 !== strpos( (string) $file['type'], 'video/webm' ) ) {
+			return new WP_Error( 'bad_type', __( 'Only audio recordings can be uploaded here.', 'tpd-tool' ) );
+		}
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		$id = media_handle_upload( 'file', 0, array( 'post_title' => sanitize_text_field( isset( $_POST['title'] ) ? wp_unslash( $_POST['title'] ) : __( 'Slide narration', 'tpd-tool' ) ) ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		if ( is_wp_error( $id ) ) {
+			return $id;
+		}
+		return array( 'id' => (int) $id, 'name' => basename( (string) get_attached_file( $id ) ), 'url' => (string) wp_get_attachment_url( $id ) );
+	}
+
+	/** Assignment submissions for a course (review queue). */
+	private static function action_assignments( $p ) {
+		$course = self::course_or_error( isset( $p['course_id'] ) ? $p['course_id'] : 0 );
+		if ( is_wp_error( $course ) ) {
+			return $course;
+		}
+		$status = isset( $p['status'] ) && in_array( $p['status'], TPD_LMS_Assign::STATUSES, true ) ? $p['status'] : 'pending';
+		$out    = array();
+		foreach ( TPD_LMS_Assign::for_course( $course->id, $status ) as $s ) {
+			$user   = get_userdata( (int) $s->user_id );
+			$lesson = TPD_LMS_Store::find( 'lessons', $s->lesson_id );
+			$out[]  = array(
+				'id'          => (int) $s->id,
+				'learner'     => $user ? $user->display_name . ' <' . $user->user_email . '>' : '?',
+				'lesson'      => $lesson ? $lesson->title : '?',
+				'text'        => TPD_LMS_Store::clean_html( (string) $s->answer_text ),
+				'file_name'   => (string) $s->file_name,
+				'file_size'   => $s->file_size ? size_format( (int) $s->file_size ) : '',
+				'file_url'    => $s->file_path ? TPD_LMS_Assign::file_url( $s ) : null,
+				'feedback'    => (string) $s->feedback,
+				'status'      => $s->status,
+				'created_at'  => $s->created_at,
+				'reviewed_at' => $s->reviewed_at,
+			);
+		}
+		$counts = array();
+		foreach ( TPD_LMS_Assign::STATUSES as $st ) {
+			$counts[ $st ] = count( TPD_LMS_Assign::for_course( $course->id, $st ) );
+		}
+		return array( 'course' => self::course_summary( $course ), 'status' => $status, 'counts' => $counts, 'submissions' => $out );
+	}
+
+	private static function action_assignment_review( $p ) {
+		$sub    = TPD_LMS_Store::find( 'assignment_submissions', isset( $p['submission_id'] ) ? $p['submission_id'] : 0 );
+		$lesson = $sub ? TPD_LMS_Store::find( 'lessons', $sub->lesson_id ) : null;
+		if ( ! $sub || ! $lesson ) {
+			return new WP_Error( 'submission_missing', __( 'That submission no longer exists. Reload the page.', 'tpd-tool' ) );
+		}
+		$course = self::course_or_error( $lesson->course_id );
+		if ( is_wp_error( $course ) ) {
+			return $course;
+		}
+		$res = TPD_LMS_Assign::review( $sub, isset( $p['decision'] ) ? (string) $p['decision'] : '', isset( $p['feedback'] ) ? (string) $p['feedback'] : '' );
+		return is_wp_error( $res ) ? $res : self::action_assignments( array( 'course_id' => $course->id, 'status' => 'pending' ) );
+	}
+
 	private static function action_coupon_list() {
 		$courses = array();
 		foreach ( TPD_LMS_Store::list_courses( 'all' ) as $c ) {
@@ -575,6 +649,12 @@ class TPD_LMS_Admin {
 		}
 		if ( array_key_exists( 'is_preview', $p ) ) {
 			$fields['is_preview'] = '1' === (string) $p['is_preview'] ? 1 : 0;
+		}
+		if ( isset( $p['settings'] ) ) {
+			$settings = json_decode( (string) $p['settings'], true );
+			if ( is_array( $settings ) ) {
+				$fields['settings'] = $settings; // Cleaned per lesson type by the store.
+			}
 		}
 		if ( ! empty( $fields['attachment_id'] ) && ! get_post( absint( $fields['attachment_id'] ) ) ) {
 			return new WP_Error( 'file_missing', __( 'That file is no longer in the media library. Choose it again.', 'tpd-tool' ) );
@@ -775,7 +855,7 @@ class TPD_LMS_Admin {
 	private static function course_tree( $course ) {
 		$lessons_by_chapter = array();
 		foreach ( TPD_LMS_Store::lessons_for_course( $course->id ) as $l ) {
-			$quiz                                         = in_array( $l->type, array( 'quiz', 'exam' ), true ) ? TPD_LMS_Store::quiz_for_lesson( $l->id ) : null;
+			$quiz                                         = in_array( $l->type, TPD_LMS_Store::QUIZ_TYPES, true ) ? TPD_LMS_Store::quiz_for_lesson( $l->id ) : null;
 			$lessons_by_chapter[ (int) $l->chapter_id ][] = array(
 				'id'             => (int) $l->id,
 				'title'          => $l->title,
@@ -803,9 +883,43 @@ class TPD_LMS_Admin {
 				'access_days'         => null === $course->access_days ? null : (int) $course->access_days,
 				'tier_included'       => $course->tier_included,
 				'has_final_exam'      => (bool) TPD_LMS_Store::final_exam_for_course( $course->id ),
+				'pending_assignments' => TPD_LMS_Assign::pending_count( $course->id ),
 			) ),
 			'chapters' => $chapters,
 		);
+	}
+
+	/** Lesson settings plus the names/URLs the editor shows (files, slide audio, local start time). */
+	private static function settings_for_editor( $lesson ) {
+		$s    = TPD_LMS_Store::lesson_settings( $lesson );
+		$file = function ( $id ) {
+			return array(
+				'id'   => (int) $id,
+				'name' => basename( (string) get_attached_file( (int) $id ) ),
+				'url'  => (string) wp_get_attachment_url( (int) $id ),
+			);
+		};
+		if ( 'download' === $lesson->type ) {
+			$ids = $s['files'];
+			if ( $lesson->attachment_id && ! in_array( (int) $lesson->attachment_id, $ids, true ) ) {
+				array_unshift( $ids, (int) $lesson->attachment_id );
+			}
+			$s['files'] = array_map( $file, $ids );
+		}
+		if ( 'presentation' === $lesson->type ) {
+			foreach ( $s['slides'] as $i => $slide ) {
+				$s['slides'][ $i ]['audio'] = $slide['audio_id'] ? $file( $slide['audio_id'] ) : null;
+			}
+		}
+		if ( 'live' === $lesson->type ) {
+			$s['starts_local'] = '';
+			if ( $s['starts_at'] ) {
+				$dt = new DateTime( $s['starts_at'], new DateTimeZone( 'UTC' ) );
+				$dt->setTimezone( new DateTimeZone( $s['timezone'] ) );
+				$s['starts_local'] = $dt->format( 'Y-m-d\TH:i' );
+			}
+		}
+		return $s;
 	}
 
 	private static function lesson_detail( $lesson ) {
@@ -823,10 +937,17 @@ class TPD_LMS_Admin {
 				'duration_minutes' => null === $lesson->duration_minutes ? null : (int) $lesson->duration_minutes,
 				'is_preview'       => (bool) $lesson->is_preview,
 				'drip_days'        => null === $lesson->drip_days ? null : (int) $lesson->drip_days,
+				'attachment_url'   => $lesson->attachment_id ? (string) wp_get_attachment_url( (int) $lesson->attachment_id ) : '',
+				'settings'         => self::settings_for_editor( $lesson ),
 			),
 			'quiz'      => null,
 			'questions' => array(),
 		);
+		if ( 'assignment' === $lesson->type ) {
+			$out['pending_submissions'] = count( array_filter( TPD_LMS_Assign::for_course( $lesson->course_id, 'pending' ), function ( $s ) use ( $lesson ) {
+				return (int) $s->lesson_id === (int) $lesson->id;
+			} ) );
+		}
 		$quiz = TPD_LMS_Store::quiz_for_lesson( $lesson->id );
 		if ( $quiz ) {
 			$out['quiz'] = array(

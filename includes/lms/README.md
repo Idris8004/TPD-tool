@@ -33,6 +33,7 @@ wp tpd-lms disable   # switch off; data is kept
 | `class-tpd-lms-exam.php` | Exam password or one-time codes, lockout, proctor requests, proctor page `/proctor/{token}/` |
 | `templates/lms/proctor.php` | The proctor's private page (no account needed) |
 | `class-tpd-lms-reports.php` | Students per course, one student's progress and codes, per-question quiz results |
+| `class-tpd-lms-assign.php` | Assignment hand-ins: private file storage (uploads/tpd-lms-private, web access denied), review, emails |
 | `class-tpd-lms-mail.php` | Plain-text emails: enrolled (with receipt), certificate, proctoring; failures are logged, never fatal |
 
 When the module is off:
@@ -81,3 +82,18 @@ Run them against a **local** WordPress with TPD active. Tests create and delete 
 ```bash
 TPD_WP_LOAD=/path/to/wordpress/wp-load.php php phpunit.phar -c tests/lms/phpunit.xml
 ```
+
+## Lesson types
+
+The types match Thinkific's: video, text, PDF, quiz, audio, download, multimedia, survey, presentation, assignment, exam and live (Zoom). Type-specific options live in `lessons.settings` (JSON, cleaned per type by `TPD_LMS_Store::sanitize_settings()`).
+
+| Type | How it works |
+|---|---|
+| PDF | Pages drawn in the lesson with PDF.js (loaded from cdnjs only when needed). The file is streamed through a lock-checked endpoint (`tpd_lms_file`). The download button is optional. |
+| Presentation | Thinkific's model: upload a PDF (PowerPoint and Keynote export to PDF), one slide per page. Each slide can have narration (uploaded, or recorded in the browser) and text under it. Options: view every slide before completing, auto-advance when a slide's narration ends, download. |
+| Audio | A media-library file or an https link, with a transcript. |
+| Download | Several files per lesson. Only files that belong to the lesson can be downloaded. |
+| Multimedia | An https embed (Typeform, Canva, H5P, Google Slides…), with a set height. |
+| Live (Zoom) | Join link, a start time stored in UTC and shown in each advisor's time zone, a join button from 15 minutes before the start, and a recording link afterwards. It doesn't create Zoom meetings automatically. |
+| Survey | A quiz with a pass mark of 0 and no right answers. One response, which completes the lesson. Results show per question. |
+| Assignment | A file and/or written answer. Completes on staff approval (or on hand-in if approval is off). Returned work can be sent again. |

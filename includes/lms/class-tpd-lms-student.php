@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class TPD_LMS_Student {
 
-	const ACTIONS = array( 'outline', 'lesson', 'complete', 'quiz_start', 'quiz_save', 'quiz_submit', 'proctor_request', 'proctor_cancel' );
+	const ACTIONS = array( 'outline', 'lesson', 'complete', 'quiz_start', 'quiz_save', 'quiz_submit', 'proctor_request', 'proctor_cancel', 'assignment_submit' );
 
 	/** Public certificate page: /certificate-verify/ and /certificate-verify/{CODE}/ */
 	const CERT_PATH = 'certificate-verify';
@@ -24,6 +24,7 @@ class TPD_LMS_Student {
 			add_action( 'wp_ajax_tpd_lms_s_' . $action, array( __CLASS__, 'dispatch' ) );
 		}
 		add_action( 'wp_ajax_tpd_lms_download', array( __CLASS__, 'download' ) );
+		add_action( 'wp_ajax_tpd_lms_file', array( __CLASS__, 'serve_lesson_file' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue' ), 20 );
 		add_filter( 'template_include', array( __CLASS__, 'certificate_template' ), 1000 );
 	}
@@ -345,11 +346,98 @@ class TPD_LMS_Student {
 			'content'  => TPD_LMS_Store::clean_html( (string) $lesson->content ),
 			'minutes'  => null === $lesson->duration_minutes ? null : (int) $lesson->duration_minutes,
 			'done'     => in_array( (int) $lesson->id, TPD_LMS_Progress::completed_lesson_ids( $enrollment ), true ),
-			'can_mark' => (bool) $enrollment && ! in_array( $lesson->type, array( 'quiz', 'exam' ), true ),
+			'can_mark' => (bool) $enrollment && in_array( $lesson->type, TPD_LMS_Store::MARKABLE_TYPES, true ),
 			'video'    => null,
 			'file'     => null,
+			'files'    => array(),
 			'quiz'     => null,
 		);
+		$settings = TPD_LMS_Store::lesson_settings( $lesson );
+
+		switch ( $lesson->type ) {
+			case 'pdf':
+				if ( $lesson->attachment_id ) {
+					$out['pdf'] = array(
+						'url'            => self::file_url( $lesson->id, 'pdf' ),
+						'name'           => basename( (string) get_attached_file( (int) $lesson->attachment_id ) ),
+						'allow_download' => $settings['allow_download'],
+					);
+				}
+				break;
+			case 'audio':
+				$src = $lesson->attachment_id ? wp_get_attachment_url( (int) $lesson->attachment_id ) : $settings['audio_url'];
+				$out['audio'] = $src ? array( 'src' => $src ) : null;
+				break;
+			case 'multimedia':
+				$out['embed'] = '' !== $settings['embed_url'] ? array( 'src' => $settings['embed_url'], 'height' => $settings['height'] ) : null;
+				break;
+			case 'presentation':
+				$slides = array();
+				foreach ( $settings['slides'] as $i => $slide ) {
+					$slides[] = array(
+						'audio' => $slide['audio_id'] ? wp_get_attachment_url( $slide['audio_id'] ) : null,
+						'text'  => $slide['text'],
+					);
+				}
+				$out['presentation'] = $lesson->attachment_id ? array(
+					'pdf'                => self::file_url( $lesson->id, 'pdf' ),
+					'slides'             => $slides,
+					'require_all_slides' => $settings['require_all_slides'],
+					'auto_advance'       => $settings['auto_advance'],
+					'allow_download'     => $settings['allow_download'],
+				) : null;
+				break;
+			case 'live':
+				$start = $settings['starts_at'] ? strtotime( $settings['starts_at'] . ' UTC' ) : 0;
+				$mins  = $lesson->duration_minutes ? (int) $lesson->duration_minutes : 60;
+				$out['live'] = array(
+					'join_url'      => $settings['join_url'],
+					'starts_at'     => $start ? gmdate( 'c', $start ) : null,
+					'ends_at'       => $start ? gmdate( 'c', $start + 60 * $mins ) : null,
+					'host_timezone' => $settings['timezone'],
+					'recording_url' => $settings['recording_url'],
+					'now'           => gmdate( 'c' ),
+				);
+				break;
+			case 'assignment':
+				$sub = $enrollment ? TPD_LMS_Assign::latest( $lesson->id, $enrollment->id ) : null;
+				$out['assignment'] = array(
+					'submission'       => $settings['submission'],
+					'require_approval' => $settings['require_approval'],
+					'max_mb'           => $settings['max_mb'],
+					'extensions'       => TPD_LMS_Store::ASSIGNMENT_EXTENSIONS,
+					'latest'           => $sub ? array(
+						'status'     => $sub->status,
+						'feedback'   => (string) $sub->feedback,
+						'file_name'  => (string) $sub->file_name,
+						'file_url'   => $sub->file_path ? TPD_LMS_Assign::file_url( $sub ) : null,
+						'text'       => TPD_LMS_Store::clean_html( (string) $sub->answer_text ),
+						'created_at' => $sub->created_at,
+					) : null,
+				);
+				break;
+			case 'download':
+				$ids = $settings['files'];
+				if ( $lesson->attachment_id && ! in_array( (int) $lesson->attachment_id, $ids, true ) ) {
+					array_unshift( $ids, (int) $lesson->attachment_id ); // Lessons made before multi-file downloads.
+				}
+				foreach ( $ids as $i => $aid ) {
+					$path = get_attached_file( $aid );
+					if ( $path ) {
+						$out['files'][] = array(
+							'name' => basename( $path ),
+							'size' => file_exists( $path ) ? size_format( filesize( $path ) ) : '',
+							'url'  => add_query_arg( array(
+								'action'    => 'tpd_lms_download',
+								'lesson_id' => (int) $lesson->id,
+								'file'      => $aid,
+								'nonce'     => wp_create_nonce( 'tpd_lms_download_' . (int) $lesson->id ),
+							), admin_url( 'admin-ajax.php' ) ),
+						);
+					}
+				}
+				break;
+		}
 
 		if ( 'video' === $lesson->type ) {
 			$embed = self::video_embed_url( (string) $lesson->video_url );
@@ -371,10 +459,74 @@ class TPD_LMS_Student {
 				), admin_url( 'admin-ajax.php' ) ),
 			);
 		}
-		if ( in_array( $lesson->type, array( 'quiz', 'exam' ), true ) ) {
+		if ( in_array( $lesson->type, TPD_LMS_Store::QUIZ_TYPES, true ) ) {
 			$out['quiz'] = self::quiz_summary( TPD_LMS_Store::quiz_for_lesson( $lesson->id ), $enrollment );
 		}
 		return $out;
+	}
+
+	/** Lock-checked link to a lesson's PDF (PDF and presentation lessons). */
+	private static function file_url( $lesson_id, $what ) {
+		return add_query_arg( array(
+			'action'    => 'tpd_lms_file',
+			'lesson_id' => (int) $lesson_id,
+			'what'      => $what,
+			'nonce'     => wp_create_nonce( 'tpd_lms_file_' . (int) $lesson_id ),
+		), admin_url( 'admin-ajax.php' ) );
+	}
+
+	/**
+	 * Stream a PDF/presentation lesson's file inline (for the in-page viewer)
+	 * to someone allowed to open the lesson.
+	 */
+	public static function serve_lesson_file() {
+		$lesson_id = isset( $_GET['lesson_id'] ) ? absint( $_GET['lesson_id'] ) : 0;
+		if ( ! wp_verify_nonce( isset( $_GET['nonce'] ) ? sanitize_text_field( wp_unslash( $_GET['nonce'] ) ) : '', 'tpd_lms_file_' . $lesson_id ) ) {
+			wp_die( esc_html__( 'This link has expired. Open the lesson again.', 'tpd-tool' ), '', array( 'response' => 403 ) );
+		}
+		$lesson = TPD_LMS_Store::find( 'lessons', $lesson_id );
+		$check  = self::can_open( $lesson, get_current_user_id() );
+		if ( is_wp_error( $check ) || ! $lesson->attachment_id || ! in_array( $lesson->type, array( 'pdf', 'presentation' ), true ) ) {
+			wp_die( esc_html( is_wp_error( $check ) ? $check->get_error_message() : __( 'This lesson has no file.', 'tpd-tool' ) ), '', array( 'response' => 403 ) );
+		}
+		$path = get_attached_file( (int) $lesson->attachment_id );
+		if ( ! $path || ! file_exists( $path ) || 'application/pdf' !== get_post_mime_type( (int) $lesson->attachment_id ) ) {
+			wp_die( esc_html__( 'The file is missing. Let the course team know.', 'tpd-tool' ), '', array( 'response' => 404 ) );
+		}
+		$settings = TPD_LMS_Store::lesson_settings( $lesson );
+		$download = ! empty( $_GET['download'] ) && ! empty( $settings['allow_download'] );
+		nocache_headers();
+		header( 'Content-Type: application/pdf' );
+		header( 'Content-Disposition: ' . ( $download ? 'attachment' : 'inline' ) . '; filename="' . str_replace( '"', '', basename( $path ) ) . '"' );
+		header( 'Content-Length: ' . filesize( $path ) );
+		header( 'X-Content-Type-Options: nosniff' );
+		readfile( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		exit;
+	}
+
+	/** Hand in an assignment (multipart: answer text and/or a file). */
+	private static function action_assignment_submit( $user_id, $p ) {
+		$lesson = TPD_LMS_Store::find( 'lessons', isset( $p['lesson_id'] ) ? $p['lesson_id'] : 0 );
+		$check  = self::can_open( $lesson, $user_id );
+		if ( is_wp_error( $check ) ) {
+			return $check;
+		}
+		if ( 'assignment' !== $lesson->type ) {
+			return new WP_Error( 'not_assignment', __( 'This lesson isn’t an assignment.', 'tpd-tool' ) );
+		}
+		$enrollment = TPD_LMS_Progress::get_enrollment( $user_id, (int) $lesson->course_id );
+		if ( ! $enrollment ) {
+			return new WP_Error( 'not_enrolled', __( 'Enroll in the course to hand in assignments.', 'tpd-tool' ) );
+		}
+		$file = isset( $_FILES['file'] ) ? $_FILES['file'] : null; // phpcs:ignore WordPress.Security.NonceVerification -- checked in dispatch().
+		$sub  = TPD_LMS_Assign::submit( $lesson, $enrollment, isset( $p['answer'] ) ? (string) $p['answer'] : '', $file );
+		if ( is_wp_error( $sub ) ) {
+			return $sub;
+		}
+		return array(
+			'lesson'  => self::action_lesson( $user_id, array( 'lesson_id' => $lesson->id ) ),
+			'outline' => self::outline( TPD_LMS_Store::get_course( (int) $lesson->course_id ), $user_id ),
+		);
 	}
 
 	private static function action_complete( $user_id, $p ) {
@@ -383,8 +535,12 @@ class TPD_LMS_Student {
 		if ( is_wp_error( $check ) ) {
 			return $check;
 		}
-		if ( in_array( $lesson->type, array( 'quiz', 'exam' ), true ) ) {
-			return new WP_Error( 'pass_to_complete', __( 'Pass the quiz to complete this lesson.', 'tpd-tool' ) );
+		if ( ! in_array( $lesson->type, TPD_LMS_Store::MARKABLE_TYPES, true ) ) {
+			$messages = array(
+				'survey'     => __( 'Send your survey answers to complete this lesson.', 'tpd-tool' ),
+				'assignment' => __( 'Hand in your assignment to complete this lesson.', 'tpd-tool' ),
+			);
+			return new WP_Error( 'cannot_mark', isset( $messages[ $lesson->type ] ) ? $messages[ $lesson->type ] : __( 'Pass the quiz to complete this lesson.', 'tpd-tool' ) );
 		}
 		$enrollment = TPD_LMS_Progress::get_enrollment( $user_id, (int) $lesson->course_id );
 		if ( ! $enrollment ) {
@@ -541,6 +697,7 @@ class TPD_LMS_Student {
 			'proctor_request' => $request,
 			'id'              => (int) $quiz->id,
 			'is_final'        => (bool) $quiz->is_final,
+			'is_survey'       => TPD_LMS_Store::is_survey_quiz( $quiz->id ),
 			'passing_score'   => (int) $quiz->passing_score,
 			'max_attempts'    => null === $quiz->max_attempts ? null : (int) $quiz->max_attempts,
 			'attempts_used'   => $used,
@@ -598,6 +755,9 @@ class TPD_LMS_Student {
 
 	/** Result after submitting; correct answers only if the quiz shows them. */
 	private static function result_for_student( $attempt, $quiz ) {
+		if ( TPD_LMS_Store::is_survey_quiz( $quiz->id ) ) {
+			return array( 'survey' => true, 'passed' => true, 'review' => array() );
+		}
 		$out = array(
 			'score'         => (int) $attempt->score,
 			'passed'        => (bool) $attempt->passed,
@@ -670,15 +830,25 @@ class TPD_LMS_Student {
 		}
 		$lesson = TPD_LMS_Store::find( 'lessons', $lesson_id );
 		$check  = self::can_open( $lesson, get_current_user_id() );
-		if ( is_wp_error( $check ) || ! $lesson->attachment_id ) {
-			wp_die( esc_html( is_wp_error( $check ) ? $check->get_error_message() : __( 'This lesson has no file.', 'tpd-tool' ) ), '', array( 'response' => 403 ) );
+		if ( is_wp_error( $check ) ) {
+			wp_die( esc_html( $check->get_error_message() ), '', array( 'response' => 403 ) );
 		}
-		$path = get_attached_file( (int) $lesson->attachment_id );
+		// Only files that belong to this lesson can be asked for.
+		$allowed = TPD_LMS_Store::lesson_settings( $lesson );
+		$allowed = isset( $allowed['files'] ) ? $allowed['files'] : array();
+		if ( $lesson->attachment_id ) {
+			$allowed[] = (int) $lesson->attachment_id;
+		}
+		$aid = isset( $_GET['file'] ) ? absint( $_GET['file'] ) : (int) $lesson->attachment_id;
+		if ( ! $aid || ! in_array( $aid, $allowed, true ) ) {
+			wp_die( esc_html__( 'This lesson has no such file.', 'tpd-tool' ), '', array( 'response' => 403 ) );
+		}
+		$path = get_attached_file( $aid );
 		if ( ! $path || ! file_exists( $path ) ) {
 			wp_die( esc_html__( 'The file is missing. Let the course team know.', 'tpd-tool' ), '', array( 'response' => 404 ) );
 		}
 		nocache_headers();
-		header( 'Content-Type: ' . ( get_post_mime_type( (int) $lesson->attachment_id ) ?: 'application/octet-stream' ) );
+		header( 'Content-Type: ' . ( get_post_mime_type( $aid ) ?: 'application/octet-stream' ) );
 		header( 'Content-Disposition: attachment; filename="' . str_replace( '"', '', basename( $path ) ) . '"' );
 		header( 'Content-Length: ' . filesize( $path ) );
 		header( 'X-Content-Type-Options: nosniff' );

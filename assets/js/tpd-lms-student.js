@@ -11,7 +11,7 @@
 
 	var $player, $hub;
 	var st = { outline: null, lesson: null, attempt: null, timer: null, saveT: null };
-	var TYPE_ICON = { text: 'fa-file-lines', video: 'fa-circle-play', download: 'fa-file-arrow-down', quiz: 'fa-list-check', exam: 'fa-graduation-cap' };
+	var TYPE_ICON = { text: 'fa-file-lines', video: 'fa-circle-play', pdf: 'fa-file-pdf', audio: 'fa-headphones', download: 'fa-file-arrow-down', multimedia: 'fa-window-restore', presentation: 'fa-person-chalkboard', live: 'fa-tower-broadcast', quiz: 'fa-list-check', survey: 'fa-clipboard-list', assignment: 'fa-file-pen', exam: 'fa-graduation-cap' };
 
 	function esc(v) {
 		return String(v === null || v === undefined ? '' : v)
@@ -142,7 +142,7 @@
 	}
 
 	function typeLabel(t) {
-		return { text: 'Reading', video: 'Video', download: 'Download', quiz: 'Quiz', exam: 'Final exam' }[t] || 'Lesson';
+		return { text: 'Reading', video: 'Video', pdf: 'PDF', audio: 'Audio', download: 'Download', multimedia: 'Interactive', presentation: 'Presentation', live: 'Live session', quiz: 'Quiz', survey: 'Survey', assignment: 'Assignment', exam: 'Final exam' }[t] || 'Lesson';
 	}
 
 	function refreshPath() {
@@ -165,6 +165,8 @@
 
 	function openLesson(id) {
 		stopTimer();
+		deck = null; // Stops slide narration from the previous lesson.
+		$player.find('audio, video').each(function () { try { this.pause(); } catch (e) {} });
 		var $main = $player.find('.tpd-lms-p-main');
 		$main.html('<div class="tpd-lms-p-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading lesson…</div>');
 		api('lesson', { lesson_id: id }).then(function (lesson) {
@@ -185,21 +187,40 @@
 			else if (l.video.kind === 'file') body += '<div class="tpd-lms-video"><video controls preload="metadata" src="' + esc(l.video.src) + '"></video></div>';
 			else body += '<p><a class="tpd-btn tpd-btn-sm tpd-btn-outline" target="_blank" rel="noopener" href="' + esc(l.video.src) + '"><i class="fa-solid fa-circle-play"></i> Watch the video</a></p>';
 		}
-		if (l.file) {
-			body += '<div class="tpd-lms-file"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>' + esc(l.file.name) + '</span>' +
-				'<a class="tpd-btn tpd-btn-sm tpd-btn-darkblue" href="' + esc(l.file.url) + '"><i class="fa-solid fa-download"></i> Download</a></div>';
+		(l.files || []).forEach(function (f) {
+			body += '<div class="tpd-lms-file"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>' + esc(f.name) + (f.size ? ' <small class="tpd-lms-muted">' + esc(f.size) + '</small>' : '') + '</span>' +
+				'<a class="tpd-btn tpd-btn-sm tpd-btn-darkblue" href="' + esc(f.url) + '"><i class="fa-solid fa-download"></i> Download</a></div>';
+		});
+		if (l.type === 'pdf') {
+			body += l.pdf ? '<div class="tpd-lms-pdf" data-pdf-pages><p class="tpd-lms-muted"><i class="fa-solid fa-spinner fa-spin"></i> Loading the PDF…</p></div>' +
+				(l.pdf.allow_download ? '<p><a class="tpd-btn tpd-btn-sm tpd-btn-outline" href="' + esc(l.pdf.url) + '&download=1"><i class="fa-solid fa-download"></i> Download the PDF</a></p>' : '') :
+				'<p class="tpd-lms-muted">The PDF for this lesson hasn’t been added yet.</p>';
 		}
+		if (l.type === 'audio') {
+			body += l.audio ? '<div class="tpd-lms-audio"><i class="fa-solid fa-headphones" aria-hidden="true"></i><audio controls preload="metadata" src="' + esc(l.audio.src) + '"></audio></div>' :
+				'<p class="tpd-lms-muted">The audio for this lesson hasn’t been added yet.</p>';
+		}
+		if (l.type === 'multimedia') {
+			body += l.embed ? '<div class="tpd-lms-embed" style="height:' + Number(l.embed.height) + 'px"><iframe src="' + esc(l.embed.src) + '" title="' + esc(l.title) + '" allow="autoplay; fullscreen; clipboard-write; encrypted-media; picture-in-picture" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>' +
+				'<p class="tpd-lms-muted">Not loading? <a href="' + esc(l.embed.src) + '" target="_blank" rel="noopener">Open it in a new tab</a>.</p>' :
+				'<p class="tpd-lms-muted">The content for this lesson hasn’t been added yet.</p>';
+		}
+		if (l.type === 'presentation') body += renderPresentationShell(l.presentation);
+		if (l.type === 'live') body += renderLive(l.live);
 		if (l.content) body += '<div class="tpd-lms-content">' + l.content + '</div>';
+		if (l.type === 'assignment') body += renderAssignment(l.assignment);
 
 		var footer = '';
 		if (l.quiz) {
 			body += renderQuizIntro(l.quiz);
 		} else if (l.can_mark) {
+			var gated = l.type === 'presentation' && l.presentation && l.presentation.require_all_slides && !l.done;
 			footer = l.done ?
 				'<span class="tpd-lms-done"><i class="fa-solid fa-circle-check"></i> Completed</span>' + nextButton() :
-				'<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-darkblue" data-lms-complete style="background:#00798c;border-color:#00798c;"><i class="fa-solid fa-check"></i> Mark complete and continue</button>';
-		} else {
-			footer = nextButton();
+				'<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-darkblue" data-lms-complete style="background:#00798c;border-color:#00798c;"' + (gated ? ' disabled' : '') + '><i class="fa-solid fa-check"></i> Mark complete and continue</button>' +
+				(gated ? '<span class="tpd-lms-muted" data-slides-left>View every slide to continue.</span>' : '');
+		} else if (l.type !== 'assignment' || l.done) {
+			footer = (l.done ? '<span class="tpd-lms-done"><i class="fa-solid fa-circle-check"></i> Completed</span>' : '') + nextButton();
 		}
 
 		$player.find('.tpd-lms-p-main').html(
@@ -208,6 +229,171 @@
 			body +
 			(footer ? '<div class="tpd-lms-p-actions">' + footer + '</div>' : '')
 		);
+		if (l.type === 'pdf' && l.pdf) renderPdfPages(l.pdf.url);
+		if (l.type === 'presentation' && l.presentation) startPresentation(l.presentation);
+	}
+
+	/* PDF and presentation (PDF.js, loaded on demand) ---------------------- */
+
+	var pdfjsLoading = null;
+	function loadPdfJs() {
+		if (window.pdfjsLib) return $.Deferred().resolve(window.pdfjsLib).promise();
+		if (!pdfjsLoading) {
+			pdfjsLoading = $.Deferred();
+			var sc = document.createElement('script');
+			sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+			sc.onload = function () { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; pdfjsLoading.resolve(window.pdfjsLib); };
+			sc.onerror = function () { pdfjsLoading.reject(); };
+			document.head.appendChild(sc);
+		}
+		return pdfjsLoading.promise();
+	}
+
+	function openPdf(url) {
+		return loadPdfJs().then(function (lib) { return lib.getDocument({ url: url, withCredentials: true }).promise; });
+	}
+
+	function drawPage(pdf, n, canvas, width) {
+		return pdf.getPage(n).then(function (page) {
+			var base = page.getViewport({ scale: 1 });
+			var ratio = window.devicePixelRatio || 1;
+			var view = page.getViewport({ scale: (width / base.width) * ratio });
+			canvas.width = view.width; canvas.height = view.height;
+			canvas.style.width = '100%';
+			return page.render({ canvasContext: canvas.getContext('2d'), viewport: view }).promise;
+		});
+	}
+
+	/** PDF lesson: every page, drawn as it scrolls into view. */
+	function renderPdfPages(url) {
+		var $wrap = $player.find('[data-pdf-pages]');
+		openPdf(url).then(function (pdf) {
+			var width = $wrap.width() || 800;
+			$wrap.html('');
+			var io = window.IntersectionObserver ? new IntersectionObserver(function (entries) {
+				entries.forEach(function (en) {
+					if (en.isIntersecting && !en.target.dataset.done) { en.target.dataset.done = '1'; drawPage(pdf, Number(en.target.dataset.page), en.target, width); }
+				});
+			}, { rootMargin: '400px' }) : null;
+			for (var n = 1; n <= pdf.numPages; n++) {
+				var c = document.createElement('canvas');
+				c.dataset.page = n;
+				c.setAttribute('aria-label', 'Page ' + n + ' of ' + pdf.numPages);
+				$wrap.append(c);
+				if (io) io.observe(c); else drawPage(pdf, n, c, width);
+			}
+		}, function () {
+			$wrap.html('<p class="tpd-lms-muted">The PDF couldn’t be shown here. Check your connection and reload.</p>');
+		});
+	}
+
+	function renderPresentationShell(p) {
+		if (!p) return '<p class="tpd-lms-muted">The slides for this lesson haven’t been added yet.</p>';
+		return '<div class="tpd-lms-deck" data-deck tabindex="0" aria-roledescription="slide deck">' +
+			'<div class="tpd-lms-deck-stage"><canvas data-deck-canvas aria-live="polite"></canvas><div class="tpd-lms-deck-loading"><i class="fa-solid fa-spinner fa-spin"></i></div></div>' +
+			'<div class="tpd-lms-deck-bar">' +
+			'<button type="button" class="tpd-lms-icon-btn" data-deck-prev aria-label="Previous slide"><i class="fa-solid fa-chevron-left"></i></button>' +
+			'<span data-deck-count>…</span>' +
+			'<button type="button" class="tpd-lms-icon-btn" data-deck-next aria-label="Next slide"><i class="fa-solid fa-chevron-right"></i></button>' +
+			'<span class="tpd-lms-deck-spacer"></span>' +
+			(p.allow_download ? '<a class="tpd-lms-icon-btn" href="' + esc(p.pdf) + '&download=1" aria-label="Download the slides" title="Download the slides"><i class="fa-solid fa-download"></i></a>' : '') +
+			'<button type="button" class="tpd-lms-icon-btn" data-deck-full aria-label="Full screen" title="Full screen"><i class="fa-solid fa-expand"></i></button>' +
+			'</div>' +
+			'<div class="tpd-lms-deck-audio" data-deck-audio hidden></div>' +
+			'<div class="tpd-lms-deck-text tpd-lms-content" data-deck-text></div>' +
+			'</div>';
+	}
+
+	var deck = null;
+	function startPresentation(p) {
+		deck = { p: p, pdf: null, n: 1, seen: {}, total: 0 };
+		openPdf(p.pdf).then(function (pdf) {
+			deck.pdf = pdf;
+			deck.total = pdf.numPages;
+			showSlide(1);
+		}, function () {
+			$player.find('[data-deck]').html('<p class="tpd-lms-muted">The slides couldn’t be shown here. Check your connection and reload.</p>');
+		});
+	}
+
+	function showSlide(n) {
+		if (!deck || !deck.pdf) return;
+		n = Math.max(1, Math.min(deck.total, n));
+		deck.n = n;
+		deck.seen[n] = true;
+		var $d = $player.find('[data-deck]');
+		var canvas = $d.find('[data-deck-canvas]')[0];
+		$d.find('.tpd-lms-deck-loading').show();
+		drawPage(deck.pdf, n, canvas, $d.find('.tpd-lms-deck-stage').width() || 800).then(function () { $d.find('.tpd-lms-deck-loading').hide(); });
+		$d.find('[data-deck-count]').text('Slide ' + n + ' of ' + deck.total);
+		$d.find('[data-deck-prev]').prop('disabled', n === 1);
+		$d.find('[data-deck-next]').prop('disabled', n === deck.total);
+		var slide = deck.p.slides[n - 1] || {};
+		var $audio = $d.find('[data-deck-audio]');
+		if (slide.audio) {
+			$audio.prop('hidden', false).html('<i class="fa-solid fa-volume-high" aria-hidden="true"></i><audio controls autoplay preload="auto" src="' + esc(slide.audio) + '"></audio>');
+			if (deck.p.auto_advance) {
+				$audio.find('audio').on('ended', function () { if (deck && deck.n === n && n < deck.total) showSlide(n + 1); });
+			}
+		} else {
+			$audio.prop('hidden', true).empty();
+		}
+		$d.find('[data-deck-text]').html(slide.text || '');
+		var left = deck.total - Object.keys(deck.seen).length;
+		if (left <= 0) {
+			$player.find('[data-lms-complete]').prop('disabled', false);
+			$player.find('[data-slides-left]').remove();
+		} else {
+			$player.find('[data-slides-left]').text(left + (left === 1 ? ' slide' : ' slides') + ' left to view.');
+		}
+	}
+
+	/* Live session --------------------------------------------------------- */
+
+	function renderLive(v) {
+		if (!v || !v.starts_at) {
+			return '<div class="tpd-lms-live"><p class="tpd-lms-muted">The date for this session hasn’t been set yet.</p>' +
+				(v && v.join_url ? '<a class="tpd-btn tpd-btn-sm tpd-btn-darkblue" target="_blank" rel="noopener" href="' + esc(v.join_url) + '"><i class="fa-solid fa-video"></i> Join the session</a>' : '') + '</div>';
+		}
+		var start = new Date(v.starts_at), end = new Date(v.ends_at);
+		var skew = new Date(v.now).getTime() - Date.now(); // Server clock decides.
+		var now = Date.now() + skew;
+		var opens = start.getTime() - 15 * 60 * 1000;
+		var when = start.toLocaleString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+		var state = now < opens ? 'soon' : (now <= end.getTime() ? 'live' : 'over');
+		var action = '';
+		if (state === 'live' && v.join_url) action = '<a class="tpd-btn tpd-btn-sm tpd-btn-darkblue" style="background:#b91c1c;border-color:#b91c1c;" target="_blank" rel="noopener" href="' + esc(v.join_url) + '"><i class="fa-solid fa-tower-broadcast"></i> Join now</a>';
+		else if (state === 'soon') action = '<span class="tpd-lms-muted">The join button appears 15 minutes before the start.</span>' + (v.join_url ? ' <a href="' + esc(v.join_url) + '" target="_blank" rel="noopener">Meeting link</a>' : '');
+		else if (state === 'over') action = v.recording_url ? '<a class="tpd-btn tpd-btn-sm tpd-btn-darkblue" target="_blank" rel="noopener" href="' + esc(v.recording_url) + '"><i class="fa-solid fa-circle-play"></i> Watch the recording</a>' : '<span class="tpd-lms-muted">This session has ended. A recording will appear here if one is shared.</span>';
+		return '<div class="tpd-lms-live is-' + state + '"><div class="tpd-lms-live-when"><i class="fa-regular fa-calendar" aria-hidden="true"></i><div><strong>' + esc(when) + '</strong>' +
+			'<span class="tpd-lms-muted">' + (state === 'live' ? 'Happening now' : state === 'over' ? 'Finished' : 'Shown in your time zone') + '</span></div></div>' + action + '</div>';
+	}
+
+	/* Assignment ----------------------------------------------------------- */
+
+	function renderAssignment(a) {
+		if (!a) return '';
+		if (!st.outline.enrolled) return '<p class="tpd-lms-muted">Enroll in the course to hand in this assignment.</p>';
+		var last = a.latest;
+		var status = '';
+		if (last) {
+			var labels = { pending: ['is-draft', 'Waiting for review'], approved: ['is-published', 'Approved'], returned: ['is-error', 'Returned for changes'] };
+			var lb = labels[last.status] || ['is-draft', last.status];
+			status = '<div class="tpd-lms-submission"><p><span class="tpd-lms-badge ' + lb[0] + '">' + lb[1] + '</span> <span class="tpd-lms-muted">Handed in ' + esc(new Date(last.created_at.replace(' ', 'T') + 'Z').toLocaleString()) + '</span></p>' +
+				(last.file_url ? '<p><a href="' + esc(last.file_url) + '"><i class="fa-solid fa-paperclip"></i> ' + esc(last.file_name) + '</a></p>' : '') +
+				(last.text ? '<div class="tpd-lms-answer">' + last.text + '</div>' : '') +
+				(last.feedback ? '<div class="tpd-lms-feedback"><strong>Feedback</strong><p>' + esc(last.feedback) + '</p></div>' : '') + '</div>';
+		}
+		if (last && (last.status === 'pending' || last.status === 'approved')) return status;
+		var accept = a.extensions.map(function (e) { return '.' + e; }).join(',');
+		return status + '<form class="tpd-lms-assign-form" data-lms-assign enctype="multipart/form-data">' +
+			'<h4 class="tpd-lms-p-h4">' + (last ? 'Send it again' : 'Hand in your work') + '</h4>' +
+			(a.submission !== 'file' ? '<label class="tpd-lms-block">Your answer<textarea name="answer" class="tpd-input" rows="6"></textarea></label>' : '') +
+			(a.submission !== 'text' ? '<label class="tpd-lms-block">File<input type="file" name="file" class="tpd-input" accept="' + esc(accept) + '"></label>' +
+				'<p class="tpd-lms-muted">PDF, Word, PowerPoint, Excel, text or image. Up to ' + a.max_mb + ' MB.</p>' : '') +
+			'<button type="submit" class="tpd-btn tpd-btn-sm tpd-btn-darkblue" style="background:#00798c;border-color:#00798c;"><i class="fa-solid fa-paper-plane"></i> Hand in</button>' +
+			(a.require_approval ? ' <span class="tpd-lms-muted">The lesson completes when the course team approves it.</span>' : '') +
+			'</form>';
 	}
 
 	function nextLesson() {
@@ -227,6 +413,15 @@
 	/* ------------------------------------------------------------------ */
 
 	function renderQuizIntro(q) {
+		if (q.is_survey) {
+			var sAction;
+			if (!st.outline.enrolled) sAction = st.outline.preview ? '<p class="tpd-lms-muted">Course team preview: enroll a test account to answer the survey.</p>' : enrollButton();
+			else if (q.attempts_used && !q.can_attempt) sAction = '<p class="tpd-lms-done"><i class="fa-solid fa-circle-check"></i> Thanks, your answers were sent.</p>' + nextButton();
+			else if (q.question_count === 0) sAction = '<p class="tpd-lms-muted">This survey has no questions yet.</p>';
+			else sAction = '<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-darkblue" data-lms-quiz-start style="background:#00798c;border-color:#00798c;"><i class="fa-solid fa-play"></i> ' + (q.has_open ? 'Continue the survey' : 'Start the survey') + '</button>';
+			return '<div class="tpd-lms-quiz-intro"><ul class="tpd-lms-facts"><li>' + q.question_count + (q.question_count === 1 ? ' question' : ' questions') + '</li><li>No right or wrong answers</li></ul>' +
+				'<div class="tpd-lms-p-actions tpd-lms-p-actions-col">' + sAction + '</div></div>';
+		}
 		var facts = [];
 		facts.push(q.question_count + (q.question_count === 1 ? ' question' : ' questions'));
 		facts.push('Pass mark ' + q.passing_score + '%');
@@ -393,6 +588,13 @@
 	}
 
 	function renderResult(r) {
+		if (r.survey) {
+			$player.find('.tpd-lms-p-main').html(
+				'<div class="tpd-lms-result is-pass"><div class="tpd-lms-score"><i class="fa-solid fa-circle-check"></i></div>' +
+				'<div><h3 class="tpd-lms-p-h3">Thanks for your answers</h3><p>Your feedback helps us improve the course.</p></div></div>' +
+				'<div class="tpd-lms-p-actions">' + nextButton() + '</div>');
+			return;
+		}
 		var review = r.review.length ? '<h4 class="tpd-lms-p-h4">Review your answers</h4><ol class="tpd-lms-review">' + r.review.map(function (it) {
 			return '<li class="' + (it.ok ? 'is-ok' : 'is-wrong') + '"><div class="tpd-lms-q-prompt">' + it.prompt + '</div>' +
 				'<p><strong>' + (it.ok ? '<i class="fa-solid fa-check"></i> Correct' : '<i class="fa-solid fa-xmark"></i> Not quite') + '</strong>' +
@@ -498,6 +700,40 @@
 					if (n) openLesson(n.id);
 					else { renderLesson(); flash(outline.progress === 100 ? 'Course complete. Congratulations!' : 'Lesson completed.'); }
 				}, function (msg) { $b.prop('disabled', false); flash(msg, 'error'); });
+			})
+			.on('click', '[data-deck-prev]', function () { if (deck) showSlide(deck.n - 1); })
+			.on('click', '[data-deck-next]', function () { if (deck) showSlide(deck.n + 1); })
+			.on('keydown', '[data-deck]', function (e) {
+				if (!deck) return;
+				if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); showSlide(deck.n + 1); }
+				if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); showSlide(deck.n - 1); }
+			})
+			.on('click', '[data-deck-full]', function () {
+				var el = $player.find('[data-deck]')[0];
+				if (document.fullscreenElement) document.exitFullscreen();
+				else if (el && el.requestFullscreen) el.requestFullscreen().then(function () { if (deck) showSlide(deck.n); });
+			})
+			.on('submit', '[data-lms-assign]', function (e) {
+				e.preventDefault();
+				var $f = $(this), $b = $f.find('[type=submit]');
+				var fd = new FormData(this);
+				fd.append('action', 'tpd_lms_s_assignment_submit');
+				fd.append('nonce', tpdLmsStudent.nonce);
+				fd.append('lesson_id', st.lesson.id);
+				$b.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Sending…');
+				$.ajax({ url: tpdLmsStudent.ajaxUrl, type: 'POST', data: fd, processData: false, contentType: false, dataType: 'json' }).then(function (res) {
+					if (!res || !res.success) return $.Deferred().reject(res && res.data && res.data.message ? res.data.message : 'Something went wrong. Try again.').promise();
+					st.lesson = res.data.lesson;
+					st.outline = res.data.outline;
+					st.dirty = true;
+					refreshPath();
+					renderLesson();
+					flash(st.lesson.done ? 'Handed in. The lesson is complete.' : 'Handed in. We’ll email you when it’s reviewed.');
+				}).then(null, function (msg) {
+					var m = typeof msg === 'string' ? msg : (msg && msg.responseJSON && msg.responseJSON.data && msg.responseJSON.data.message) || 'The upload failed. Check the file and try again.';
+					$b.prop('disabled', false).html('<i class="fa-solid fa-paper-plane"></i> Hand in');
+					flash(m, 'error');
+				});
 			})
 			.on('click', '[data-lms-quiz-start]', startQuiz)
 			.on('keydown', '#tpd-lms-access-code', function (e) { if (e.key === 'Enter') { e.preventDefault(); startQuiz(); } })

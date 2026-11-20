@@ -13,7 +13,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class TPD_LMS_Store {
 
-	const LESSON_TYPES   = array( 'text', 'video', 'download', 'quiz', 'exam' );
+	const LESSON_TYPES   = array( 'video', 'text', 'pdf', 'quiz', 'audio', 'download', 'multimedia', 'survey', 'presentation', 'assignment', 'exam', 'live' );
+	/** Types backed by a quiz row (questions and attempts). */
+	const QUIZ_TYPES     = array( 'quiz', 'exam', 'survey' );
+	/** Types the learner completes with "Mark complete". */
+	const MARKABLE_TYPES = array( 'video', 'text', 'pdf', 'audio', 'download', 'multimedia', 'presentation', 'live' );
+	/** File types learners may hand in for assignments. */
+	const ASSIGNMENT_EXTENSIONS = array( 'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'rtf', 'odt', 'jpg', 'jpeg', 'png', 'gif', 'webp' );
 	const QUESTION_TYPES = array( 'single', 'multiple', 'true_false', 'short' );
 
 	/* ------------------------------------------------------------------ */
@@ -329,20 +335,33 @@ class TPD_LMS_Store {
 		$row['chapter_id'] = (int) $chapter->id;
 		$row['position']   = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COALESCE(MAX(position), 0) + 1 FROM ' . TPD_LMS_Schema::t( 'lessons' ) . ' WHERE chapter_id = %d', (int) $chapter->id ) );
 
+		if ( ! isset( $row['settings'] ) ) {
+			$row['settings'] = wp_json_encode( self::sanitize_settings( $row['type'], array() ) );
+		}
 		$lesson_id = self::insert( 'lessons', $row );
-		if ( $lesson_id && in_array( $row['type'], array( 'quiz', 'exam' ), true ) ) {
-			self::insert( 'quizzes', array(
+		if ( $lesson_id && in_array( $row['type'], self::QUIZ_TYPES, true ) ) {
+			$quiz = array(
 				'lesson_id'           => $lesson_id,
 				'is_final'            => 'exam' === $row['type'] ? 1 : 0,
 				'require_all_lessons' => 'exam' === $row['type'] ? 1 : 0,
-			) );
+			);
+			if ( 'survey' === $row['type'] ) {
+				// Surveys have no right answers: everyone "passes" by submitting, once.
+				$quiz += array( 'passing_score' => 0, 'show_answers' => 0, 'max_attempts' => 1 );
+			}
+			self::insert( 'quizzes', $quiz );
 		}
 		return $lesson_id ? $lesson_id : new WP_Error( 'db_error', __( 'The lesson could not be saved. Try again.', 'tpd-tool' ) );
 	}
 
 	public static function update_lesson( $lesson_id, array $data ) {
-		$row = self::lesson_fields( $data, true );
-		unset( $row['type'] ); // A lesson's type is fixed once created.
+		$lesson = self::find( 'lessons', $lesson_id );
+		if ( ! $lesson ) {
+			return new WP_Error( 'lesson_missing', __( 'That lesson no longer exists.', 'tpd-tool' ) );
+		}
+		$data['type'] = $lesson->type; // A lesson's type is fixed once created; settings follow it.
+		$row          = self::lesson_fields( $data, true );
+		unset( $row['type'] );
 		if ( isset( $row['title'] ) && '' === $row['title'] ) {
 			return new WP_Error( 'title_required', __( 'Give the lesson a title.', 'tpd-tool' ) );
 		}
@@ -357,6 +376,18 @@ class TPD_LMS_Store {
 			self::delete_quiz( $quiz->id );
 		}
 		$wpdb->delete( TPD_LMS_Schema::t( 'lesson_completions' ), array( 'lesson_id' => $lesson_id ), array( '%d' ) );
+		// Assignment submissions and their private files go with the lesson.
+		$files = $wpdb->get_col( $wpdb->prepare( 'SELECT file_path FROM ' . TPD_LMS_Schema::t( 'assignment_submissions' ) . ' WHERE lesson_id = %d AND file_path IS NOT NULL', $lesson_id ) );
+		if ( $files && class_exists( 'TPD_LMS_Assign' ) ) {
+			$dir = TPD_LMS_Assign::private_dir();
+			foreach ( $files as $f ) {
+				$path = $dir . '/' . basename( $f );
+				if ( file_exists( $path ) ) {
+					wp_delete_file( $path );
+				}
+			}
+		}
+		$wpdb->delete( TPD_LMS_Schema::t( 'assignment_submissions' ), array( 'lesson_id' => $lesson_id ), array( '%d' ) );
 		return self::delete( 'lessons', $lesson_id );
 	}
 
@@ -386,10 +417,119 @@ class TPD_LMS_Store {
 		if ( array_key_exists( 'is_preview', $data ) ) {
 			$row['is_preview'] = empty( $data['is_preview'] ) ? 0 : 1;
 		}
+		if ( array_key_exists( 'settings', $data ) && is_array( $data['settings'] ) ) {
+			$type            = isset( $data['type'] ) ? sanitize_key( $data['type'] ) : 'text';
+			$row['settings'] = wp_json_encode( self::sanitize_settings( $type, $data['settings'] ) );
+		}
 		if ( ! $partial ) {
 			$row += array( 'title' => '' );
 		}
 		return $row;
+	}
+
+	/**
+	 * A lesson's type-specific settings, with defaults filled in.
+	 */
+	public static function lesson_settings( $lesson ) {
+		$raw = $lesson && ! empty( $lesson->settings ) ? json_decode( (string) $lesson->settings, true ) : array();
+		return self::sanitize_settings( $lesson ? $lesson->type : 'text', is_array( $raw ) ? $raw : array() );
+	}
+
+	private static function https_url( $url ) {
+		$url = esc_url_raw( trim( (string) $url ), array( 'https', 'http' ) );
+		return 0 === strpos( $url, 'https://' ) ? $url : '';
+	}
+
+	private static function attachment_ids( $ids, $max = 20 ) {
+		$out = array();
+		foreach ( (array) $ids as $id ) {
+			$id = absint( $id );
+			if ( $id && 'attachment' === get_post_type( $id ) && ! in_array( $id, $out, true ) ) {
+				$out[] = $id;
+			}
+		}
+		return array_slice( $out, 0, $max );
+	}
+
+	/**
+	 * Clean the settings for one lesson type. Unknown keys are dropped.
+	 */
+	public static function sanitize_settings( $type, array $s ) {
+		$bool = function ( $key, $default = false ) use ( $s ) {
+			return array_key_exists( $key, $s ) ? ! empty( $s[ $key ] ) && 'false' !== $s[ $key ] && '0' !== (string) $s[ $key ] : $default;
+		};
+		switch ( $type ) {
+			case 'pdf':
+				return array( 'allow_download' => $bool( 'allow_download', true ) );
+
+			case 'audio':
+				return array( 'audio_url' => self::https_url( isset( $s['audio_url'] ) ? $s['audio_url'] : '' ) );
+
+			case 'download':
+				return array( 'files' => self::attachment_ids( isset( $s['files'] ) ? $s['files'] : array() ) );
+
+			case 'multimedia':
+				$height = isset( $s['height'] ) ? absint( $s['height'] ) : 600;
+				return array(
+					'embed_url' => self::https_url( isset( $s['embed_url'] ) ? $s['embed_url'] : '' ),
+					'height'    => max( 300, min( 1400, $height ?: 600 ) ),
+				);
+
+			case 'presentation':
+				$slides = array();
+				foreach ( array_slice( (array) ( isset( $s['slides'] ) ? $s['slides'] : array() ), 0, 500 ) as $slide ) {
+					$slide    = (array) $slide;
+					$audio    = isset( $slide['audio_id'] ) ? absint( $slide['audio_id'] ) : 0;
+					$slides[] = array(
+						'audio_id' => $audio && 'attachment' === get_post_type( $audio ) ? $audio : null,
+						'text'     => self::clean_html( isset( $slide['text'] ) ? (string) $slide['text'] : '' ),
+					);
+				}
+				return array(
+					'slides'             => $slides,
+					'require_all_slides' => $bool( 'require_all_slides', true ),
+					'auto_advance'       => $bool( 'auto_advance', false ),
+					'allow_download'     => $bool( 'allow_download', false ),
+				);
+
+			case 'live':
+				$tz = isset( $s['timezone'] ) && in_array( $s['timezone'], timezone_identifiers_list(), true ) ? $s['timezone'] : 'UTC';
+				$starts = '';
+				if ( ! empty( $s['starts_local'] ) ) {
+					// Entered as local wall-clock time in the chosen time zone; stored in UTC.
+					try {
+						$dt = new DateTime( (string) $s['starts_local'], new DateTimeZone( $tz ) );
+						$dt->setTimezone( new DateTimeZone( 'UTC' ) );
+						$starts = $dt->format( 'Y-m-d H:i:s' );
+					} catch ( Exception $e ) {
+						$starts = '';
+					}
+				} elseif ( ! empty( $s['starts_at'] ) && preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', (string) $s['starts_at'] ) ) {
+					$starts = (string) $s['starts_at'];
+				}
+				return array(
+					'join_url'      => self::https_url( isset( $s['join_url'] ) ? $s['join_url'] : '' ),
+					'starts_at'     => $starts,
+					'timezone'      => $tz,
+					'recording_url' => self::https_url( isset( $s['recording_url'] ) ? $s['recording_url'] : '' ),
+				);
+
+			case 'assignment':
+				$mode = isset( $s['submission'] ) && in_array( $s['submission'], array( 'file', 'text', 'either' ), true ) ? $s['submission'] : 'either';
+				$mb   = isset( $s['max_mb'] ) ? absint( $s['max_mb'] ) : 10;
+				return array(
+					'submission'       => $mode,
+					'require_approval' => $bool( 'require_approval', true ),
+					'max_mb'           => max( 1, min( 20, $mb ?: 10 ) ),
+				);
+		}
+		return array();
+	}
+
+	public static function is_survey_quiz( $quiz_id ) {
+		$quiz   = self::find( 'quizzes', $quiz_id );
+		$lesson = $quiz ? self::find( 'lessons', $quiz->lesson_id ) : null;
+		return $lesson && 'survey' === $lesson->type;
 	}
 
 	/* ------------------------------------------------------------------ */
@@ -477,7 +617,7 @@ class TPD_LMS_Store {
 		$type   = isset( $data['type'] ) ? sanitize_key( $data['type'] ) : 'single';
 		$type   = in_array( $type, self::QUESTION_TYPES, true ) ? $type : 'single';
 		$prompt = self::clean_html( isset( $data['prompt'] ) ? (string) $data['prompt'] : '' );
-		$error  = self::validate_question( $type, $prompt, $data, $options );
+		$error  = self::validate_question( $type, $prompt, $data, $options, self::is_survey_quiz( $quiz_id ) );
 		if ( $error ) {
 			return $error;
 		}
@@ -525,7 +665,7 @@ class TPD_LMS_Store {
 		$type   = isset( $data['type'] ) ? sanitize_key( $data['type'] ) : $question->type;
 		$type   = in_array( $type, self::QUESTION_TYPES, true ) ? $type : 'single';
 		$prompt = self::clean_html( isset( $data['prompt'] ) ? (string) $data['prompt'] : $question->prompt );
-		$error  = self::validate_question( $type, $prompt, $data, $options );
+		$error  = self::validate_question( $type, $prompt, $data, $options, self::is_survey_quiz( $question->quiz_id ) );
 		if ( $error ) {
 			return $error;
 		}
@@ -560,12 +700,12 @@ class TPD_LMS_Store {
 	/**
 	 * @return WP_Error|null Null when the question is valid.
 	 */
-	private static function validate_question( $type, $prompt, array $data, array $options ) {
+	private static function validate_question( $type, $prompt, array $data, array $options, $survey = false ) {
 		if ( '' === trim( wp_strip_all_tags( $prompt ) ) ) {
 			return new WP_Error( 'prompt_required', __( 'Write the question before saving it.', 'tpd-tool' ) );
 		}
 		if ( 'short' === $type ) {
-			if ( '' === trim( isset( $data['accepted_answers'] ) ? (string) $data['accepted_answers'] : '' ) ) {
+			if ( ! $survey && '' === trim( isset( $data['accepted_answers'] ) ? (string) $data['accepted_answers'] : '' ) ) {
 				return new WP_Error( 'answers_required', __( 'Add at least one accepted answer.', 'tpd-tool' ) );
 			}
 			return null;
@@ -573,6 +713,10 @@ class TPD_LMS_Store {
 		$options = array_filter( $options, function ( $o ) {
 			return '' !== trim( (string) ( isset( $o['text'] ) ? $o['text'] : '' ) );
 		} );
+		if ( $survey ) {
+			// Survey questions have no right answer, only choices.
+			return count( $options ) < 2 ? new WP_Error( 'options_required', __( 'Add at least two choices.', 'tpd-tool' ) ) : null;
+		}
 		$correct = array_filter( $options, function ( $o ) {
 			return ! empty( $o['is_correct'] );
 		} );

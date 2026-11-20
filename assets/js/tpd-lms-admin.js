@@ -12,13 +12,23 @@
 	var state = { view: 'list', courses: [], tree: null, lesson: null };
 	var editors = [];
 
+	// The lesson types, in the order of the "Add lesson" picker.
 	var LESSON_TYPES = {
-		text: { label: 'Text', icon: 'fa-file-lines' },
-		video: { label: 'Video', icon: 'fa-circle-play' },
-		download: { label: 'Download', icon: 'fa-file-arrow-down' },
-		quiz: { label: 'Quiz', icon: 'fa-list-check' },
-		exam: { label: 'Final exam', icon: 'fa-graduation-cap' }
+		video: { label: 'Video', icon: 'fa-video', desc: 'YouTube, Vimeo or an uploaded video' },
+		text: { label: 'Text', icon: 'fa-file-lines', desc: 'Formatted text and images' },
+		pdf: { label: 'PDF', icon: 'fa-file-pdf', desc: 'A PDF shown page by page' },
+		quiz: { label: 'Quiz', icon: 'fa-list-check', desc: 'Graded questions with a pass mark' },
+		audio: { label: 'Audio', icon: 'fa-microphone', desc: 'An audio file with a transcript' },
+		download: { label: 'Download', icon: 'fa-download', desc: 'Files advisors can download' },
+		multimedia: { label: 'Multimedia', icon: 'fa-window-restore', desc: 'Embed Typeform, Canva, H5P, Google Slides…' },
+		survey: { label: 'Survey', icon: 'fa-clipboard-list', desc: 'Questions without right answers' },
+		presentation: { label: 'Presentation', icon: 'fa-person-chalkboard', desc: 'Slides from a PDF, with narration' },
+		assignment: { label: 'Assignment', icon: 'fa-file-pen', desc: 'Advisors hand in work for review' },
+		exam: { label: 'Exam', icon: 'fa-graduation-cap', desc: 'The final exam (one per course)' },
+		live: { label: 'Live (Zoom)', icon: 'fa-tower-broadcast', desc: 'A scheduled Zoom or live session' }
 	};
+	var PDFJS_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+	var PDFJS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 	var QUESTION_TYPES = {
 		single: 'Single choice',
 		multiple: 'Multiple select (all or nothing)',
@@ -326,10 +336,11 @@
 					'</span></li>';
 			}).join('');
 
-			var typeOptions = Object.keys(LESSON_TYPES).filter(function (k) {
-				return k !== 'exam' || !state.tree.course.has_final_exam;
-			}).map(function (k) {
-				return '<option value="' + k + '">' + esc(LESSON_TYPES[k].label) + '</option>';
+			var tiles = Object.keys(LESSON_TYPES).map(function (k) {
+				var t = LESSON_TYPES[k];
+				var off = k === 'exam' && state.tree.course.has_final_exam;
+				return '<button type="button" class="tpd-lms-tile" data-pick-type="' + k + '"' + (off ? ' disabled title="This course already has its final exam"' : ' title="' + esc(t.desc) + '"') + '>' +
+					'<i class="fa-solid ' + t.icon + '" aria-hidden="true"></i><span>' + esc(t.label) + '</span></button>';
 			}).join('');
 
 			return '<section class="tpd-lms-chapter" data-chapter="' + ch.id + '">' +
@@ -342,11 +353,16 @@
 				'<button type="button" class="tpd-lms-icon-btn tpd-lms-danger" data-delete-chapter="' + ch.id + '" data-title="' + esc(ch.title) + '" data-count="' + ch.lessons.length + '" title="Delete module" aria-label="Delete module ' + esc(ch.title) + '"><i class="fa-solid fa-trash"></i></button>' +
 				'</span></header>' +
 				(lessons ? '<ol class="tpd-lms-lessons">' + lessons + '</ol>' : '<p class="tpd-lms-muted tpd-lms-pad">No lessons in this module yet.</p>') +
-				'<form class="tpd-lms-inline-form" data-form="new-lesson" data-chapter="' + ch.id + '">' +
-				'<select name="type" class="tpd-input" aria-label="Lesson type">' + typeOptions + '</select>' +
+				'<div class="tpd-lms-add-lesson">' +
+				'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" data-open-picker><i class="fa-solid fa-plus"></i> Add lesson</button>' +
+				'<div class="tpd-lms-picker" hidden>' +
+				'<div class="tpd-lms-bar"><strong>Lessons</strong><button type="button" class="tpd-lms-icon-btn" data-close-picker aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>' +
+				'<div class="tpd-lms-tiles" role="group" aria-label="Lesson type">' + tiles + '</div>' +
+				'<form class="tpd-lms-inline-form tpd-lms-pad0" data-form="new-lesson" data-chapter="' + ch.id + '" hidden>' +
+				'<input type="hidden" name="type" value="">' +
 				'<input type="text" name="title" class="tpd-input" required maxlength="255" placeholder="Lesson title" aria-label="New lesson title">' +
-				'<button type="submit" class="tpd-btn tpd-btn-xs tpd-btn-outline"><i class="fa-solid fa-plus"></i> Add lesson</button>' +
-				'</form></section>';
+				'<button type="submit" class="tpd-btn tpd-btn-xs tpd-btn-darkblue"><i class="fa-solid fa-plus"></i> Create lesson</button>' +
+				'</form></div></div></section>';
 		}).join('');
 	}
 
@@ -431,7 +447,8 @@
 		return '<div class="tpd-sa-card tpd-lms-curriculum">' +
 			'<div class="tpd-lms-bar"><h3 class="tpd-sa-card-title">Curriculum</h3>' +
 			'<span class="tpd-lms-bar-actions"><button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" data-go="students"><i class="fa-solid fa-users"></i> Students (' + c.student_count + ')</button>' +
-			'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" data-go="quiz_report"><i class="fa-solid fa-chart-column"></i> Quiz results</button>' +
+			'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" data-go="quiz_report"><i class="fa-solid fa-chart-column"></i> Quiz and survey results</button>' +
+			'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" data-go="assignments"><i class="fa-solid fa-inbox"></i> Assignments' + (c.pending_assignments ? ' <span class="tpd-lms-count">' + c.pending_assignments + '</span>' : '') + '</button>' +
 			'<span class="tpd-lms-badge is-' + esc(c.status) + '">' + (c.status === 'published' ? 'Published' : 'Draft') + '</span></span></div>' +
 			renderCurriculum() +
 			'<form class="tpd-lms-inline-form" data-form="new-chapter">' +
@@ -463,27 +480,13 @@
 		var t = LESSON_TYPES[l.type] || LESSON_TYPES.text;
 		crumbs([{ label: 'Courses', go: 'list' }, { label: state.tree.course.title, go: 'course' }, { label: l.title }]);
 
-		var body = '';
-		if (l.type === 'text' || l.type === 'video' || l.type === 'download') {
-			if (l.type === 'video') {
-				body += field('Video link', '<input type="url" name="video_url" class="tpd-input" value="' + esc(l.video_url) + '" placeholder="https://www.youtube.com/watch?v=… or https://vimeo.com/…">',
-					'Paste a YouTube or Vimeo link, or upload a video file below.');
-			}
-			if (l.type === 'video' || l.type === 'download') {
-				body += field(l.type === 'video' ? 'Video file' : 'File to download',
-					'<div class="tpd-lms-media"><input type="hidden" name="attachment_id" value="' + esc(numOrBlank(l.attachment_id)) + '">' +
-					'<span class="tpd-lms-muted" data-attachment-name>' + esc(l.attachment_name || 'No file chosen') + '</span> ' +
-					'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" data-pick-file="' + (l.type === 'video' ? 'video' : '') + '"><i class="fa-solid fa-upload"></i> Choose file</button>' +
-					(l.attachment_id ? ' <button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" data-clear-file>Remove</button>' : '') +
-					'</div>',
-					l.type === 'download' ? 'Only enrolled advisors who can open this lesson can download it.' : '');
-			}
-			body += field(l.type === 'text' ? 'Lesson content' : 'Notes for advisors',
-				'<textarea id="tpd-lms-lesson-content" name="content" rows="14" class="tpd-input">' + esc(l.content) + '</textarea>');
-		} else {
-			body += field('Instructions', '<textarea id="tpd-lms-lesson-content" name="content" rows="6" class="tpd-input">' + esc(l.content) + '</textarea>',
-				'Shown to advisors before they start.');
-		}
+		var body = lessonBody(l, l.settings || {});
+		var side = '';
+		if (state.lesson.quiz) side = (l.type === 'survey' ? renderSurveyNote() : renderQuizSettings(state.lesson.quiz)) + renderQuestions();
+		if (l.type === 'presentation') side = renderSlidesCard();
+		if (l.type === 'assignment') side = '<div class="tpd-sa-card"><h3 class="tpd-sa-card-title">Submissions</h3>' +
+			'<p class="tpd-lms-muted">' + (state.lesson.pending_submissions ? state.lesson.pending_submissions + ' waiting for review.' : 'Nothing waiting for review.') + '</p>' +
+			'<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-darkblue" data-go="assignments"><i class="fa-solid fa-inbox"></i> Review submissions</button></div>';
 
 		$root.html(
 			'<div class="tpd-lms-grid tpd-lms-grid-lesson">' +
@@ -501,10 +504,253 @@
 			'<div class="tpd-lms-form-actions"><button type="submit" class="tpd-btn tpd-btn-sm tpd-btn-darkblue"><i class="fa-solid fa-floppy-disk"></i> Save lesson</button> ' +
 			'<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline" data-go="course">Back to curriculum</button></div>' +
 			'</form></div>' +
-			(state.lesson.quiz ? '<div>' + renderQuizSettings(state.lesson.quiz) + renderQuestions() + '</div>' : '') +
+			(side ? '<div>' + side + '</div>' : '') +
 			'</div>'
 		);
 		addEditor('tpd-lms-lesson-content');
+		if (l.type === 'presentation') loadSlides();
+	}
+
+	function fileField(label, name, value, fileName, pick, help) {
+		return field(label,
+			'<div class="tpd-lms-media"><input type="hidden" name="' + name + '" value="' + esc(numOrBlank(value)) + '">' +
+			'<span class="tpd-lms-muted" data-attachment-name>' + esc(fileName || 'No file chosen') + '</span> ' +
+			'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" data-pick-file="' + esc(pick) + '"><i class="fa-solid fa-upload"></i> Choose file</button>' +
+			(value ? ' <button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" data-clear-file>Remove</button>' : '') +
+			'</div>', help);
+	}
+
+	function contentField(label, rows, help) {
+		var l = state.lesson.lesson;
+		return field(label, '<textarea id="tpd-lms-lesson-content" name="content" rows="' + rows + '" class="tpd-input">' + esc(l.content) + '</textarea>', help);
+	}
+
+	/** The editor fields for one lesson type. */
+	function lessonBody(l, s) {
+		switch (l.type) {
+			case 'video':
+				return field('Video link', '<input type="url" name="video_url" class="tpd-input" value="' + esc(l.video_url) + '" placeholder="https://www.youtube.com/watch?v=… or https://vimeo.com/…">', 'Paste a YouTube or Vimeo link, or upload a video file below.') +
+					fileField('Video file', 'attachment_id', l.attachment_id, l.attachment_name, 'video') +
+					contentField('Notes for advisors', 8);
+			case 'pdf':
+				return fileField('PDF file', 'attachment_id', l.attachment_id, l.attachment_name, 'application/pdf', 'Advisors read it page by page inside the lesson.') +
+					checkbox('s_allow_download', 'Let advisors download the PDF', s.allow_download) +
+					contentField('Notes for advisors', 6);
+			case 'audio':
+				return fileField('Audio file', 'attachment_id', l.attachment_id, l.attachment_name, 'audio', 'MP3, M4A, WAV or OGG from the media library.') +
+					field('Or an audio link', '<input type="url" name="s_audio_url" class="tpd-input" value="' + esc(s.audio_url) + '" placeholder="https://…/episode.mp3">', 'Used only if no file is chosen. Must start with https://.') +
+					contentField('Transcript or notes', 10);
+			case 'download':
+				return field('Files to download', '<ul class="tpd-lms-filelist" data-files>' + (s.files || []).map(fileRow).join('') + '</ul>' +
+					'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" data-add-files><i class="fa-solid fa-plus"></i> Add files</button>',
+					'Only enrolled advisors who can open this lesson can download them.') +
+					contentField('Description', 6);
+			case 'multimedia':
+				return field('Content link', '<input type="url" name="s_embed_url" class="tpd-input" value="' + esc(s.embed_url) + '" placeholder="https://…">',
+					'The embed or share link from Typeform, Canva, Genially, H5P, Google Slides, Articulate Rise and similar. It must start with https:// and allow embedding.') +
+					field('Height (pixels)', '<input type="number" name="s_height" class="tpd-input" min="300" max="1400" step="10" value="' + esc(s.height || 600) + '">') +
+					contentField('Instructions', 6);
+			case 'live':
+				var tz = s.timezone && s.timezone !== 'UTC' ? s.timezone : ((Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions().timeZone) || 'UTC');
+				return field('Join link', '<input type="url" name="s_join_url" class="tpd-input" value="' + esc(s.join_url) + '" placeholder="https://zoom.us/j/…">', 'Your Zoom (or Teams, Google Meet) meeting link.') +
+					'<div class="tpd-form-grid-2">' +
+					field('Starts', '<input type="datetime-local" name="s_starts_local" class="tpd-input" value="' + esc(s.starts_local) + '">') +
+					field('Time zone', '<input type="text" name="s_timezone" class="tpd-input" value="' + esc(tz) + '" list="tpd-lms-tz" autocomplete="off">' + tzList(), 'Advisors see the time in their own time zone.') +
+					'</div>' +
+					field('Recording link (after the session)', '<input type="url" name="s_recording_url" class="tpd-input" value="' + esc(s.recording_url) + '" placeholder="https://…">', 'Shown after the session ends.') +
+					contentField('Agenda and details', 6);
+			case 'assignment':
+				var mode = s.submission || 'either';
+				return contentField('Instructions', 10) +
+					field('Advisors hand in', '<select name="s_submission" class="tpd-input">' +
+						[['either', 'A file, a written answer, or both'], ['file', 'A file'], ['text', 'A written answer']].map(function (o) { return '<option value="' + o[0] + '"' + (mode === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('') + '</select>') +
+					field('Largest file (MB)', '<input type="number" name="s_max_mb" class="tpd-input" min="1" max="20" value="' + esc(s.max_mb || 10) + '">', 'PDF, Word, PowerPoint, Excel, text or image files.') +
+					checkbox('s_require_approval', 'Staff must approve it before the lesson counts as complete', s.require_approval !== false, 'Turn off to complete the lesson as soon as it is handed in.');
+			case 'presentation':
+				return fileField('Slides (PDF)', 'attachment_id', l.attachment_id, l.attachment_name, 'application/pdf',
+					'Each page becomes a slide. In PowerPoint or Keynote, use File → Save As (or Export) → PDF. For animations, export a video and use a Video lesson.') +
+					checkbox('s_require_all_slides', 'Advisors must view every slide before completing', s.require_all_slides !== false) +
+					checkbox('s_auto_advance', 'Move to the next slide when its narration ends', s.auto_advance) +
+					checkbox('s_allow_download', 'Let advisors download the slides as a PDF', s.allow_download) +
+					contentField('Introduction (optional)', 4);
+			case 'text':
+				return contentField('Lesson content', 14);
+			default:
+				return contentField('Instructions', 6, 'Shown to advisors before they start.');
+		}
+	}
+
+	function fileRow(f) {
+		return '<li data-file-id="' + f.id + '"><i class="fa-solid fa-paperclip" aria-hidden="true"></i> <span>' + esc(f.name) + '</span>' +
+			'<button type="button" class="tpd-lms-icon-btn tpd-lms-danger" data-remove-file aria-label="Remove ' + esc(f.name) + '"><i class="fa-solid fa-xmark"></i></button></li>';
+	}
+
+	function tzList() {
+		if (document.getElementById('tpd-lms-tz')) return '';
+		var zones = (Intl.supportedValuesOf ? Intl.supportedValuesOf('timeZone') : ['UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles', 'Europe/London', 'Africa/Nairobi', 'Asia/Dubai', 'Australia/Sydney']);
+		return '<datalist id="tpd-lms-tz">' + zones.map(function (z) { return '<option value="' + esc(z) + '">'; }).join('') + '</datalist>';
+	}
+
+	/** Read the type-specific settings from the lesson form. */
+	function collectSettings(type, $f) {
+		var v = function (n) { return $f.find('[name=' + n + ']').val(); };
+		var c = function (n) { return $f.find('[name=' + n + ']').is(':checked'); };
+		switch (type) {
+			case 'pdf': return { allow_download: c('s_allow_download') };
+			case 'audio': return { audio_url: v('s_audio_url') };
+			case 'download': return { files: $f.find('[data-files] li').map(function () { return Number($(this).data('file-id')); }).get() };
+			case 'multimedia': return { embed_url: v('s_embed_url'), height: v('s_height') };
+			case 'live': return { join_url: v('s_join_url'), starts_local: v('s_starts_local'), timezone: v('s_timezone'), recording_url: v('s_recording_url') };
+			case 'assignment': return { submission: v('s_submission'), max_mb: v('s_max_mb'), require_approval: c('s_require_approval') };
+			case 'presentation':
+				return {
+					require_all_slides: c('s_require_all_slides'), auto_advance: c('s_auto_advance'), allow_download: c('s_allow_download'),
+					slides: (state.slides || []).map(function (sl) { return { audio_id: sl.audio ? sl.audio.id : null, text: sl.text || '' }; })
+				};
+		}
+		return null;
+	}
+
+	function renderSurveyNote() {
+		return '<div class="tpd-sa-card"><h3 class="tpd-sa-card-title">Survey</h3>' +
+			'<p class="tpd-lms-muted">Questions have no right answers. The lesson completes when the advisor sends their answers. See the results under Quiz and survey results on the course page.</p></div>';
+	}
+
+	/* Presentation slides ------------------------------------------------- */
+
+	var pdfjsLoading = null;
+	function loadPdfJs() {
+		if (window.pdfjsLib) return $.Deferred().resolve(window.pdfjsLib).promise();
+		if (!pdfjsLoading) {
+			pdfjsLoading = $.Deferred();
+			var sc = document.createElement('script');
+			sc.src = PDFJS_SRC;
+			sc.onload = function () { window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER; pdfjsLoading.resolve(window.pdfjsLib); };
+			sc.onerror = function () { pdfjsLoading.reject('The slide viewer could not load. Check your connection.'); };
+			document.head.appendChild(sc);
+		}
+		return pdfjsLoading.promise();
+	}
+
+	function renderSlidesCard() {
+		return '<div class="tpd-sa-card"><div class="tpd-lms-bar"><h3 class="tpd-sa-card-title">Slides</h3><span class="tpd-lms-muted" data-slide-count></span></div>' +
+			'<p class="tpd-lms-help">Add narration to any slide: upload an audio file or record it here. Text appears under the slide. Save the lesson to keep your changes.</p>' +
+			'<div data-slides><p class="tpd-lms-muted">' + (state.lesson.lesson.attachment_id ? '<i class="fa-solid fa-spinner fa-spin"></i> Reading the PDF…' : 'Choose the slides PDF on the left, then save.') + '</p></div></div>';
+	}
+
+	function loadSlides() {
+		var l = state.lesson.lesson;
+		var saved = (l.settings && l.settings.slides) || [];
+		state.slides = saved.map(function (s) { return { audio: s.audio || null, text: s.text || '' }; });
+		if (!l.attachment_url) return;
+		loadPdfJs().then(function (pdfjsLib) {
+			return pdfjsLib.getDocument({ url: l.attachment_url }).promise;
+		}).then(function (pdf) {
+			state.pdf = pdf;
+			while (state.slides.length < pdf.numPages) state.slides.push({ audio: null, text: '' });
+			state.slides.length = pdf.numPages;
+			$('[data-slide-count]').text(pdf.numPages + (pdf.numPages === 1 ? ' slide' : ' slides'));
+			$('[data-slides]').html(state.slides.map(slideRow).join(''));
+			state.slides.forEach(function (_, i) { renderThumb(pdf, i); });
+		}, function (err) {
+			$('[data-slides]').html('<p class="tpd-lms-muted">' + esc(typeof err === 'string' ? err : 'This PDF could not be read. Save it again from PowerPoint as PDF and choose it again.') + '</p>');
+		});
+	}
+
+	function slideRow(s, i) {
+		return '<div class="tpd-lms-slide" data-slide="' + i + '">' +
+			'<div class="tpd-lms-slide-thumb"><canvas aria-label="Slide ' + (i + 1) + '"></canvas><span>' + (i + 1) + '</span></div>' +
+			'<div class="tpd-lms-slide-body">' +
+			'<div class="tpd-lms-slide-audio">' + slideAudio(s, i) + '</div>' +
+			'<textarea class="tpd-input" rows="2" data-slide-text="' + i + '" placeholder="Text under this slide (optional)" aria-label="Text for slide ' + (i + 1) + '">' + esc($('<div>').html(String(s.text || '').replace(/<br\s*\/?>/gi, '\n')).text()) + '</textarea>' +
+			'</div></div>';
+	}
+
+	function slideAudio(s, i) {
+		if (s.recording) return '<span class="tpd-lms-rec"><i class="fa-solid fa-circle"></i> Recording…</span> <button type="button" class="tpd-btn tpd-btn-xs tpd-btn-darkblue" data-stop-rec="' + i + '"><i class="fa-solid fa-stop"></i> Stop</button>';
+		if (s.uploading) return '<span class="tpd-lms-muted"><i class="fa-solid fa-spinner fa-spin"></i> Saving the recording…</span>';
+		if (s.audio) return '<audio controls preload="none" src="' + esc(s.audio.url) + '"></audio> <button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-lms-danger" data-slide-audio-remove="' + i + '">Remove narration</button>';
+		return '<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" data-slide-audio-pick="' + i + '"><i class="fa-solid fa-upload"></i> Upload narration</button> ' +
+			(window.MediaRecorder ? '<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" data-slide-rec="' + i + '"><i class="fa-solid fa-microphone"></i> Record</button>' : '');
+	}
+
+	function refreshSlideAudio(i) {
+		$('[data-slide="' + i + '"] .tpd-lms-slide-audio').html(slideAudio(state.slides[i], i));
+	}
+
+	function renderThumb(pdf, i) {
+		pdf.getPage(i + 1).then(function (page) {
+			var canvas = $('[data-slide="' + i + '"] canvas')[0];
+			if (!canvas) return;
+			var vp = page.getViewport({ scale: 1 });
+			var scale = 160 / vp.width;
+			var view = page.getViewport({ scale: scale });
+			canvas.width = view.width; canvas.height = view.height;
+			page.render({ canvasContext: canvas.getContext('2d'), viewport: view });
+		});
+	}
+
+	var recorder = null;
+	function startRecording(i) {
+		if (recorder) { notify('Stop the current recording first.', 'error'); return; }
+		navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+			var chunks = [];
+			recorder = new MediaRecorder(stream);
+			recorder.ondataavailable = function (e) { if (e.data.size) chunks.push(e.data); };
+			recorder.onstop = function () {
+				stream.getTracks().forEach(function (t) { t.stop(); });
+				recorder = null;
+				var type = chunks.length ? chunks[0].type : 'audio/webm';
+				var ext = type.indexOf('mp4') !== -1 ? 'm4a' : (type.indexOf('ogg') !== -1 ? 'ogg' : 'webm');
+				var fd = new FormData();
+				fd.append('file', new Blob(chunks, { type: type }), 'slide-' + (i + 1) + '-narration.' + ext);
+				fd.append('title', state.lesson.lesson.title + ': slide ' + (i + 1) + ' narration');
+				state.slides[i].recording = false;
+				state.slides[i].uploading = true;
+				refreshSlideAudio(i);
+				apiForm('media_upload', fd).then(function (att) {
+					state.slides[i].uploading = false;
+					state.slides[i].audio = att;
+					refreshSlideAudio(i);
+					notify('Narration recorded. Save the lesson to keep it.');
+				}, function (msg) { state.slides[i].uploading = false; refreshSlideAudio(i); notify(msg, 'error'); });
+			};
+			recorder.start();
+			state.slides[i].recording = true;
+			refreshSlideAudio(i);
+		}, function () { notify('Allow microphone access in your browser to record narration.', 'error'); });
+	}
+
+	/* Assignments review --------------------------------------------------- */
+
+	function showAssignments(status) {
+		removeEditors();
+		var c = state.tree.course;
+		crumbs([{ label: 'Courses', go: 'list' }, { label: c.title, go: 'course' }, { label: 'Assignments' }]);
+		$root.html('<div class="tpd-sa-card tpd-lms-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading submissions…</div>');
+		api('assignments', { course_id: c.id, status: status || 'pending' }).then(renderAssignments, function (msg) { notify(msg, 'error'); renderCourse(); });
+	}
+
+	function renderAssignments(data) {
+		state.view = 'assignments';
+		var names = { pending: 'Waiting for review', approved: 'Approved', returned: 'Returned' };
+		var tabs = ['pending', 'approved', 'returned'].map(function (s) {
+			return '<button type="button" class="tpd-btn tpd-btn-xs ' + (s === data.status ? 'tpd-btn-darkblue' : 'tpd-btn-outline') + '" data-assign-tab="' + s + '">' + names[s] + ' (' + (data.counts[s] || 0) + ')</button>';
+		}).join(' ');
+		var cards = data.submissions.map(function (s) {
+			return '<div class="tpd-sa-card"><dl class="tpd-lms-dl"><dt>Advisor</dt><dd>' + esc(s.learner) + '</dd><dt>Lesson</dt><dd>' + esc(s.lesson) + '</dd><dt>Handed in</dt><dd>' + fmtDate(s.created_at) + '</dd>' +
+				(s.file_url ? '<dt>File</dt><dd><a href="' + esc(s.file_url) + '"><i class="fa-solid fa-paperclip"></i> ' + esc(s.file_name) + '</a> <span class="tpd-lms-muted">' + esc(s.file_size) + '</span></dd>' : '') +
+				(s.feedback ? '<dt>Feedback</dt><dd>' + esc(s.feedback) + '</dd>' : '') + '</dl>' +
+				(s.text ? '<div class="tpd-lms-answer">' + s.text + '</div>' : '') +
+				(data.status === 'pending' ? '<form class="tpd-lms-form" data-form="review" data-id="' + s.id + '">' +
+					field('Feedback for the advisor', '<textarea name="feedback" rows="2" class="tpd-input" placeholder="Required when returning it"></textarea>') +
+					'<div class="tpd-lms-form-actions"><button type="submit" name="decision" value="approve" class="tpd-btn tpd-btn-sm tpd-btn-darkblue"><i class="fa-solid fa-check"></i> Approve</button> ' +
+					'<button type="submit" name="decision" value="return" class="tpd-btn tpd-btn-sm tpd-btn-outline">Return for changes</button></div></form>' : '') +
+				'</div>';
+		}).join('');
+		$root.html('<div class="tpd-sa-card"><div class="tpd-lms-bar"><h3 class="tpd-sa-card-title">Assignments</h3><span class="tpd-lms-bar-actions">' + tabs + '</span></div>' +
+			'<p class="tpd-lms-help">Approving completes the lesson for the advisor. Returning lets them send it again. They are emailed either way.</p></div>' +
+			(cards || '<div class="tpd-sa-card"><div class="tpd-lms-empty"><i class="fa-solid fa-inbox"></i><p>Nothing here.</p></div></div>'));
 	}
 
 	function renderQuizSettings(q) {
@@ -622,6 +868,18 @@
 		api('quiz_report', { course_id: c.id }).then(function (data) {
 			state.view = 'quiz_report';
 			$root.html(data.quizzes.length ? data.quizzes.map(function (q) {
+				if (q.is_survey) {
+					return '<div class="tpd-sa-card"><h3 class="tpd-sa-card-title">' + esc(q.title) + ' <span class="tpd-lms-badge is-published">Survey</span></h3>' +
+						'<p class="tpd-lms-muted">' + q.responses + (q.responses === 1 ? ' response' : ' responses') + '</p>' +
+						q.questions.map(function (x) {
+							var body = x.type === 'short' ?
+								(x.texts.length ? '<ul class="tpd-lms-texts">' + x.texts.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' : '<p class="tpd-lms-muted">No answers yet.</p>') :
+								'<table class="tpd-lms-table"><tbody>' + x.options.map(function (o) {
+									return '<tr><td>' + esc(o.text) + '</td><td><div class="tpd-lms-mini-bar"><span style="width:' + o.percent + '%"></span></div> ' + o.percent + '%</td><td class="tpd-lms-muted">' + o.count + '</td></tr>';
+								}).join('') + '</tbody></table>';
+							return '<div class="tpd-lms-survey-q"><strong>' + esc(x.prompt) + '</strong> <span class="tpd-lms-muted">· ' + x.answers + ' answered</span>' + body + '</div>';
+						}).join('') + '</div>';
+				}
 				var rows = q.questions.map(function (x) {
 					return '<tr><td>' + esc(x.prompt) + (x.topic ? '<div class="tpd-lms-muted">' + esc(x.topic) + '</div>' : '') + '</td><td>' + x.answers + '</td>' +
 						'<td>' + (x.correct === null ? '—' : '<div class="tpd-lms-mini-bar ' + (x.correct < 50 ? 'is-low' : '') + '"><span style="width:' + x.correct + '%"></span></div> ' + x.correct + '%') + '</td></tr>';
@@ -675,15 +933,16 @@
 
 	function renderQuestions() {
 		var qs = state.lesson.questions;
+		var survey = isSurvey();
 		var list = qs.map(function (q, i) {
 			var answers = q.type === 'short' ?
-				'<div class="tpd-lms-muted">Accepted: ' + esc(q.accepted_answers.split(/\r?\n/).filter(Boolean).join(' · ')) + '</div>' :
+				(survey ? '<div class="tpd-lms-muted">Written answer</div>' : '<div class="tpd-lms-muted">Accepted: ' + esc(q.accepted_answers.split(/\r?\n/).filter(Boolean).join(' · ')) + '</div>') :
 				'<ul class="tpd-lms-options">' + q.options.map(function (o) {
-					return '<li class="' + (o.is_correct ? 'is-correct' : '') + '">' + (o.is_correct ? '<i class="fa-solid fa-check" aria-label="Correct"></i> ' : '') + esc(o.text) + '</li>';
+					return '<li class="' + (o.is_correct && !survey ? 'is-correct' : '') + '">' + (o.is_correct && !survey ? '<i class="fa-solid fa-check" aria-label="Correct"></i> ' : '') + esc(o.text) + '</li>';
 				}).join('') + '</ul>';
 			return '<li class="tpd-lms-question">' +
 				'<div class="tpd-lms-bar"><span class="tpd-lms-muted">' + (i + 1) + '. ' + esc(QUESTION_TYPES[q.type] || q.type) +
-				(q.topic ? ' · ' + esc(q.topic) : '') + ' · ' + q.points + (q.points === 1 ? ' point' : ' points') + '</span>' +
+				(survey ? '' : (q.topic ? ' · ' + esc(q.topic) : '') + ' · ' + q.points + (q.points === 1 ? ' point' : ' points')) + '</span>' +
 				'<span><button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" data-edit-question="' + q.id + '"><i class="fa-solid fa-pen"></i> Edit</button> ' +
 				'<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-lms-danger" data-delete-question="' + q.id + '"><i class="fa-solid fa-trash"></i></button></span></div>' +
 				'<div class="tpd-lms-prompt">' + esc($('<div>').html(q.prompt).text()) + '</div>' + answers + '</li>';
@@ -775,26 +1034,29 @@
 		$('#tpd-lms-question-editor').html(
 			'<form class="tpd-lms-form tpd-lms-question-form" data-form="question" data-id="' + q.id + '">' +
 			'<h4>' + (q.id ? 'Edit question' : 'New question') + '</h4>' +
-			'<div class="tpd-form-grid-2">' +
-			field('Type', '<select name="type" class="tpd-input">' + types + '</select>') +
-			field('Topic', '<input type="text" name="topic" class="tpd-input" maxlength="120" value="' + esc(q.topic) + '" placeholder="e.g. Module 4">', 'Used to balance random draws. “4” becomes “Module 4”.') +
-			'</div>' +
+			(isSurvey() ?
+				field('Type', '<select name="type" class="tpd-input">' + types.replace('Multiple select (all or nothing)', 'Pick any that apply').replace('Short answer', 'Written answer') + '</select>') :
+				'<div class="tpd-form-grid-2">' +
+				field('Type', '<select name="type" class="tpd-input">' + types + '</select>') +
+				field('Topic', '<input type="text" name="topic" class="tpd-input" maxlength="120" value="' + esc(q.topic) + '" placeholder="e.g. Module 4">', 'Used to balance random draws. “4” becomes “Module 4”.') +
+				'</div>') +
 			field('Question', '<textarea id="tpd-lms-q-prompt" name="prompt" rows="3" class="tpd-input">' + esc(q.prompt) + '</textarea>') +
 			'<div data-options-wrap>' + renderOptionRows(q) + '</div>' +
-			'<div data-short-wrap' + (q.type === 'short' ? '' : ' hidden') + '>' +
-			field('Accepted answers', '<textarea name="accepted_answers" rows="3" class="tpd-input" placeholder="One per line">' + esc(q.accepted_answers) + '</textarea>', 'Capital letters and extra spaces are ignored.') +
-			'</div>' +
-			'<div class="tpd-form-grid-2">' +
-			field('Points', '<input type="number" name="points" class="tpd-input" min="1" max="100" value="' + esc(q.points) + '">') +
-			'</div>' +
-			field('Explanation', '<textarea id="tpd-lms-q-expl" name="explanation" rows="2" class="tpd-input">' + esc(q.explanation) + '</textarea>', 'Optional. Shown after submitting, if the quiz shows answers.') +
+			(isSurvey() ? '' :
+				'<div data-short-wrap' + (q.type === 'short' ? '' : ' hidden') + '>' +
+				field('Accepted answers', '<textarea name="accepted_answers" rows="3" class="tpd-input" placeholder="One per line">' + esc(q.accepted_answers) + '</textarea>', 'Capital letters and extra spaces are ignored.') +
+				'</div>' +
+				'<div class="tpd-form-grid-2">' +
+				field('Points', '<input type="number" name="points" class="tpd-input" min="1" max="100" value="' + esc(q.points) + '">') +
+				'</div>' +
+				field('Explanation', '<textarea id="tpd-lms-q-expl" name="explanation" rows="2" class="tpd-input">' + esc(q.explanation) + '</textarea>', 'Optional. Shown after submitting, if the quiz shows answers.')) +
 			'<div class="tpd-lms-form-actions"><button type="submit" class="tpd-btn tpd-btn-sm tpd-btn-darkblue"><i class="fa-solid fa-floppy-disk"></i> Save question</button> ' +
 			'<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline" data-cancel-question>Cancel</button></div>' +
 			'</form>'
 		);
 		var $form = $('#tpd-lms-question-editor form');
 		addEditor('tpd-lms-q-prompt', 'compact');
-		addEditor('tpd-lms-q-expl', 'compact');
+		if (!isSurvey()) addEditor('tpd-lms-q-expl', 'compact');
 		$form[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
 	}
 
@@ -810,9 +1072,21 @@
 		removeEditor('tpd-lms-q-expl');
 	}
 
+	function isSurvey() {
+		return !!(state.lesson && state.lesson.lesson && state.lesson.lesson.type === 'survey');
+	}
+
 	function renderOptionRows(q) {
 		if (q.type === 'short') return '';
 		var inputType = q.type === 'multiple' ? 'checkbox' : 'radio';
+		var survey = isSurvey();
+		if (survey) {
+			// Survey choices have no right answer.
+			return '<div class="tpd-form-group tpd-lms-field"><label>Choices</label>' + q.options.map(function (o) {
+				return '<div class="tpd-lms-option-row"><input type="text" class="tpd-input" data-option-text maxlength="500" value="' + esc(o.text) + '" placeholder="Choice"' + (q.type === 'true_false' ? ' readonly' : '') + '>' +
+					(q.type === 'true_false' ? '' : '<button type="button" class="tpd-lms-icon-btn" data-remove-option title="Remove choice" aria-label="Remove choice"><i class="fa-solid fa-xmark"></i></button>') + '</div>';
+			}).join('') + (q.type === 'true_false' ? '' : '<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" data-add-option><i class="fa-solid fa-plus"></i> Add choice</button>') + '</div>';
+		}
 		var rows = q.options.map(function (o) {
 			return '<div class="tpd-lms-option-row">' +
 				'<label class="tpd-lms-correct"><input type="' + inputType + '" name="correct" value="1"' + (o.is_correct ? ' checked' : '') + '> <span class="screen-reader-text">Correct answer</span></label>' +
@@ -856,6 +1130,7 @@
 				if (go === 'proctoring') showProctoring();
 				if (go === 'students') showStudents();
 				if (go === 'quiz_report') showQuizReport();
+				if (go === 'assignments') showAssignments();
 			})
 			.on('change', '[data-form=access] [name=access_mode]', function () {
 				$(this).closest('form').find('[data-password-wrap]').prop('hidden', $(this).val() !== 'password');
@@ -1025,9 +1300,28 @@
 			})
 			.on('click', '[data-move-lesson]', function () { moveLesson(Number($(this).data('move-lesson')), Number($(this).data('dir'))); })
 			.on('click', '[data-move-chapter]', function () { moveChapter(Number($(this).data('move-chapter')), Number($(this).data('dir'))); })
+			.on('click', '[data-open-picker]', function () {
+				$('.tpd-lms-picker').prop('hidden', true);
+				$(this).prop('hidden', true).siblings('.tpd-lms-picker').prop('hidden', false);
+			})
+			.on('click', '[data-close-picker]', function () {
+				var $wrap = $(this).closest('.tpd-lms-add-lesson');
+				$wrap.find('.tpd-lms-picker').prop('hidden', true);
+				$wrap.find('[data-open-picker]').prop('hidden', false);
+			})
+			.on('click', '[data-pick-type]', function () {
+				var $p = $(this).closest('.tpd-lms-picker');
+				var type = $(this).data('pick-type');
+				$p.find('.tpd-lms-tile').removeClass('is-selected').attr('aria-pressed', 'false');
+				$(this).addClass('is-selected').attr('aria-pressed', 'true');
+				var $f = $p.find('[data-form=new-lesson]').prop('hidden', false);
+				$f.find('[name=type]').val(type);
+				$f.find('[name=title]').attr('placeholder', LESSON_TYPES[type].label + ' lesson title').trigger('focus');
+			})
 			.on('submit', '[data-form=new-lesson]', function (e) {
 				e.preventDefault();
 				var $f = $(this);
+				if (!$f.find('[name=type]').val()) { notify('Choose a lesson type first.', 'error'); return; }
 				api('lesson_save', { chapter_id: $f.data('chapter'), type: $f.find('[name=type]').val(), title: $f.find('[name=title]').val() }).then(function (detail) {
 					state.lesson = detail;
 					return api('course_get', { course_id: state.tree.course.id });
@@ -1042,6 +1336,10 @@
 				var data = formData($f);
 				data.content = editorValue('tpd-lms-lesson-content');
 				data.lesson_id = state.lesson.lesson.id;
+				var settings = collectSettings(state.lesson.lesson.type, $f);
+				if (settings) data.settings = JSON.stringify(settings);
+				Object.keys(data).forEach(function (k) { if (k.indexOf('s_') === 0) delete data[k]; });
+				if (recorder) { notify('Stop the recording before saving.', 'error'); return; }
 				busy($b, true);
 				api('lesson_save', data).then(function (detail) {
 					state.lesson = detail;
@@ -1051,6 +1349,50 @@
 					notify('Lesson saved.');
 					renderLesson();
 				}, function (msg) { busy($b, false); notify(msg, 'error'); });
+			})
+			.on('click', '[data-add-files]', function () {
+				var $list = $(this).siblings('[data-files]');
+				if (!(window.wp && wp.media)) { notify('The media library is not available on this page.', 'error'); return; }
+				var frame = wp.media({ title: 'Choose files to download', multiple: 'add' });
+				frame.on('select', function () {
+					frame.state().get('selection').each(function (att) {
+						var a = att.toJSON();
+						if (!$list.find('[data-file-id="' + a.id + '"]').length) $list.append(fileRow({ id: a.id, name: a.filename || a.title }));
+					});
+				});
+				frame.open();
+			})
+			.on('click', '[data-remove-file]', function () { $(this).closest('li').remove(); })
+			.on('click', '[data-slide-audio-pick]', function () {
+				var i = Number($(this).data('slide-audio-pick'));
+				pickMedia('Choose narration for slide ' + (i + 1), 'audio', function (att) {
+					state.slides[i].audio = { id: att.id, name: att.filename || att.title, url: att.url };
+					refreshSlideAudio(i);
+				});
+			})
+			.on('click', '[data-slide-audio-remove]', function () {
+				var i = Number($(this).data('slide-audio-remove'));
+				state.slides[i].audio = null;
+				refreshSlideAudio(i);
+			})
+			.on('click', '[data-slide-rec]', function () { startRecording(Number($(this).data('slide-rec'))); })
+			.on('click', '[data-stop-rec]', function () { if (recorder) recorder.stop(); })
+			.on('input', '[data-slide-text]', function () {
+				var i = Number($(this).data('slide-text'));
+				if (state.slides[i]) state.slides[i].text = esc($(this).val()).replace(/\n/g, '<br>');
+			})
+			.on('click', '[data-assign-tab]', function () { showAssignments($(this).data('assign-tab')); })
+			.on('click', '[data-form=review] [type=submit]', function () { $(this).closest('form').data('decision', $(this).val()); })
+			.on('submit', '[data-form=review]', function (e) {
+				e.preventDefault();
+				var $f = $(this);
+				var decision = $f.data('decision') || 'approve';
+				if (decision === 'return' && !$.trim($f.find('[name=feedback]').val())) { notify('Tell the advisor what to change before returning it.', 'error'); return; }
+				$f.find('[type=submit]').prop('disabled', true);
+				api('assignment_review', { submission_id: $f.data('id'), decision: decision, feedback: $f.find('[name=feedback]').val() }).then(function (data) {
+					notify(decision === 'approve' ? 'Approved. The advisor has been emailed.' : 'Returned. The advisor has been emailed.');
+					renderAssignments(data);
+				}, function (msg) { $f.find('[type=submit]').prop('disabled', false); notify(msg, 'error'); });
 			})
 			.on('click', '[data-pick-file]', function () {
 				var $form = $(this).closest('form');
@@ -1146,7 +1488,7 @@
 				var $f = $(this), $b = $f.find('[type=submit]');
 				var data = formData($f);
 				data.prompt = editorValue('tpd-lms-q-prompt');
-				data.explanation = editorValue('tpd-lms-q-expl');
+				data.explanation = isSurvey() ? '' : editorValue('tpd-lms-q-expl');
 				data.options = JSON.stringify(readOptions($f));
 				if (Number($f.data('id'))) data.question_id = $f.data('id');
 				else data.quiz_id = state.lesson.quiz.id;
