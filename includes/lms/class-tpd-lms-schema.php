@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class TPD_LMS_Schema {
 
-	const DB_VERSION = '1.2';
+	const DB_VERSION = '1.3';
 	const OPT_DB_VER = 'tpd_lms_db_ver';
 
 	/** Short names of every LMS table, without the prefix. */
@@ -84,6 +84,7 @@ class TPD_LMS_Schema {
 			certificate_enabled TINYINT(1) NOT NULL DEFAULT 1,
 			access_days SMALLINT UNSIGNED NULL,
 			tier_included VARCHAR(40) NOT NULL DEFAULT 'none',
+			exam_card TINYINT(1) NOT NULL DEFAULT 0,
 			created_at DATETIME NOT NULL,
 			updated_at DATETIME NOT NULL,
 			PRIMARY KEY  (id),
@@ -181,6 +182,10 @@ class TPD_LMS_Schema {
 			completed_at DATETIME NULL,
 			last_activity_at DATETIME NULL,
 			last_lesson_id BIGINT UNSIGNED NULL,
+			exam_unlocked_at DATETIME NULL,
+			exam_unlocked_by BIGINT UNSIGNED NULL,
+			exam_unlock_key_hash VARCHAR(64) NULL,
+			exam_unlock_key_expires DATETIME NULL,
 			created_at DATETIME NOT NULL,
 			updated_at DATETIME NOT NULL,
 			PRIMARY KEY  (id),

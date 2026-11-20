@@ -97,3 +97,10 @@ The types match Thinkific's: video, text, PDF, quiz, audio, download, multimedia
 | Live (Zoom) | Join link, a start time stored in UTC and shown in each advisor's time zone, a join button from 15 minutes before the start, and a recording link afterwards. It doesn't create Zoom meetings automatically. |
 | Survey | A quiz with a pass mark of 0 and no right answers. One response, which completes the lesson. Results show per question. |
 | Assignment | A file and/or written answer. Completes on staff approval (or on hand-in if approval is off). Returned work can be sent again. |
+
+## Exam card
+
+With "Show the final exam as a separate card" on, a course's final exam leaves the curriculum and appears as its own card in Resources & Tools → My Exams (`templates/lms/exam-cards.php`, `class-tpd-lms-examcard.php`).
+- **Unlocking:** the card is locked until every other lesson is done, or until an admin unlocks it early, either with the "Unlock exam now" button on the student's page or with a one-time unlock key the advisor types on the card.
+- **Keys:** stored as a hash, they expire, and five wrong tries lock the advisor out for 15 minutes.
+- **What still applies:** access expiry, exam passwords and proctor codes, and the certificate rule.

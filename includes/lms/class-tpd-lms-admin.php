@@ -40,6 +40,9 @@ class TPD_LMS_Admin {
 		'code_create',
 		'code_revoke',
 		'quiz_report',
+		'exam_unlock',
+		'exam_relock',
+		'exam_key',
 		'proctor_list',
 		'proctor_approve',
 		'proctor_decline',
@@ -215,7 +218,44 @@ class TPD_LMS_Admin {
 		if ( is_wp_error( $e ) ) {
 			return $e;
 		}
-		return array( 'enrollment_id' => (int) $e->id, 'valid_for' => TPD_LMS_Exam::VALID_FOR ) + TPD_LMS_Reports::student( $e );
+		$card = TPD_LMS_ExamCard::state( $e );
+		if ( $card ) {
+			$by                    = $e->exam_unlocked_by ? get_userdata( (int) $e->exam_unlocked_by ) : null;
+			$card['unlocked_at']   = $e->exam_unlocked_at;
+			$card['unlocked_by']   = $e->exam_unlocked_at ? ( $by ? $by->display_name : __( 'unlock key', 'tpd-tool' ) ) : null;
+			$card['key_expires']   = $card['has_key'] ? $e->exam_unlock_key_expires : null;
+			$card['key_days']      = TPD_LMS_ExamCard::KEY_DAYS;
+		}
+		return array( 'enrollment_id' => (int) $e->id, 'valid_for' => TPD_LMS_Exam::VALID_FOR, 'exam_card' => $card ) + TPD_LMS_Reports::student( $e );
+	}
+
+	private static function action_exam_unlock( $p ) {
+		$e = self::enrollment_or_error( isset( $p['enrollment_id'] ) ? $p['enrollment_id'] : 0 );
+		if ( is_wp_error( $e ) ) {
+			return $e;
+		}
+		TPD_LMS_ExamCard::unlock( $e, get_current_user_id() );
+		return self::action_student_detail( array( 'enrollment_id' => $e->id ) );
+	}
+
+	private static function action_exam_relock( $p ) {
+		$e = self::enrollment_or_error( isset( $p['enrollment_id'] ) ? $p['enrollment_id'] : 0 );
+		if ( is_wp_error( $e ) ) {
+			return $e;
+		}
+		TPD_LMS_ExamCard::relock( $e );
+		return self::action_student_detail( array( 'enrollment_id' => $e->id ) );
+	}
+
+	/** Make an unlock key; shown once, and optionally emailed to the advisor. */
+	private static function action_exam_key( $p ) {
+		$e = self::enrollment_or_error( isset( $p['enrollment_id'] ) ? $p['enrollment_id'] : 0 );
+		if ( is_wp_error( $e ) ) {
+			return $e;
+		}
+		$email = ! empty( $p['email'] ) && '0' !== (string) $p['email'];
+		$key   = TPD_LMS_ExamCard::create_key( $e, isset( $p['days'] ) ? (int) $p['days'] : 7, $email );
+		return array( 'unlock_key' => $key, 'emailed' => $email ) + self::action_student_detail( array( 'enrollment_id' => $e->id ) );
 	}
 
 	/** Enroll an existing TPD member by email (they get the "you're enrolled" email). */
@@ -532,7 +572,7 @@ class TPD_LMS_Admin {
 				$fields[ $key ] = $p[ $key ];
 			}
 		}
-		foreach ( array( 'sequential', 'drip_enabled', 'certificate_enabled' ) as $flag ) {
+		foreach ( array( 'sequential', 'drip_enabled', 'certificate_enabled', 'exam_card' ) as $flag ) {
 			if ( array_key_exists( $flag, $p ) ) {
 				$fields[ $flag ] = '1' === (string) $p[ $flag ] ? 1 : 0;
 			}
@@ -883,6 +923,7 @@ class TPD_LMS_Admin {
 				'access_days'         => null === $course->access_days ? null : (int) $course->access_days,
 				'tier_included'       => $course->tier_included,
 				'has_final_exam'      => (bool) TPD_LMS_Store::final_exam_for_course( $course->id ),
+				'exam_card'           => (bool) $course->exam_card,
 				'pending_assignments' => TPD_LMS_Assign::pending_count( $course->id ),
 			) ),
 			'chapters' => $chapters,

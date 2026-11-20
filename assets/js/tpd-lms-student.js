@@ -405,7 +405,13 @@
 
 	function nextButton() {
 		var n = nextLesson();
-		return n ? '<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline" data-lms-lesson="' + n.id + '">Next: ' + esc(n.title) + ' <i class="fa-solid fa-arrow-right"></i></button>' : '';
+		if (n) return '<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline" data-lms-lesson="' + n.id + '">Next: ' + esc(n.title) + ' <i class="fa-solid fa-arrow-right"></i></button>';
+		// End of the curriculum: point to the separate exam card's exam once it is unlocked.
+		var x = st.outline && st.outline.exam_card;
+		if (x && !x.locked && !x.passed && (!st.lesson || st.lesson.id !== x.lesson_id)) {
+			return '<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-darkblue" data-lms-lesson="' + x.lesson_id + '" style="background:#00798c;border-color:#00798c;"><i class="fa-solid fa-graduation-cap"></i> Go to the ' + esc(x.title) + '</button>';
+		}
+		return '';
 	}
 
 	/* ------------------------------------------------------------------ */
@@ -685,7 +691,22 @@
 		$(document)
 			.on('click', '.tpd-lms-launch', function (e) {
 				e.preventDefault();
-				openCourse(String($(this).data('redirect')));
+				openCourse(String($(this).data('redirect')), Number($(this).data('lesson')) || null);
+			})
+			.on('submit', '[data-exam-unlock]', function (e) {
+				e.preventDefault();
+				var $f = $(this), $card = $f.closest('[data-exam-card]'), $msg = $f.find('.tpd-lms-unlock-msg');
+				var $b = $f.find('[type=submit]').prop('disabled', true);
+				api('exam_unlock', { course: $f.data('exam-unlock'), key: $f.find('[name=key]').val() }).then(function (r) {
+					var x = r.exam_card;
+					$card.removeClass('is-locked');
+					$card.find('.tpd-lms-exam-icon i').attr('class', 'fa-solid fa-lock-open');
+					$card.find('.tpd-lms-exam-status').attr('class', 'tpd-lms-exam-status is-open').html('<i class="fa-solid fa-lock-open"></i> Unlocked. Good luck!');
+					$f.replaceWith('<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-darkblue tpd-btn-block tpd-lms-launch" data-redirect="' + esc(x.course_slug) + '" data-lesson="' + x.lesson_id + '" style="background:#00798c;border-color:#00798c;"><i class="fa-solid fa-play"></i> Start the exam</button>');
+				}, function (msg) {
+					$b.prop('disabled', false);
+					$msg.text(msg).prop('hidden', false);
+				});
 			})
 			.on('click', '[data-lms-close]', closePlayer)
 			.on('click', '#tpd-lms-player [data-lms-lesson]', function () { openLesson(Number($(this).data('lms-lesson'))); })

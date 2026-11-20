@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class TPD_LMS_Student {
 
-	const ACTIONS = array( 'outline', 'lesson', 'complete', 'quiz_start', 'quiz_save', 'quiz_submit', 'proctor_request', 'proctor_cancel', 'assignment_submit' );
+	const ACTIONS = array( 'outline', 'lesson', 'complete', 'quiz_start', 'quiz_save', 'quiz_submit', 'proctor_request', 'proctor_cancel', 'assignment_submit', 'exam_unlock' );
 
 	/** Public certificate page: /certificate-verify/ and /certificate-verify/{CODE}/ */
 	const CERT_PATH = 'certificate-verify';
@@ -107,6 +107,7 @@ class TPD_LMS_Student {
 				'expired'          => TPD_LMS_Progress::is_expired( $e ),
 				'learn_path'       => $course->slug,
 				'certificate'      => $cert ? array( 'code' => $cert->code, 'path' => self::certificate_url( $cert->code ) ) : null,
+				'exam_card'        => TPD_LMS_ExamCard::state( $e ),
 			);
 		}
 		return $out;
@@ -273,7 +274,11 @@ class TPD_LMS_Student {
 		$done       = TPD_LMS_Progress::completed_lesson_ids( $enrollment );
 		$by_chapter = array();
 		$resume     = null;
+		$card_exam  = TPD_LMS_ExamCard::exam_lesson( $course );
 		foreach ( $ordered as $l ) {
+			if ( $card_exam && (int) $l->id === (int) $card_exam->id ) {
+				continue; // Shown as its own card, outside the curriculum.
+			}
 			$lock = $manage ? null : TPD_LMS_Progress::lock_reason( $l, $enrollment, $ordered, $done );
 			$is_done = in_array( (int) $l->id, $done, true );
 			if ( null === $resume && ! $is_done && null === $lock ) {
@@ -323,7 +328,19 @@ class TPD_LMS_Student {
 			'resume'     => $resume,
 			'chapters'   => $chapters,
 			'certificate'=> $cert ? array( 'code' => $cert->code, 'url' => self::certificate_url( $cert->code ) ) : null,
+			'exam_card'  => $enrollment ? TPD_LMS_ExamCard::state( $enrollment ) : null,
 		);
+	}
+
+	/** The advisor types an unlock key on the exam card. */
+	private static function action_exam_unlock( $user_id, $p ) {
+		$course     = TPD_LMS_Store::get_course( isset( $p['course'] ) ? (string) $p['course'] : '' );
+		$enrollment = $course ? TPD_LMS_Progress::get_enrollment( $user_id, $course->id ) : null;
+		if ( ! $enrollment || ! TPD_LMS_ExamCard::exam_lesson( $course ) ) {
+			return new WP_Error( 'no_exam', __( 'That exam isn’t available.', 'tpd-tool' ) );
+		}
+		$enrollment = TPD_LMS_ExamCard::redeem_key( $enrollment, isset( $p['key'] ) ? (string) $p['key'] : '' );
+		return is_wp_error( $enrollment ) ? $enrollment : array( 'exam_card' => TPD_LMS_ExamCard::state( $enrollment ) );
 	}
 
 	/** One lesson's content, if the user may open it. */

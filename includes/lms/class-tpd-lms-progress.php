@@ -114,6 +114,10 @@ class TPD_LMS_Progress {
 		if ( self::is_expired( $enrollment ) ) {
 			return __( 'Your access to this course has ended.', 'tpd-tool' );
 		}
+		// Unlocked early by an admin (button or unlock key): skip the order and "finish every lesson" checks.
+		if ( 'exam' === $lesson->type && ! empty( $enrollment->exam_unlocked_at ) ) {
+			return null;
+		}
 
 		$course = TPD_LMS_Store::get_course( (int) $lesson->course_id );
 
