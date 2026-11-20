@@ -391,7 +391,15 @@ class TPD_Tool_Shortcodes {
 		return ob_get_clean();
 	}
 
-	public static function render_portal_login( $atts ) {
+	public static function render_portal_login( $atts = array() ) {
+		$atts = shortcode_atts(
+			array(
+				'show_hero'      => 'yes',
+				'default_portal' => 'advisor',
+			),
+			$atts,
+			'tpd_portal_login'
+		);
 		ob_start();
 		$template = TPD_TOOL_DIR . 'templates/auth/portal-login.php';
 		if ( file_exists( $template ) ) {

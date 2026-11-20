@@ -36,28 +36,20 @@ if ( is_user_logged_in() && ! isset( $_GET['preview_login'] ) && ( ! class_exist
 	}
 }
 
+$show_hero = isset( $atts['show_hero'] ) ? ! in_array( strtolower( (string) $atts['show_hero'] ), array( 'no', '0', 'false', 'hide' ), true ) : true;
+$default_portal = ! empty( $atts['default_portal'] ) && in_array( strtolower( (string) $atts['default_portal'] ), array( 'advisor', 'supplier' ), true ) ? strtolower( (string) $atts['default_portal'] ) : 'advisor';
 $is_standalone = ! did_action( 'wp_head' );
 
 if ( $is_standalone ) {
-	?>
-	<!DOCTYPE html>
-	<html <?php language_attributes(); ?>>
-	<head>
-		<meta charset="<?php bloginfo( 'charset' ); ?>">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title><?php esc_html_e( 'Official Portal Login | Travel Advisor Resource Center', 'tpd-tool' ); ?></title>
-		<link rel="preconnect" href="https://fonts.googleapis.com">
-		<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-		<?php wp_head(); ?>
-	</head>
-	<body <?php body_class( 'tpd-standalone-portal-body' ); ?>>
-	<?php
+	get_header();
 }
 ?>
 
 <!-- Scoped Brand Design Tokens & Stylesheet -->
 <style>
+	@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+	@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css');
+
 	:root {
 		--tarc-deep-slate-teal: #236a7f;
 		--tarc-sage-teal:       #64a2ad;
@@ -97,87 +89,6 @@ if ( $is_standalone ) {
 		box-sizing: border-box;
 	}
 
-	/* Top Brand Header */
-	.tarc-portal-nav {
-		background: var(--tarc-dark-teal);
-		border-bottom: 1px solid rgba(151, 188, 199, 0.25);
-		padding: 16px 44px;
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		color: var(--tarc-pure-white);
-		position: sticky;
-		top: 0;
-		z-index: 100;
-	}
-
-	.tarc-nav-brand {
-		display: flex;
-		align-items: center;
-		gap: 14px;
-		text-decoration: none;
-	}
-
-	.tarc-nav-emblem {
-		width: 48px;
-		height: 48px;
-		background: rgba(255, 255, 255, 0.08);
-		border: 1.5px solid var(--tarc-warm-ochre-gold);
-		border-radius: 12px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: var(--tarc-warm-ochre-gold);
-		font-size: 22px;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-	}
-
-	.tarc-nav-titles {
-		display: flex;
-		flex-direction: column;
-	}
-
-	.tarc-nav-name-full {
-		font-family: var(--tarc-font-heading);
-		font-size: 23px;
-		font-weight: 700;
-		letter-spacing: -0.01em;
-		color: var(--tarc-pure-white);
-		line-height: 1.2;
-	}
-
-	.tarc-nav-subtext {
-		font-size: 11px;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.16em;
-		color: var(--tarc-soft-mist-teal);
-		margin-top: 2px;
-	}
-
-	.tarc-nav-trust {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-	}
-
-	.tarc-trust-pill {
-		font-size: 11.5px;
-		font-weight: 600;
-		padding: 6px 14px;
-		border-radius: 20px;
-		background: rgba(255, 255, 255, 0.08);
-		border: 1px solid rgba(151, 188, 199, 0.3);
-		color: var(--tarc-pure-white);
-		display: flex;
-		align-items: center;
-		gap: 8px;
-	}
-
-	.tarc-trust-pill i {
-		color: var(--tarc-warm-ochre-gold);
-	}
-
 	/* Hero & Company Intro Section */
 	.tarc-company-hero {
 		position: relative;
@@ -215,13 +126,14 @@ if ( $is_standalone ) {
 		backdrop-filter: blur(8px);
 	}
 
-	.tarc-hero-title {
-		font-family: var(--tarc-font-heading);
-		font-size: 42px;
-		line-height: 1.18;
-		font-weight: 700;
-		margin: 0 0 16px;
-		color: var(--tarc-pure-white);
+	.tarc-hero-title,
+	h1.tarc-hero-title {
+		font-family: var(--tarc-font-heading) !important;
+		font-size: 42px !important;
+		line-height: 1.18 !important;
+		font-weight: 700 !important;
+		margin: 0 0 16px !important;
+		color: var(--tarc-pure-white) !important;
 	}
 
 	.tarc-hero-title span {
@@ -419,14 +331,29 @@ if ( $is_standalone ) {
 		border: 1px solid rgba(100, 162, 173, 0.4);
 	}
 
-	.tarc-gateway-name {
-		font-family: var(--tarc-font-heading);
-		font-size: 24px;
-		font-weight: 700;
-		margin: 0 0 4px;
-		display: flex;
-		align-items: center;
-		gap: 10px;
+	.tarc-portal-wrapper .tarc-gateway-header h3,
+	.tarc-portal-wrapper .tarc-gateway-header h3.tarc-gateway-name,
+	.tarc-portal-wrapper .tarc-gateway-name,
+	.tarc-portal-wrapper .card-advisor .tarc-gateway-name,
+	.tarc-portal-wrapper .card-supplier .tarc-gateway-name,
+	.tarc-gateway-card .tarc-gateway-name,
+	h3.tarc-gateway-name {
+		font-family: var(--tarc-font-heading) !important;
+		font-size: 24px !important;
+		font-weight: 700 !important;
+		color: #ffffff !important;
+		margin: 0 0 4px !important;
+		display: flex !important;
+		align-items: center !important;
+		gap: 10px !important;
+		line-height: 1.25 !important;
+	}
+
+	.tarc-portal-wrapper .tarc-gateway-header h3 span,
+	.tarc-portal-wrapper .tarc-gateway-name span,
+	.tarc-gateway-name span,
+	.tarc-gateway-title-text {
+		color: #ffffff !important;
 	}
 
 	.tarc-gateway-caption {
@@ -978,32 +905,6 @@ if ( $is_standalone ) {
 		font-size: 13px;
 	}
 
-	/* Bottom Legal Footer */
-	.tarc-portal-footer {
-		background: var(--tarc-dark-teal);
-		border-top: 1px solid rgba(151, 188, 199, 0.25);
-		padding: 24px 44px;
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		color: var(--tarc-soft-mist-teal);
-		font-size: 12.5px;
-	}
-
-	.tarc-footer-links {
-		display: flex;
-		gap: 18px;
-	}
-
-	.tarc-footer-links a {
-		color: var(--tarc-soft-mist-teal);
-		text-decoration: none;
-	}
-
-	.tarc-footer-links a:hover {
-		color: var(--tarc-warm-ochre-gold);
-	}
-
 	@media (max-width: 1024px) {
 		.tarc-features-grid {
 			grid-template-columns: 1fr 1fr;
@@ -1026,12 +927,6 @@ if ( $is_standalone ) {
 	}
 
 	@media (max-width: 768px) {
-		.tarc-portal-nav {
-			padding: 14px 20px;
-			flex-direction: column;
-			gap: 12px;
-			text-align: center;
-		}
 		.tarc-company-hero {
 			padding: 40px 20px;
 		}
@@ -1047,41 +942,14 @@ if ( $is_standalone ) {
 		.tarc-form-view {
 			padding: 26px 20px;
 		}
-		.tarc-portal-footer {
-			flex-direction: column;
-			gap: 14px;
-			text-align: center;
-			padding: 20px;
 		}
-	}
 </style>
 
 <div class="tarc-portal-wrapper">
 
-	<!-- Top Navigation Bar -->
-	<header class="tarc-portal-nav">
-		<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="tarc-nav-brand">
-			<div class="tarc-nav-emblem">
-				<i class="fa-solid fa-compass"></i>
-			</div>
-			<div class="tarc-nav-titles">
-				<span class="tarc-nav-name-full"><?php esc_html_e( 'Travel Advisor Resource Center', 'tpd-tool' ); ?></span>
-				<span class="tarc-nav-subtext"><?php esc_html_e( 'TARC • Accredited Directory & Learning Platform', 'tpd-tool' ); ?></span>
-			</div>
-		</a>
+	
 
-		<div class="tarc-nav-trust">
-			<div class="tarc-trust-pill">
-				<i class="fa-solid fa-shield-halved"></i>
-				<span><?php esc_html_e( '256-Bit TLS SSO', 'tpd-tool' ); ?></span>
-			</div>
-			<div class="tarc-trust-pill">
-				<i class="fa-solid fa-circle-check"></i>
-				<span><?php esc_html_e( 'Verified Network', 'tpd-tool' ); ?></span>
-			</div>
-		</div>
-	</header>
-
+	<?php if ( $show_hero ) : ?>
 	<!-- Company Hero & Mission Introduction -->
 	<section class="tarc-company-hero">
 		<div class="tarc-hero-container">
@@ -1137,6 +1005,7 @@ if ( $is_standalone ) {
 			</div>
 		</div>
 	</section>
+	<?php endif; ?>
 
 	<!-- Dual Gateway Portals (Accordion Split) -->
 	<main class="tarc-gateways-section">
@@ -1145,17 +1014,17 @@ if ( $is_standalone ) {
 			<h2 class="tarc-section-heading"><?php esc_html_e( 'Select Your Portal to Sign In', 'tpd-tool' ); ?></h2>
 
 			<div class="tarc-gateway-pill-switch">
-				<button type="button" class="tarc-switch-btn active advisor-pill" id="tarcBtnPillAdvisor" onclick="tarcSetGateway('advisor')">
+				<button type="button" class="tarc-switch-btn <?php echo 'advisor' === $default_portal ? 'active advisor-pill' : ''; ?>" id="tarcBtnPillAdvisor" onclick="tarcSetGateway('advisor')">
 					<span class="tarc-dot"></span>
 					<i class="fa-solid fa-user-tie"></i> <?php esc_html_e( 'Travel Advisor', 'tpd-tool' ); ?>
 				</button>
-				<button type="button" class="tarc-switch-btn" id="tarcBtnPillSupplier" onclick="tarcSetGateway('supplier')">
+				<button type="button" class="tarc-switch-btn <?php echo 'supplier' === $default_portal ? 'active supplier-pill' : ''; ?>" id="tarcBtnPillSupplier" onclick="tarcSetGateway('supplier')">
 					<i class="fa-solid fa-building"></i> <?php esc_html_e( 'Supplier Partner', 'tpd-tool' ); ?>
 				</button>
 			</div>
 		</div>
 
-		<div class="tarc-split-container mode-advisor" id="tarcSplitContainer">
+		<div class="tarc-split-container <?php echo 'supplier' === $default_portal ? 'mode-supplier' : 'mode-advisor'; ?>" id="tarcSplitContainer">
 
 			<!-- ==================== GATEWAY 1: TRAVEL ADVISOR ==================== -->
 			<section class="tarc-gateway-card card-advisor" id="tarcCardAdvisor" onclick="tarcOnCardClick('advisor')">
@@ -1163,9 +1032,9 @@ if ( $is_standalone ) {
 					<div class="tarc-badge-tag">
 						<i class="fa-solid fa-user-tie"></i> <?php esc_html_e( 'Advisor & Agency Access', 'tpd-tool' ); ?>
 					</div>
-					<h3 class="tarc-gateway-name">
+					<h3 class="tarc-gateway-name" style="color:#ffffff !important;">
 						<i class="fa-solid fa-graduation-cap" style="color:var(--tarc-warm-ochre-gold);"></i>
-						<?php esc_html_e( 'Travel Advisor Portal', 'tpd-tool' ); ?>
+						<span class="tarc-gateway-title-text" style="color:#ffffff !important;"><?php esc_html_e( 'Travel Advisor Portal', 'tpd-tool' ); ?></span>
 					</h3>
 					<p class="tarc-gateway-caption">
 						<?php esc_html_e( 'Access LMS specialist training, directory of vetted properties, and client amenity benefits.', 'tpd-tool' ); ?>
@@ -1296,9 +1165,9 @@ if ( $is_standalone ) {
 					<div class="tarc-badge-tag">
 						<i class="fa-solid fa-building"></i> <?php esc_html_e( 'Hospitality Brands & Operators', 'tpd-tool' ); ?>
 					</div>
-					<h3 class="tarc-gateway-name">
+					<h3 class="tarc-gateway-name" style="color:#ffffff !important;">
 						<i class="fa-solid fa-hotel" style="color:var(--tarc-sage-teal);"></i>
-						<?php esc_html_e( 'Supplier Partner Portal', 'tpd-tool' ); ?>
+						<span class="tarc-gateway-title-text" style="color:#ffffff !important;"><?php esc_html_e( 'Supplier Partner Portal', 'tpd-tool' ); ?></span>
 					</h3>
 					<p class="tarc-gateway-caption">
 						<?php esc_html_e( 'Manage property listings, update incentives, publish co-ops, and message accredited advisors.', 'tpd-tool' ); ?>
@@ -1426,19 +1295,7 @@ if ( $is_standalone ) {
 		</div>
 	</main>
 
-	<!-- Bottom Legal Footer -->
-	<footer class="tarc-portal-footer">
-		<div>
-			<span>&copy; <?php echo esc_html( gmdate( 'Y' ) ); ?> <?php esc_html_e( 'Travel Advisor Resource Center (TARC). All rights reserved.', 'tpd-tool' ); ?></span>
-		</div>
-		<div class="tarc-footer-links">
-			<a href="<?php echo esc_url( home_url( '/privacy-policy/' ) ); ?>"><?php esc_html_e( 'Privacy Policy', 'tpd-tool' ); ?></a>
-			<span>&bull;</span>
-			<a href="<?php echo esc_url( home_url( '/terms-of-service/' ) ); ?>"><?php esc_html_e( 'Terms of Service', 'tpd-tool' ); ?></a>
-			<span>&bull;</span>
-			<a href="mailto:admin@thetarc.com"><?php esc_html_e( 'Administrator Support', 'tpd-tool' ); ?></a>
-		</div>
-	</footer>
+	
 
 </div>
 
@@ -1446,7 +1303,7 @@ if ( $is_standalone ) {
 <script>
 (function() {
 	var ajaxUrl = '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>';
-	var activeRole = 'advisor';
+	var activeRole = '<?php echo esc_js( $default_portal ); ?>';
 
 	window.tarcSetGateway = function(role) {
 		activeRole = role;
@@ -1583,9 +1440,5 @@ if ( $is_standalone ) {
 
 <?php
 if ( $is_standalone ) {
-	wp_footer();
-	?>
-	</body>
-	</html>
-	<?php
+	get_footer();
 }
