@@ -9,6 +9,19 @@ if ( 'cli' !== PHP_SAPI ) {
 
 class BuilderTest extends LmsTestCase {
 
+	public function test_editor_formatting_is_kept_and_positioning_removed(): void {
+		$html  = '<p style="text-align:center"><span style="font-family: georgia, serif; font-size: 24px; color: #b91c1c; background-color: #fef08a; position: fixed; top: 0; z-index: 99">Hi</span> H<sub>2</sub>O x<sup>2</sup> <s>old</s></p><script>alert(1)</script>';
+		$clean = TPD_LMS_Store::clean_html( $html );
+
+		foreach ( array( 'font-family: georgia, serif', 'font-size: 24px', 'color: #b91c1c', 'background-color: #fef08a', 'text-align:center', '<sub>2</sub>', '<sup>2</sup>', '<s>old</s>' ) as $kept ) {
+			$this->assertStringContainsString( $kept, $clean );
+		}
+		foreach ( array( 'position', 'top:', 'z-index', '<script' ) as $gone ) {
+			$this->assertStringNotContainsString( $gone, $clean );
+		}
+		$this->assertStringContainsString( 'position:fixed', wp_kses_post( '<span style="position:fixed">x</span>' ), 'Only the LMS cleaner removes positioning; WordPress itself is unchanged.' );
+	}
+
 	public function test_reorder_moves_lessons_between_modules(): void {
 		$c        = $this->make_course( array(), array(
 			array( 'title' => 'A1', 'chapter' => 1 ),

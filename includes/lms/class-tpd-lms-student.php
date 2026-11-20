@@ -308,7 +308,7 @@ class TPD_LMS_Student {
 				'slug'                => $course->slug,
 				'title'               => $course->title,
 				'subtitle'            => (string) $course->subtitle,
-				'description'         => wp_kses_post( (string) $course->description ),
+				'description'         => TPD_LMS_Store::clean_html( (string) $course->description ),
 				'price'               => $included ? 0.0 : (float) $course->price,
 				'is_free'             => $included || (float) $course->price <= 0,
 				'included_with_plan'  => $included && (float) $course->price > 0,
@@ -342,7 +342,7 @@ class TPD_LMS_Student {
 			'id'       => (int) $lesson->id,
 			'title'    => $lesson->title,
 			'type'     => $lesson->type,
-			'content'  => wp_kses_post( (string) $lesson->content ),
+			'content'  => TPD_LMS_Store::clean_html( (string) $lesson->content ),
 			'minutes'  => null === $lesson->duration_minutes ? null : (int) $lesson->duration_minutes,
 			'done'     => in_array( (int) $lesson->id, TPD_LMS_Progress::completed_lesson_ids( $enrollment ), true ),
 			'can_mark' => (bool) $enrollment && ! in_array( $lesson->type, array( 'quiz', 'exam' ), true ),
@@ -582,7 +582,7 @@ class TPD_LMS_Student {
 			$questions[] = array(
 				'id'      => (int) $q->id,
 				'type'    => $q->type,
-				'prompt'  => wp_kses_post( $q->prompt ),
+				'prompt'  => TPD_LMS_Store::clean_html( $q->prompt ),
 				'points'  => (int) $q->points,
 				'options' => 'short' === $q->type ? array() : $options,
 			);
@@ -632,11 +632,11 @@ class TPD_LMS_Student {
 				}
 			}
 			$out['review'][] = array(
-				'prompt'      => wp_kses_post( $q->prompt ),
+				'prompt'      => TPD_LMS_Store::clean_html( $q->prompt ),
 				'ok'          => ! empty( $attempt->results[ $qid ] ),
 				'given'       => 'short' === $q->type ? (string) $given : implode( ', ', $given_text ),
 				'correct'     => 'short' === $q->type ? implode( ' · ', array_filter( preg_split( '/\r?\n/', (string) $q->accepted_answers ) ) ) : implode( ', ', $correct ),
-				'explanation' => wp_kses_post( (string) $q->explanation ),
+				'explanation' => TPD_LMS_Store::clean_html( (string) $q->explanation ),
 			);
 		}
 		return $out;

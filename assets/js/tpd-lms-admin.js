@@ -94,16 +94,40 @@
 		editors = [];
 	}
 
-	function addEditor(id) {
+	// Word-style formatting: font, size, bold/italic/underline/strikethrough,
+	// subscript/superscript, highlight and text colour, clear formatting, plus
+	// headings, lists, alignment, quotes, links, dividers and images.
+	var EDITOR_FONTS = 'Default=inherit;Plus Jakarta Sans=Plus Jakarta Sans,sans-serif;Arial=arial,helvetica,sans-serif;Calibri=calibri,carlito,sans-serif;Georgia=georgia,serif;Playfair Display=Playfair Display,serif;Times New Roman=times new roman,times,serif;Verdana=verdana,geneva,sans-serif;Courier New=courier new,courier,monospace';
+	var EDITOR_SIZES = '10px 11px 12px 14px 16px 18px 20px 24px 28px 32px 36px';
+	var EDITOR_COLORS = ['0b1526', 'Navy', '164e87', 'Blue', '00798c', 'Teal', '166534', 'Green', 'b45309', 'Amber', 'b91c1c', 'Red', '64748b', 'Grey', '000000', 'Black',
+		'fef08a', 'Yellow highlight', 'bbf7d0', 'Green highlight', 'bae6fd', 'Blue highlight', 'fecaca', 'Pink highlight', 'ffffff', 'White'];
+
+	function addEditor(id, kind) {
 		if (!(window.wp && wp.editor && wp.editor.initialize)) return;
+		var compact = kind === 'compact';
 		wp.editor.initialize(id, {
 			tinymce: {
-				wpautop: true,
-				toolbar1: 'formatselect,bold,italic,bullist,numlist,blockquote,link,unlink,undo,redo',
-				height: 260
+				wpautop: false, // Save real <p> tags, so paragraphs show the same in the player.
+				wordpress_adv_hidden: false, // Show the second toolbar row (WordPress hides it by default).
+				plugins: 'charmap,colorpicker,hr,lists,paste,tabfocus,textcolor,wordpress,wpautoresize,wpeditimage,wplink,wptextpattern',
+				toolbar1: compact ?
+					'fontselect,fontsizeselect,bold,italic,underline,strikethrough,subscript,superscript,forecolor,backcolor,removeformat' :
+					'formatselect,fontselect,fontsizeselect,bold,italic,underline,strikethrough,subscript,superscript,forecolor,backcolor,removeformat',
+				toolbar2: compact ?
+					'bullist,numlist,link,unlink,charmap,undo,redo' :
+					'alignleft,aligncenter,alignright,bullist,numlist,outdent,indent,blockquote,hr,link,unlink,charmap,undo,redo',
+				block_formats: 'Normal text=p;Heading=h2;Subheading=h3;Small heading=h4',
+				font_formats: EDITOR_FONTS,
+				fontsize_formats: EDITOR_SIZES,
+				textcolor_map: EDITOR_COLORS,
+				textcolor_cols: 8,
+				wp_autoresize_on: true,
+				autoresize_min_height: compact ? 90 : 220,
+				height: compact ? 110 : 280,
+				content_style: 'body{font-family:"Plus Jakarta Sans",system-ui,sans-serif;font-size:15px;line-height:1.6;color:#1e293b}'
 			},
 			quicktags: true,
-			mediaButtons: false
+			mediaButtons: !compact
 		});
 		editors.push(id);
 	}
@@ -747,6 +771,7 @@
 			return '<option value="' + k + '"' + (q.type === k ? ' selected' : '') + '>' + esc(QUESTION_TYPES[k]) + '</option>';
 		}).join('');
 
+		removeQuestionEditors();
 		$('#tpd-lms-question-editor').html(
 			'<form class="tpd-lms-form tpd-lms-question-form" data-form="question" data-id="' + q.id + '">' +
 			'<h4>' + (q.id ? 'Edit question' : 'New question') + '</h4>' +
@@ -754,7 +779,7 @@
 			field('Type', '<select name="type" class="tpd-input">' + types + '</select>') +
 			field('Topic', '<input type="text" name="topic" class="tpd-input" maxlength="120" value="' + esc(q.topic) + '" placeholder="e.g. Module 4">', 'Used to balance random draws. “4” becomes “Module 4”.') +
 			'</div>' +
-			field('Question', '<textarea name="prompt" rows="3" class="tpd-input" required>' + esc($('<div>').html(q.prompt).text()) + '</textarea>') +
+			field('Question', '<textarea id="tpd-lms-q-prompt" name="prompt" rows="3" class="tpd-input">' + esc(q.prompt) + '</textarea>') +
 			'<div data-options-wrap>' + renderOptionRows(q) + '</div>' +
 			'<div data-short-wrap' + (q.type === 'short' ? '' : ' hidden') + '>' +
 			field('Accepted answers', '<textarea name="accepted_answers" rows="3" class="tpd-input" placeholder="One per line">' + esc(q.accepted_answers) + '</textarea>', 'Capital letters and extra spaces are ignored.') +
@@ -762,14 +787,27 @@
 			'<div class="tpd-form-grid-2">' +
 			field('Points', '<input type="number" name="points" class="tpd-input" min="1" max="100" value="' + esc(q.points) + '">') +
 			'</div>' +
-			field('Explanation', '<textarea name="explanation" rows="2" class="tpd-input" placeholder="Optional. Shown after submitting if answers are shown.">' + esc($('<div>').html(q.explanation).text()) + '</textarea>') +
+			field('Explanation', '<textarea id="tpd-lms-q-expl" name="explanation" rows="2" class="tpd-input">' + esc(q.explanation) + '</textarea>', 'Optional. Shown after submitting, if the quiz shows answers.') +
 			'<div class="tpd-lms-form-actions"><button type="submit" class="tpd-btn tpd-btn-sm tpd-btn-darkblue"><i class="fa-solid fa-floppy-disk"></i> Save question</button> ' +
 			'<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline" data-cancel-question>Cancel</button></div>' +
 			'</form>'
 		);
 		var $form = $('#tpd-lms-question-editor form');
+		addEditor('tpd-lms-q-prompt', 'compact');
+		addEditor('tpd-lms-q-expl', 'compact');
 		$form[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
-		$form.find('[name=prompt]').trigger('focus');
+	}
+
+	function removeEditor(id) {
+		var i = editors.indexOf(id);
+		if (i === -1) return;
+		if (window.wp && wp.editor && wp.editor.remove) wp.editor.remove(id);
+		editors.splice(i, 1);
+	}
+
+	function removeQuestionEditors() {
+		removeEditor('tpd-lms-q-prompt');
+		removeEditor('tpd-lms-q-expl');
 	}
 
 	function renderOptionRows(q) {
@@ -1081,7 +1119,7 @@
 				var id = Number($(this).data('edit-question'));
 				renderQuestionForm($.extend(true, {}, state.lesson.questions.find(function (q) { return q.id === id; })));
 			})
-			.on('click', '[data-cancel-question]', function () { $('#tpd-lms-question-editor').empty(); })
+			.on('click', '[data-cancel-question]', function () { removeQuestionEditors(); $('#tpd-lms-question-editor').empty(); })
 			.on('change', '[data-form=question] [name=type]', function () {
 				var $form = $(this).closest('form');
 				var type = $(this).val();
@@ -1107,6 +1145,8 @@
 				e.preventDefault();
 				var $f = $(this), $b = $f.find('[type=submit]');
 				var data = formData($f);
+				data.prompt = editorValue('tpd-lms-q-prompt');
+				data.explanation = editorValue('tpd-lms-q-expl');
 				data.options = JSON.stringify(readOptions($f));
 				if (Number($f.data('id'))) data.question_id = $f.data('id');
 				else data.quiz_id = state.lesson.quiz.id;

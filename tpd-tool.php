@@ -3,7 +3,7 @@
  * Plugin Name: TPD Tool - Travel Partner Directory Enterprise Suite
  * Plugin URI: https://github.com/TARC-LLC/dashboard
  * Description: Enterprise-grade travel marketplace suite featuring Multi-Step Registration Wizards, Dual Portals (Advisor & Supplier Dashboards), Bi-Directional WP CPT + ACF Sync, Dynamic Membership Plan Builder, Payment Integration, Real-Time Chat, Analytics Engine, and Super Admin Control Hub.
- * Version: 2.10.0
+ * Version: 2.10.1
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: Travel Partner Directory (TARC)
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TPD_TOOL_VERSION', '2.10.0' );
+define( 'TPD_TOOL_VERSION', '2.10.1' );
 define( 'TPD_TOOL_FILE', __FILE__ );
 define( 'TPD_TOOL_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TPD_TOOL_URL', plugin_dir_url( __FILE__ ) );
