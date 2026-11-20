@@ -689,7 +689,13 @@ class TPD_Tool_Registration {
 					'message' => __( 'Access denied: Super Administrator privileges are required to log in here.', 'tpd-tool' ),
 				) );
 			}
-		} elseif ( ! $is_adv && ! $is_supp && ! $is_admin ) {
+		} elseif ( ! $is_adv && ! $is_supp ) {
+			if ( $is_admin ) {
+				wp_send_json_error( array(
+					'message'      => __( 'Administrator accounts must sign in via the dedicated Super Admin Portal at /admin-login/.', 'tpd-tool' ),
+					'redirect_url' => home_url( '/admin-login/' ),
+				) );
+			}
 			wp_send_json_error( array(
 				'message' => __( 'Access denied: A Travel Advisor or Supplier Partner account is required to sign in.', 'tpd-tool' ),
 			) );

@@ -144,28 +144,10 @@ class TPD_Tool_Core {
 			}
 		}
 
-		// TARC Official Dual Gateway Portal Login (Standalone Homepage or /portal-login/)
+		// Unified Portal Login (Travel Advisor & Supplier Partner - replaces separate dedicated pages)
 		$is_portal_home = ( is_front_page() || is_home() || '' === $uri ) && get_option( 'tpd_enable_homepage_portal_login', 0 );
-		if ( $is_portal_home || in_array( $uri, array( 'portal-login', 'tarc-login', 'portal', 'dual-login', 'gateway' ), true ) || is_page( array( 'portal-login', 'tarc-login', 'portal', 'dual-login' ) ) ) {
+		if ( $is_portal_home || in_array( $uri, array( 'portal-login', 'tarc-login', 'portal', 'dual-login', 'gateway', 'login', 'member-login', 'advisor-login', 'supplier-login', 'tpd-login' ), true ) || is_page( array( 'portal-login', 'tarc-login', 'portal', 'dual-login', 'login', 'member-login', 'advisor-login', 'supplier-login' ) ) ) {
 			$file = TPD_TOOL_DIR . 'templates/auth/portal-login.php';
-			if ( file_exists( $file ) ) {
-				status_header( 200 );
-				return $file;
-			}
-		}
-
-		// Advisor / Member Login Page
-		if ( in_array( $uri, array( 'advisor-login', 'member-login', 'tpd-login' ), true ) || is_page( array( 'advisor-login', 'member-login', 'tpd-login' ) ) ) {
-			$file = TPD_TOOL_DIR . 'templates/auth/advisor-login.php';
-			if ( file_exists( $file ) ) {
-				status_header( 200 );
-				return $file;
-			}
-		}
-
-		// Supplier Login Page
-		if ( $uri === 'supplier-login' || is_page( 'supplier-login' ) ) {
-			$file = TPD_TOOL_DIR . 'templates/auth/supplier-login.php';
 			if ( file_exists( $file ) ) {
 				status_header( 200 );
 				return $file;
@@ -265,13 +247,14 @@ class TPD_Tool_Core {
 			return $redirect_to;
 		}
 
-		// Keep explicit frontend redirect requests
-		if ( ! empty( $requested_redirect_to ) && strpos( $requested_redirect_to, 'wp-admin' ) === false ) {
+		// If a specific redirect destination was requested, honor it (including /wp-admin/)
+		if ( ! empty( $requested_redirect_to ) ) {
 			return $requested_redirect_to;
 		}
 
+		// Clean separation: WP admin login stays in /wp-admin/ for administrators
 		if ( in_array( 'administrator', (array) $user->roles, true ) ) {
-			return home_url( '/tpd-admin/' );
+			return admin_url();
 		}
 		if ( in_array( 'travel_advisor', (array) $user->roles, true ) ) {
 			return home_url( '/advisor-dashboard/' );

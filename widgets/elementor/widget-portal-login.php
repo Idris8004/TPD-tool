@@ -1,6 +1,6 @@
 <?php
 /**
- * Elementor Widget: TARC Dual Gateway Portal Login
+ * Elementor Widget: TARC Unified Executive Portal Login
  * Travel Advisor Resource Center (TARC)
  */
 
@@ -18,11 +18,11 @@ class TPD_Elementor_Portal_Login extends Widget_Base {
 	}
 
 	public function get_title() {
-		return __( 'TARC Dual Gateway Portal Login', 'tpd-tool' );
+		return __( 'TARC Unified Portal Login', 'tpd-tool' );
 	}
 
 	public function get_icon() {
-		return 'eicon-dual-button';
+		return 'eicon-lock-user';
 	}
 
 	public function get_categories() {
@@ -39,27 +39,14 @@ class TPD_Elementor_Portal_Login extends Widget_Base {
 		);
 
 		$this->add_control(
-			'show_hero',
-			array(
-				'label'        => __( 'Show Intro Hero Section', 'tpd-tool' ),
-				'type'         => Controls_Manager::SWITCHER,
-				'label_on'     => __( 'Show', 'tpd-tool' ),
-				'label_off'    => __( 'Hide', 'tpd-tool' ),
-				'return_value' => 'yes',
-				'default'      => 'yes',
-				'description'  => __( 'Toggle the company introduction & accredited highlight cards above the login gateways.', 'tpd-tool' ),
-			)
-		);
-
-		$this->add_control(
 			'default_portal',
 			array(
-				'label'   => __( 'Default Open Portal', 'tpd-tool' ),
+				'label'   => __( 'Default Active Role', 'tpd-tool' ),
 				'type'    => Controls_Manager::SELECT,
 				'default' => 'advisor',
 				'options' => array(
-					'advisor'  => __( 'Travel Advisor Portal', 'tpd-tool' ),
-					'supplier' => __( 'Supplier Partner Portal', 'tpd-tool' ),
+					'advisor'  => __( 'Travel Advisor', 'tpd-tool' ),
+					'supplier' => __( 'Supplier Partner', 'tpd-tool' ),
 				),
 			)
 		);
@@ -69,9 +56,8 @@ class TPD_Elementor_Portal_Login extends Widget_Base {
 
 	protected function render() {
 		$settings       = $this->get_settings_for_display();
-		$show_hero      = ( ! empty( $settings['show_hero'] ) && 'yes' === $settings['show_hero'] ) ? 'yes' : 'no';
 		$default_portal = ! empty( $settings['default_portal'] ) ? sanitize_key( $settings['default_portal'] ) : 'advisor';
 
-		echo do_shortcode( sprintf( '[tpd_portal_login show_hero="%s" default_portal="%s"]', esc_attr( $show_hero ), esc_attr( $default_portal ) ) );
+		echo do_shortcode( sprintf( '[tpd_portal_login default_portal="%s"]', esc_attr( $default_portal ) ) );
 	}
 }
