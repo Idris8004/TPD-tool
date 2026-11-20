@@ -52,7 +52,7 @@ class TPD_LMS_Reports {
 				'completed_at' => isset( $times[ $l->id ] ) ? $times[ $l->id ]->completed_at : null,
 				'attempts'     => array(),
 			);
-			$quiz = in_array( $l->type, array( 'quiz', 'exam' ), true ) ? TPD_LMS_Store::quiz_for_lesson( $l->id ) : null;
+			$quiz = in_array( $l->type, TPD_LMS_Store::QUIZ_TYPES, true ) ? TPD_LMS_Store::quiz_for_lesson( $l->id ) : null;
 			if ( $quiz ) {
 				$attempts = $wpdb->get_results( $wpdb->prepare(
 					'SELECT id, score, passed, started_at, submitted_at FROM ' . TPD_LMS_Schema::t( 'quiz_attempts' ) . ' WHERE quiz_id = %d AND enrollment_id = %d ORDER BY id ASC',
@@ -105,15 +105,79 @@ class TPD_LMS_Reports {
 	 * For each quiz: attempts, pass rate, average score and, per question, how
 	 * often it was answered correctly (from submitted attempts' stored results).
 	 */
+	/**
+	 * Survey results: how many chose each option, and the written answers.
+	 */
+	public static function survey( $lesson, $quiz ) {
+		global $wpdb;
+		$rows = $wpdb->get_col( $wpdb->prepare(
+			'SELECT answers FROM ' . TPD_LMS_Schema::t( 'quiz_attempts' ) . ' WHERE quiz_id = %d AND submitted_at IS NOT NULL',
+			(int) $quiz->id
+		) );
+		$responses = array();
+		foreach ( $rows as $json ) {
+			$responses[] = (array) json_decode( (string) $json, true );
+		}
+		$questions = array();
+		foreach ( TPD_LMS_Store::questions_for_quiz( $quiz->id ) as $q ) {
+			$item = array(
+				'prompt'  => wp_strip_all_tags( html_entity_decode( (string) $q->prompt, ENT_QUOTES, 'UTF-8' ) ),
+				'type'    => $q->type,
+				'answers' => 0,
+				'options' => array(),
+				'texts'   => array(),
+			);
+			$counts = array();
+			foreach ( $q->options as $o ) {
+				$counts[ (int) $o->id ] = 0;
+			}
+			foreach ( $responses as $r ) {
+				if ( ! isset( $r[ $q->id ] ) || '' === $r[ $q->id ] || array() === $r[ $q->id ] ) {
+					continue;
+				}
+				$item['answers']++;
+				if ( 'short' === $q->type ) {
+					$item['texts'][] = (string) $r[ $q->id ];
+				} else {
+					foreach ( (array) $r[ $q->id ] as $oid ) {
+						if ( isset( $counts[ (int) $oid ] ) ) {
+							$counts[ (int) $oid ]++;
+						}
+					}
+				}
+			}
+			foreach ( $q->options as $o ) {
+				$n                 = $counts[ (int) $o->id ];
+				$item['options'][] = array(
+					'text'    => $o->text,
+					'count'   => $n,
+					'percent' => $item['answers'] ? (int) round( 100 * $n / $item['answers'] ) : 0,
+				);
+			}
+			$item['texts'] = array_slice( $item['texts'], -100 );
+			$questions[]   = $item;
+		}
+		return array(
+			'title'     => $lesson->title,
+			'is_survey' => true,
+			'responses' => count( $responses ),
+			'questions' => $questions,
+		);
+	}
+
 	public static function quizzes( $course_id ) {
 		global $wpdb;
 		$out = array();
 		foreach ( TPD_LMS_Store::lessons_for_course( $course_id ) as $l ) {
-			if ( ! in_array( $l->type, array( 'quiz', 'exam' ), true ) ) {
+			if ( ! in_array( $l->type, TPD_LMS_Store::QUIZ_TYPES, true ) ) {
 				continue;
 			}
 			$quiz = TPD_LMS_Store::quiz_for_lesson( $l->id );
 			if ( ! $quiz ) {
+				continue;
+			}
+			if ( 'survey' === $l->type ) {
+				$out[] = self::survey( $l, $quiz );
 				continue;
 			}
 			$attempts = $wpdb->get_results( $wpdb->prepare(

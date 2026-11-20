@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class TPD_LMS_Schema {
 
-	const DB_VERSION = '1.1';
+	const DB_VERSION = '1.2';
 	const OPT_DB_VER = 'tpd_lms_db_ver';
 
 	/** Short names of every LMS table, without the prefix. */
@@ -33,6 +33,7 @@ class TPD_LMS_Schema {
 		'coupons',
 		'exam_access_codes',
 		'proctor_requests',
+		'assignment_submissions',
 	);
 
 	/**
@@ -111,6 +112,7 @@ class TPD_LMS_Schema {
 			content LONGTEXT NULL,
 			video_url VARCHAR(500) NULL,
 			attachment_id BIGINT UNSIGNED NULL,
+			settings LONGTEXT NULL,
 			duration_minutes SMALLINT UNSIGNED NULL,
 			is_preview TINYINT(1) NOT NULL DEFAULT 0,
 			drip_days SMALLINT UNSIGNED NULL,
@@ -292,6 +294,27 @@ class TPD_LMS_Schema {
 			PRIMARY KEY  (id),
 			UNIQUE KEY proctor_token_hash (proctor_token_hash),
 			KEY status_created (status,created_at)
+		) $c;";
+
+		// Assignment lessons: what a learner handed in and the staff decision.
+		$sql[] = 'CREATE TABLE ' . self::t( 'assignment_submissions' ) . " (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			lesson_id BIGINT UNSIGNED NOT NULL,
+			enrollment_id BIGINT UNSIGNED NOT NULL,
+			user_id BIGINT UNSIGNED NOT NULL,
+			answer_text LONGTEXT NULL,
+			file_path VARCHAR(255) NULL,
+			file_name VARCHAR(255) NULL,
+			file_size BIGINT UNSIGNED NULL,
+			status VARCHAR(16) NOT NULL DEFAULT 'pending',
+			feedback TEXT NULL,
+			reviewed_by BIGINT UNSIGNED NULL,
+			reviewed_at DATETIME NULL,
+			created_at DATETIME NOT NULL,
+			updated_at DATETIME NOT NULL,
+			PRIMARY KEY  (id),
+			KEY lesson_enrollment (lesson_id,enrollment_id),
+			KEY status (status)
 		) $c;";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';

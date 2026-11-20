@@ -21,6 +21,7 @@ require_once __DIR__ . '/class-tpd-lms-coupons.php';
 require_once __DIR__ . '/class-tpd-lms-mail.php';
 require_once __DIR__ . '/class-tpd-lms-exam.php';
 require_once __DIR__ . '/class-tpd-lms-reports.php';
+require_once __DIR__ . '/class-tpd-lms-assign.php';
 require_once __DIR__ . '/class-tpd-lms-admin.php';
 require_once __DIR__ . '/class-tpd-lms-student.php';
 
@@ -42,6 +43,7 @@ class TPD_LMS_Native {
 		TPD_LMS_Student::init();
 		TPD_LMS_Mail::init();
 		TPD_LMS_Exam::init();
+		TPD_LMS_Assign::init();
 	}
 
 	/**
