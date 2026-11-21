@@ -1630,7 +1630,7 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Full Travel Advisor workspace with sidebar navigation, profile editor, supplier directory search, saved favorites, inquiries, and chat.</p>
 								<div style="display:flex; align-items:center; gap:8px;">
 									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_advisor_dashboard]</code>
-									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_advisor_dashboard]'); alert('Copied [tpd_advisor_dashboard] to clipboard!');">
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_advisor_dashboard]'); (window.tpdAdminToast || alert)('Copied [tpd_advisor_dashboard] to clipboard!');">
 										<i class="fa-regular fa-copy"></i>
 									</button>
 								</div>
@@ -1645,7 +1645,7 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Full Supplier portal with listing creator, listing editor, delete actions, virtual office team roster, and partner inquiry manager.</p>
 								<div style="display:flex; align-items:center; gap:8px;">
 									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_supplier_dashboard]</code>
-									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_supplier_dashboard]'); alert('Copied [tpd_supplier_dashboard] to clipboard!');">
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_supplier_dashboard]'); (window.tpdAdminToast || alert)('Copied [tpd_supplier_dashboard] to clipboard!');">
 										<i class="fa-regular fa-copy"></i>
 									</button>
 								</div>
@@ -1660,7 +1660,7 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Renders the Super Admin Control Hub on any front-end page (restricted to administrators with manage_options).</p>
 								<div style="display:flex; align-items:center; gap:8px;">
 									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_admin_dashboard]</code>
-									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_admin_dashboard]'); alert('Copied [tpd_admin_dashboard] to clipboard!');">
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_admin_dashboard]'); (window.tpdAdminToast || alert)('Copied [tpd_admin_dashboard] to clipboard!');">
 										<i class="fa-regular fa-copy"></i>
 									</button>
 								</div>
@@ -1675,7 +1675,7 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Standalone real-time chat inbox and conversation thread between Travel Advisors and Verified Suppliers.</p>
 								<div style="display:flex; align-items:center; gap:8px;">
 									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_chat_inbox]</code>
-									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_chat_inbox]'); alert('Copied [tpd_chat_inbox] to clipboard!');">
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_chat_inbox]'); (window.tpdAdminToast || alert)('Copied [tpd_chat_inbox] to clipboard!');">
 										<i class="fa-regular fa-copy"></i>
 									</button>
 								</div>
@@ -1690,7 +1690,7 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Renders the responsive card grid of all suppliers saved by the currently logged-in Travel Advisor with remove action.</p>
 								<div style="display:flex; align-items:center; gap:8px;">
 									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_saved_suppliers]</code>
-									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_saved_suppliers]'); alert('Copied [tpd_saved_suppliers] to clipboard!');">
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_saved_suppliers]'); (window.tpdAdminToast || alert)('Copied [tpd_saved_suppliers] to clipboard!');">
 										<i class="fa-regular fa-copy"></i>
 									</button>
 								</div>
@@ -1715,7 +1715,7 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Full public-facing supplier showcase template with 6 interactive tabs for enhanced members or basic profile for free tier. Supports <code>id</code>, <code>slug</code>, or empty to auto-resolve.</p>
 								<div style="display:flex; align-items:center; gap:8px;">
 									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;"><?php echo esc_html( $hub_sc_code ); ?></code>
-									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('<?php echo esc_js( $hub_sc_code ); ?>'); alert('Copied <?php echo esc_js( $hub_sc_code ); ?> to clipboard!');">
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('<?php echo esc_js( $hub_sc_code ); ?>'); (window.tpdAdminToast || alert)('Copied <?php echo esc_js( $hub_sc_code ); ?> to clipboard!');">
 										<i class="fa-regular fa-copy"></i>
 									</button>
 								</div>
@@ -1739,7 +1739,7 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Multi-step application flow for travel advisors (Credentials, Business Profile, Verification, Plan Selection).</p>
 								<div style="display:flex; align-items:center; gap:8px;">
 									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_advisor_registration]</code>
-									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_advisor_registration]'); alert('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_advisor_registration]'); (window.tpdAdminToast || alert)('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
 								</div>
 							</div>
 
@@ -1751,7 +1751,7 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Multi-step onboarding form for supplier partners with trade verification, rep details, and plan selection.</p>
 								<div style="display:flex; align-items:center; gap:8px;">
 									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_supplier_registration]</code>
-									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_supplier_registration]'); alert('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_supplier_registration]'); (window.tpdAdminToast || alert)('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
 								</div>
 							</div>
 
@@ -1763,7 +1763,7 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Secure login box redirecting authenticated travel advisors straight to /advisor-dashboard/.</p>
 								<div style="display:flex; align-items:center; gap:8px;">
 									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_advisor_login]</code>
-									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_advisor_login]'); alert('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_advisor_login]'); (window.tpdAdminToast || alert)('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
 								</div>
 							</div>
 
@@ -1775,7 +1775,7 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Secure login box redirecting authenticated supplier users straight to /supplier-dashboard/.</p>
 								<div style="display:flex; align-items:center; gap:8px;">
 									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_supplier_login]</code>
-									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_supplier_login]'); alert('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_supplier_login]'); (window.tpdAdminToast || alert)('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
 								</div>
 							</div>
 
@@ -1787,7 +1787,7 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Dedicated administrator-only login portal at /admin-login/ separated from WordPress backend.</p>
 								<div style="display:flex; align-items:center; gap:8px;">
 									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_admin_login]</code>
-									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_admin_login]'); alert('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_admin_login]'); (window.tpdAdminToast || alert)('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
 								</div>
 							</div>
 						</div>
@@ -1809,7 +1809,7 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Modern 4-column card grid with gradient cover image, start/end dates in cyan (#00798c), location pin, and View Event modal.</p>
 								<div style="display:flex; align-items:center; gap:8px;">
 									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:11.5px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_upcoming_events limit="4" columns="4"]</code>
-									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_upcoming_events limit=\'4\' columns=\'4\']'); alert('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_upcoming_events limit=\'4\' columns=\'4\']'); (window.tpdAdminToast || alert)('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
 								</div>
 							</div>
 
@@ -1821,7 +1821,7 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Embeddable 'Inquire Now' button on public advisor pages that opens an interactive consultation request modal popup.</p>
 								<div style="display:flex; align-items:center; gap:8px;">
 									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:11.5px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_inquire_button advisor_id="1"]</code>
-									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_inquire_button advisor_id=\'1\']'); alert('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_inquire_button advisor_id=\'1\']'); (window.tpdAdminToast || alert)('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
 								</div>
 							</div>
 
@@ -1833,7 +1833,7 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 								<p style="font-size:12px; color:#64748b; margin:0 0 12px;">Full inline trip consultation inquiry form collecting traveler name, email, phone, destination, dates, passengers, and budget.</p>
 								<div style="display:flex; align-items:center; gap:8px;">
 									<code style="background:#f1f5f9; padding:6px 10px; border-radius:6px; font-size:11.5px; font-weight:700; color:#00798c; flex:1; overflow-x:auto;">[tpd_advisor_inquiry_form advisor_id="1"]</code>
-									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_advisor_inquiry_form advisor_id=\'1\']'); alert('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
+									<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline" onclick="navigator.clipboard.writeText('[tpd_advisor_inquiry_form advisor_id=\'1\']'); (window.tpdAdminToast || alert)('Copied to clipboard!');"><i class="fa-regular fa-copy"></i></button>
 								</div>
 							</div>
 						</div>

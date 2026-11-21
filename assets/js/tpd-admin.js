@@ -80,12 +80,12 @@
 					if (res && res.success) {
 						showAdminToast('User plan updated to ' + res.data.label);
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to update tier.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to update tier.');
 					}
 				},
 				error: function() {
 					$select.prop('disabled', false);
-					alert('Connection error. Please try again.');
+					showAdminError('Connection error. Please try again.');
 				}
 			});
 		});
@@ -111,7 +111,7 @@
 							.text(res.data.label || (res.data.status === 'active' ? 'Active' : 'Inactive'));
 						showAdminToast('Account status changed to ' + (res.data.label || res.data.status));
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to toggle status.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to toggle status.');
 					}
 				}
 			});
@@ -263,12 +263,12 @@
 							window.location.reload();
 						}, 700);
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to save user.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to save user.');
 					}
 				},
 				error: function() {
 					$btn.prop('disabled', false).html('<i class="fa-solid fa-floppy-disk"></i> Save User Account');
-					alert('Connection error.');
+					showAdminError('Connection error.');
 				}
 			});
 		});
@@ -301,12 +301,12 @@
 						showAdminToast(res.data.message);
 					} else {
 						$btn.prop('disabled', false);
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to delete user.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to delete user.');
 					}
 				},
 				error: function() {
 					$btn.prop('disabled', false);
-					alert('Connection error.');
+					showAdminError('Connection error.');
 				}
 			});
 		});
@@ -348,7 +348,7 @@
 						showAdminToast(res.data.message);
 						setTimeout(function() { window.location.reload(); }, 700);
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to save plan.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to save plan.');
 					}
 				}
 			});
@@ -372,7 +372,7 @@
 						showAdminToast(res.data.message);
 						setTimeout(function() { window.location.reload(); }, 700);
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Cannot delete this plan.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Cannot delete this plan.');
 					}
 				}
 			});
@@ -396,7 +396,7 @@
 					if (res && res.success) {
 						showAdminToast(res.data.message);
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to save payment settings.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to save payment settings.');
 					}
 				}
 			});
@@ -443,7 +443,7 @@
 						showAdminToast(res.data.message);
 						setTimeout(function() { window.location.reload(); }, 700);
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to add custom field.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to add custom field.');
 					}
 				}
 			});
@@ -527,7 +527,7 @@
 						$row.find('.tpd-claim-action-btn').parent().html('<span style="font-size:12px; color:#64748b;">Reviewed</span>');
 						showAdminToast(res.data.message);
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to process claim.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to process claim.');
 						$btn.prop('disabled', false);
 					}
 				}
@@ -554,7 +554,7 @@
 						showAdminToast(res.data.message);
 						setTimeout(function() { window.location.reload(); }, 700);
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to publish.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to publish.');
 					}
 				}
 			});
@@ -599,7 +599,7 @@
 			}
 
 			if (typeof wp === 'undefined' || !wp.media) {
-				alert('WordPress Media Library is unavailable. Please verify admin privileges.');
+				showAdminError('WordPress Media Library is unavailable. Please verify admin privileges.');
 				return;
 			}
 
@@ -725,12 +725,12 @@
 					if (res && res.success) {
 						showAdminToast(res.data.message || 'Ad banners successfully saved and published!');
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to save ad banners.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to save ad banners.');
 					}
 				},
 				error: function() {
 					$btn.prop('disabled', false).html(origHtml);
-					alert('Network error while saving ad banners.');
+					showAdminError('Network error while saving ad banners.');
 				}
 			});
 		});
@@ -789,12 +789,12 @@
 							window.location.reload();
 						}, 1200);
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to create Super Admin account.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to create Super Admin account.');
 					}
 				},
 				error: function() {
 					$btn.prop('disabled', false).html(origHtml);
-					alert('Network error while creating Super Admin account.');
+					showAdminError('Network error while creating Super Admin account.');
 				}
 			});
 		});
@@ -838,12 +838,12 @@
 						$('#tpd-sa-admin-pass-modal').removeClass('open').fadeOut(150);
 						showAdminToast(res.data.message || 'Password updated successfully!');
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to update password.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to update password.');
 					}
 				},
 				error: function() {
 					$btn.prop('disabled', false).html(origHtml);
-					alert('Network error while updating password.');
+					showAdminError('Network error while updating password.');
 				}
 			});
 		});
@@ -871,11 +871,11 @@
 						$row.fadeOut(300, function() { $(this).remove(); });
 						showAdminToast(res.data.message || 'Super Admin deleted.');
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to delete administrator.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to delete administrator.');
 					}
 				},
 				error: function() {
-					alert('Network error while deleting administrator.');
+					showAdminError('Network error while deleting administrator.');
 				}
 			});
 		});
@@ -938,12 +938,12 @@
 						window.location.hash = 'sa-financial';
 						setTimeout(function() { window.location.reload(); }, 700);
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to update transaction.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to update transaction.');
 					}
 				},
 				error: function() {
 					$btn.prop('disabled', false).html(origHtml);
-					alert('Network error updating transaction.');
+					showAdminError('Network error updating transaction.');
 				}
 			});
 		});
@@ -971,12 +971,12 @@
 						window.location.hash = 'sa-lms-studio';
 						setTimeout(function() { window.location.reload(); }, 700);
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to save resource.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to save resource.');
 					}
 				},
 				error: function() {
 					$btn.prop('disabled', false).html(origHtml);
-					alert('Network error saving resource.');
+					showAdminError('Network error saving resource.');
 				}
 			});
 		});
@@ -999,14 +999,38 @@
 						$('#sa-res-row-' + resId).fadeOut(250, function() { $(this).remove(); });
 						showAdminToast(res.data.message || 'Resource deleted.');
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to delete resource.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to delete resource.');
 					}
 				},
 				error: function() {
-					alert('Network error deleting resource.');
+					showAdminError('Network error deleting resource.');
 				}
 			});
 		});
+
+		// Error/notice toast (replaces browser showAdminError() pop-ups). Text only, stacks bottom-right, click to dismiss.
+		function showAdminError(message) {
+			var $stack = $('#tpd-toast-stack');
+			if (!$stack.length) {
+				$stack = $('<div id="tpd-toast-stack" aria-live="assertive"></div>').css({
+					position: 'fixed', bottom: '24px', right: '24px', zIndex: 1000000,
+					display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end', maxWidth: 'calc(100vw - 48px)'
+				}).appendTo('body');
+			}
+			var $toast = $('<div role="alert" class="tpd-error-toast"></div>').css({
+				background: '#b91c1c', color: '#ffffff', padding: '12px 16px', borderRadius: '10px',
+				boxShadow: '0 10px 25px rgba(0,0,0,0.25)', fontSize: '13.5px', fontWeight: '600',
+				display: 'flex', alignItems: 'flex-start', gap: '10px', maxWidth: '420px', cursor: 'pointer', lineHeight: '1.4'
+			});
+			$toast.append($('<i class="fa-solid fa-circle-exclamation" aria-hidden="true" style="margin-top:2px;"></i>'));
+			$toast.append($('<span></span>').text(String(message || 'Something went wrong. Please try again.')));
+			$toast.hide().appendTo($stack).fadeIn(160);
+			var close = function() { $toast.fadeOut(220, function() { $(this).remove(); }); };
+			$toast.on('click', close);
+			setTimeout(close, 7000);
+		}
+		// Shortcode copy buttons in the Super Admin template use these.
+		window.tpdAdminToast = function(m) { showAdminToast($('<span>').text(m).html()); };
 
 		function showAdminToast(msg) {
 			var $toast = $('<div class="tpd-admin-toast"><i class="fa-solid fa-circle-check" style="color:#4ade80;"></i> ' + msg + '</div>');
