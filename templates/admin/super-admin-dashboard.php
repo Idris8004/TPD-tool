@@ -930,6 +930,17 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 							</div>
 						</div>
 
+						<div class="tpd-form-grid-2">
+							<div class="tpd-form-group">
+								<label><?php esc_html_e( 'PayPal Webhook ID (Optional)', 'tpd-tool' ); ?></label>
+								<input type="text" name="paypal_webhook_id" value="<?php echo esc_attr( $payment_settings['paypal_webhook_id'] ?? '' ); ?>" placeholder="e.g. 4HY87930..." class="tpd-input">
+							</div>
+							<div class="tpd-form-group">
+								<label><?php esc_html_e( 'PayPal Webhook Endpoint URL', 'tpd-tool' ); ?></label>
+								<input type="text" readonly value="<?php echo esc_attr( rest_url( 'tpd/v1/paypal-webhook' ) ); ?>" class="tpd-input" style="background:#f8fafc; font-family:monospace; font-size:12px;">
+							</div>
+						</div>
+
 						<button type="submit" class="tpd-btn tpd-btn-darkblue" style="background:#164e87;">
 							<i class="fa-solid fa-floppy-disk"></i> <?php esc_html_e( 'Save Payment Gateway Configuration', 'tpd-tool' ); ?>
 						</button>

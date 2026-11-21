@@ -1008,6 +1008,8 @@ class TPD_Tool_Settings {
 			'paypal_enabled'         => ! empty( $_POST['paypal_enabled'] ) ? 1 : 0,
 			'paypal_client_id'       => isset( $_POST['paypal_client_id'] ) ? sanitize_text_field( wp_unslash( $_POST['paypal_client_id'] ) ) : '',
 			'paypal_secret'          => isset( $_POST['paypal_secret'] ) ? sanitize_text_field( wp_unslash( $_POST['paypal_secret'] ) ) : '',
+			'paypal_webhook_id'      => isset( $_POST['paypal_webhook_id'] ) ? sanitize_text_field( wp_unslash( $_POST['paypal_webhook_id'] ) ) : '',
+			'paypal_webhook_secret'  => isset( $_POST['paypal_webhook_secret'] ) ? sanitize_text_field( wp_unslash( $_POST['paypal_webhook_secret'] ) ) : ( isset( $_POST['paypal_webhook_id'] ) ? sanitize_text_field( wp_unslash( $_POST['paypal_webhook_id'] ) ) : '' ),
 			'offline_enabled'        => ! empty( $_POST['offline_enabled'] ) ? 1 : 0,
 		);
 

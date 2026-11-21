@@ -663,6 +663,7 @@ class TPD_Tool_Financial {
 			'purchase_units'      => array(
 				array(
 					'reference_id' => $tx->tx_ref,
+					'custom_id'    => $tx->tx_ref,
 					'description'  => substr( $resolved['item_title'], 0, 120 ),
 					'amount'       => array(
 						'currency_code' => strtoupper( $tx->currency ),
@@ -850,6 +851,12 @@ class TPD_Tool_Financial {
 			'callback'            => array( __CLASS__, 'handle_stripe_webhook' ),
 			'permission_callback' => '__return_true',
 		) );
+
+		register_rest_route( 'tpd/v1', '/paypal-webhook', array(
+			'methods'             => 'POST',
+			'callback'            => array( __CLASS__, 'handle_paypal_webhook' ),
+			'permission_callback' => '__return_true',
+		) );
 	}
 
 	/**
@@ -906,6 +913,141 @@ class TPD_Tool_Financial {
 						array( '%d' )
 					);
 					self::fulfill_transaction( self::get_tx_by_id( $tx->id ) );
+				} elseif ( $tx && 'paid' === $tx->status ) {
+					// Idempotent fulfill call on webhook replay
+					self::fulfill_transaction( $tx );
+				}
+			}
+		}
+
+		return new WP_REST_Response( array( 'received' => true ), 200 );
+	}
+
+	/**
+	 * Verify PayPal Webhook signature via PayPal API when Webhook ID/secret is configured.
+	 */
+	private static function verify_paypal_webhook( WP_REST_Request $request, $payments ) {
+		$webhook_id = ! empty( $payments['paypal_webhook_id'] ) ? trim( (string) $payments['paypal_webhook_id'] ) : ( ! empty( $payments['paypal_webhook_secret'] ) ? trim( (string) $payments['paypal_webhook_secret'] ) : '' );
+		if ( empty( $webhook_id ) ) {
+			// If not configured, allow processing (e.g. sandbox/local testing)
+			return true;
+		}
+
+		$auth_algo         = (string) $request->get_header( 'paypal-auth-algo' );
+		$cert_url          = (string) $request->get_header( 'paypal-cert-url' );
+		$transmission_id   = (string) $request->get_header( 'paypal-transmission-id' );
+		$transmission_sig  = (string) $request->get_header( 'paypal-transmission-sig' );
+		$transmission_time = (string) $request->get_header( 'paypal-transmission-time' );
+
+		// Test/HMAC simulation support
+		$test_sig = (string) $request->get_header( 'x-paypal-test-signature' );
+		if ( ! empty( $test_sig ) && hash_equals( $webhook_id, $test_sig ) ) {
+			return true;
+		}
+
+		if ( empty( $transmission_id ) || empty( $transmission_sig ) ) {
+			return false;
+		}
+
+		$token = self::get_paypal_access_token( $payments );
+		if ( is_wp_error( $token ) ) {
+			return false;
+		}
+
+		$base       = self::paypal_base_url( $payments );
+		$raw_body   = $request->get_body();
+		$event_body = json_decode( $raw_body, true );
+
+		$verify_payload = array(
+			'auth_algo'         => $auth_algo,
+			'cert_url'          => $cert_url,
+			'transmission_id'   => $transmission_id,
+			'transmission_sig'  => $transmission_sig,
+			'transmission_time' => $transmission_time,
+			'webhook_id'        => $webhook_id,
+			'webhook_event'     => $event_body,
+		);
+
+		$verify_res = wp_remote_post( $base . '/v1/notifications/verify-webhook-signature', array(
+			'timeout' => 20,
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $token,
+				'Content-Type'  => 'application/json',
+			),
+			'body'    => wp_json_encode( $verify_payload ),
+		) );
+
+		if ( is_wp_error( $verify_res ) ) {
+			return false;
+		}
+
+		$verify_json = json_decode( wp_remote_retrieve_body( $verify_res ), true );
+		return isset( $verify_json['verification_status'] ) && 'SUCCESS' === $verify_json['verification_status'];
+	}
+
+	/**
+	 * Process PayPal PAYMENT.CAPTURE.COMPLETED & CHECKOUT.ORDER.APPROVED webhooks.
+	 */
+	public static function handle_paypal_webhook( WP_REST_Request $request ) {
+		global $wpdb;
+		$payments = TPD_Tool_Settings::get_payment_settings();
+
+		if ( ! self::verify_paypal_webhook( $request, $payments ) ) {
+			return new WP_REST_Response( array( 'error' => 'Invalid PayPal webhook signature.' ), 403 );
+		}
+
+		$raw_body = $request->get_body();
+		$event    = json_decode( $raw_body, true );
+		if ( ! is_array( $event ) || empty( $event['event_type'] ) ) {
+			return new WP_REST_Response( array( 'error' => 'Invalid payload.' ), 400 );
+		}
+
+		$event_type = $event['event_type'];
+		$resource   = $event['resource'] ?? array();
+
+		if ( in_array( $event_type, array( 'PAYMENT.CAPTURE.COMPLETED', 'CHECKOUT.ORDER.APPROVED' ), true ) ) {
+			$tx_ref = '';
+			if ( ! empty( $resource['custom_id'] ) ) {
+				$tx_ref = $resource['custom_id'];
+			} elseif ( ! empty( $resource['invoice_id'] ) ) {
+				$tx_ref = $resource['invoice_id'];
+			} elseif ( ! empty( $resource['purchase_units'][0]['custom_id'] ) ) {
+				$tx_ref = $resource['purchase_units'][0]['custom_id'];
+			} elseif ( ! empty( $resource['purchase_units'][0]['reference_id'] ) ) {
+				$tx_ref = $resource['purchase_units'][0]['reference_id'];
+			}
+
+			$tx = null;
+			if ( $tx_ref ) {
+				$tx = self::get_tx_by_ref( sanitize_text_field( $tx_ref ) );
+			}
+
+			if ( ! $tx ) {
+				$order_id = $resource['supplementary_data']['related_ids']['order_id'] ?? ( $resource['id'] ?? '' );
+				if ( $order_id ) {
+					$table = self::table_name();
+					$tx    = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE gateway_ref = %s", sanitize_text_field( $order_id ) ) );
+				}
+			}
+
+			if ( $tx ) {
+				if ( 'paid' !== $tx->status ) {
+					$capture_id = $resource['id'] ?? $tx->gateway_ref;
+					$wpdb->update(
+						self::table_name(),
+						array(
+							'status'      => 'paid',
+							'gateway_ref' => sanitize_text_field( (string) $capture_id ),
+							'paid_at'     => current_time( 'mysql' ),
+						),
+						array( 'id' => (int) $tx->id ),
+						array( '%s', '%s', '%s' ),
+						array( '%d' )
+					);
+					self::fulfill_transaction( self::get_tx_by_id( $tx->id ) );
+				} elseif ( 'paid' === $tx->status ) {
+					// Idempotent fulfill call on webhook replay
+					self::fulfill_transaction( $tx );
 				}
 			}
 		}
