@@ -113,9 +113,6 @@ $paypal_ready = ! empty( $pay_settings['paypal_enabled'] ) && ! empty( $pay_sett
 				<h4 style="margin:0 0 6px; font-size:18px; font-weight:800; color:#0f172a;"><?php esc_html_e( 'Order Confirmed!', 'tpd-tool' ); ?></h4>
 				<p id="tpd-co-success-text" style="margin:0 0 18px; font-size:13.5px; color:#475569; line-height:1.5;"></p>
 				<div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-					<a href="#" id="tpd-co-launch-sso-btn" class="tpd-btn tpd-btn-sm tpd-btn-darkblue" style="display:none; background:#00798c; border-color:#00798c; text-decoration:none;">
-						<i class="fa-solid fa-play"></i> <?php esc_html_e( 'Launch Course Now (SSO)', 'tpd-tool' ); ?>
-					</a>
 					<button type="button" id="tpd-co-done-btn" class="tpd-btn tpd-btn-sm tpd-btn-outline"><?php esc_html_e( 'Done', 'tpd-tool' ); ?></button>
 				</div>
 			</div>

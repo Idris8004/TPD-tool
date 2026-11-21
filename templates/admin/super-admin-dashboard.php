@@ -149,11 +149,7 @@ $faqs                = TPD_Tool_Settings::get_faqs();
 $all_features        = TPD_Tool_Tiers::get_all_features();
 $current_permissions = get_option( TPD_Tool_Tiers::OPTION_PERMISSIONS, array() );
 $claims              = class_exists( 'TPD_Tool_Profile_Editor' ) ? TPD_Tool_Profile_Editor::get_claims() : array();
-$lms_settings        = class_exists( 'TPD_Tool_LMS' ) ? TPD_Tool_LMS::get_settings() : array();
-$lms_configured      = class_exists( 'TPD_Tool_LMS' ) && TPD_Tool_LMS::is_configured();
-$lms_overview        = $lms_configured ? TPD_Tool_LMS::get_admin_overview( false ) : null;
-$lms_courses_admin   = ! empty( $lms_overview['courses'] ) ? $lms_overview['courses'] : ( $lms_configured ? TPD_Tool_LMS::get_catalog( false, 'all' ) : array() );
-$tpd_resources_all   = class_exists( 'TPD_Tool_LMS' ) ? TPD_Tool_LMS::get_custom_resources( true ) : array();
+$tpd_resources_all   = TPD_Tool_Resources::get_custom_resources( true );
 $fin_stats           = class_exists( 'TPD_Tool_Financial' ) ? TPD_Tool_Financial::get_summary_stats() : array();
 $fin_txns            = class_exists( 'TPD_Tool_Financial' ) ? TPD_Tool_Financial::get_transactions( array( 'limit' => 150 ) ) : array();
 $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $payment_settings['currency_symbol'] : '$';
@@ -2175,403 +2171,93 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 			     ========================================================================= -->
 			<div id="sa-lms-studio" class="tpd-sa-pane">
 <?php if ( class_exists( 'TPD_LMS_Native' ) && TPD_LMS_Native::is_enabled() ) : include TPD_TOOL_DIR . 'templates/lms/admin/studio.php'; else : ?>
-				<div class="tpd-sa-card" style="padding:16px 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-					<div style="display:flex; gap:8px; flex-wrap:wrap;">
-						<button type="button" class="tpd-btn tpd-btn-sm tpd-sa-lms-subtab active" data-lmstab="studio" style="background:#164e87; color:#ffffff; border-color:#164e87;">
-							<i class="fa-solid fa-chalkboard-user"></i> <?php esc_html_e( 'Studio & Overview', 'tpd-tool' ); ?>
-						</button>
-						<button type="button" class="tpd-btn tpd-btn-sm tpd-sa-lms-subtab" data-lmstab="catalog" style="background:#f8fafc; color:#334155; border:1px solid #cbd5e1;">
-							<i class="fa-solid fa-book-open"></i> <?php esc_html_e( 'Courses & TPD Toolkits', 'tpd-tool' ); ?>
-						</button>
-						<button type="button" class="tpd-btn tpd-btn-sm tpd-sa-lms-subtab" data-lmstab="settings" style="background:#f8fafc; color:#334155; border:1px solid #cbd5e1;">
-							<i class="fa-solid fa-plug"></i> <?php esc_html_e( 'Connection & .env Setup', 'tpd-tool' ); ?>
-						</button>
-					</div>
-
-					<div style="display:flex; gap:8px; align-items:center;">
-						<span style="font-size:12px; font-weight:700; padding:5px 11px; border-radius:999px; background:<?php echo $lms_configured ? '#dcfce7' : '#fef3c7'; ?>; color:<?php echo $lms_configured ? '#166534' : '#92400e'; ?>;">
-							<i class="fa-solid fa-circle" style="font-size:8px; vertical-align:middle;"></i>
-							<?php echo $lms_configured ? esc_html__( 'LMS Bridge Configured', 'tpd-tool' ) : esc_html__( 'Credentials Pending', 'tpd-tool' ); ?>
-						</span>
-						<button type="button" id="tpd-sa-sync-lms-btn" class="tpd-btn tpd-btn-xs tpd-btn-outline">
-							<i class="fa-solid fa-arrows-rotate"></i> <?php esc_html_e( 'Sync LMS Cache', 'tpd-tool' ); ?>
-						</button>
-					</div>
-				</div>
-
-				<!-- SUB-PANE 1: STUDIO & OVERVIEW -->
-				<div id="tpd-sa-lms-tab-studio" class="tpd-sa-lms-panel active">
-					<?php $lms_st = ! empty( $lms_overview['stats'] ) ? $lms_overview['stats'] : array(); ?>
-					<div class="tpd-sa-kpi-row-4">
-						<div class="tpd-sa-blue-card">
-							<div class="tpd-sa-bc-title"><i class="fa-solid fa-book"></i> <?php esc_html_e( 'LMS Courses', 'tpd-tool' ); ?></div>
-							<div class="tpd-sa-bc-stats">
-								<span class="tpd-sa-bc-main-num"><?php echo esc_html( (int) ( $lms_st['courses_total'] ?? count( $lms_courses_admin ) ) ); ?></span>
-								<span class="tpd-sa-bc-7d"><?php esc_html_e( 'Published', 'tpd-tool' ); ?><strong><?php echo esc_html( (int) ( $lms_st['courses_published'] ?? 0 ) ); ?></strong></span>
-							</div>
-						</div>
-						<div class="tpd-sa-blue-card" style="background:linear-gradient(135deg, #00798c 0%, #014f5e 100%);">
-							<div class="tpd-sa-bc-title"><i class="fa-solid fa-users-line"></i> <?php esc_html_e( 'Total Enrollments', 'tpd-tool' ); ?></div>
-							<div class="tpd-sa-bc-stats">
-								<span class="tpd-sa-bc-main-num"><?php echo esc_html( (int) ( $lms_st['enrollments_total'] ?? 0 ) ); ?></span>
-								<span class="tpd-sa-bc-7d"><?php esc_html_e( 'TPD Learners', 'tpd-tool' ); ?><strong><?php echo esc_html( (int) ( $lms_st['learners_count'] ?? 0 ) ); ?></strong></span>
-							</div>
-						</div>
-						<div class="tpd-sa-blue-card" style="background:linear-gradient(135deg, #047857 0%, #065f46 100%);">
-							<div class="tpd-sa-bc-title"><i class="fa-solid fa-certificate text-gold"></i> <?php esc_html_e( 'Certificates Issued', 'tpd-tool' ); ?></div>
-							<div class="tpd-sa-bc-stats">
-								<span class="tpd-sa-bc-main-num"><?php echo esc_html( (int) ( $lms_st['certificates_issued'] ?? 0 ) ); ?></span>
-								<span class="tpd-sa-bc-7d"><?php esc_html_e( 'Completions', 'tpd-tool' ); ?><strong><?php echo esc_html( (int) ( $lms_st['completions_total'] ?? 0 ) ); ?></strong></span>
-							</div>
-						</div>
-						<div class="tpd-sa-blue-card" style="background:linear-gradient(135deg, #3730a3 0%, #312e81 100%);">
-							<div class="tpd-sa-bc-title"><i class="fa-solid fa-coins text-gold"></i> <?php esc_html_e( 'LMS Paid Orders', 'tpd-tool' ); ?></div>
-							<div class="tpd-sa-bc-stats">
-								<span class="tpd-sa-bc-main-num"><?php echo esc_html( $pay_symbol . number_format( (float) ( $lms_st['gross_revenue'] ?? 0 ), 2 ) ); ?></span>
-								<span class="tpd-sa-bc-7d"><?php esc_html_e( 'Paid Orders', 'tpd-tool' ); ?><strong><?php echo esc_html( (int) ( $lms_st['paid_orders'] ?? 0 ) ); ?></strong></span>
-							</div>
-						</div>
-					</div>
-
-					<!-- Embedded LMS Studio Workspace via Signed SSO + CSP frame-ancestors -->
-					<div class="tpd-sa-card">
-						<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
-							<div>
-								<h3 class="tpd-sa-card-title" style="margin:0 0 4px;"><i class="fa-solid fa-display text-blue"></i> <?php esc_html_e( 'LMS Instructor Studio & Admin Workspace (Signed SSO)', 'tpd-tool' ); ?></h3>
-								<span style="font-size:12.5px; color:#64748b;"><?php esc_html_e( 'Author courses, upload video lessons, manage quizzes, or inspect LMS admin tools with automatic Super Admin SSO.', 'tpd-tool' ); ?></span>
-							</div>
-							<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-								<select id="tpd-sa-lms-route" class="tpd-select" style="width:210px; padding:7px 10px; font-size:12.5px;">
-									<option value="/studio"><?php esc_html_e( 'Instructor Studio (/studio)', 'tpd-tool' ); ?></option>
-									<option value="/studio/courses/create"><?php esc_html_e( 'Create New Course', 'tpd-tool' ); ?></option>
-									<option value="/admin"><?php esc_html_e( 'LMS Platform Admin (/admin)', 'tpd-tool' ); ?></option>
-								</select>
-								<button type="button" id="tpd-sa-load-lms-iframe" class="tpd-btn tpd-btn-xs tpd-btn-darkblue" style="background:#00798c;">
-									<i class="fa-solid fa-play"></i> <?php esc_html_e( 'Load Studio in Tab', 'tpd-tool' ); ?>
-								</button>
-								<button type="button" id="tpd-sa-open-lms-tab" class="tpd-btn tpd-btn-xs tpd-btn-outline">
-									<i class="fa-solid fa-arrow-up-right-from-square"></i> <?php esc_html_e( 'Open in New Tab', 'tpd-tool' ); ?>
-								</button>
-							</div>
-						</div>
-
-						<div id="tpd-sa-lms-iframe-wrap" style="border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; min-height:240px; overflow:hidden; display:flex; flex-direction:column;">
-							<!-- Top Action / Status Bar when Studio is Active -->
-							<div id="tpd-sa-lms-active-bar" style="display:none; background:#0b1526; color:#ffffff; padding:10px 18px; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; font-size:12px;">
-								<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-									<span style="background:#00798c; color:#fff; font-weight:800; padding:3px 9px; border-radius:5px; text-transform:uppercase;">
-										<i class="fa-solid fa-bolt"></i> SSO ACTIVE
-									</span>
-									<span id="tpd-sa-lms-active-dest" style="color:#bae6fd; font-family:monospace;">/studio</span>
-								</div>
-								<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-									<button type="button" id="tpd-sa-toggle-studio-mode" class="tpd-btn tpd-btn-xs" style="background:#1e293b; color:#f8fafc; border:1px solid #475569;">
-										<i class="fa-solid fa-laptop-code text-teal"></i> <span id="tpd-sa-mode-label"><?php esc_html_e( 'Switch to Studio Simulator', 'tpd-tool' ); ?></span>
-									</button>
-									<a href="#" id="tpd-sa-lms-active-sso-link" target="_blank" rel="noopener noreferrer" class="tpd-btn tpd-btn-xs" style="background:#00798c; color:#ffffff; text-decoration:none;">
-										<i class="fa-solid fa-arrow-up-right-from-square"></i> <?php esc_html_e( 'Open SSO in New Tab', 'tpd-tool' ); ?>
-									</a>
-									<button type="button" id="tpd-sa-close-lms-frame" class="tpd-btn tpd-btn-xs" style="background:transparent; border:none; color:#cbd5e1; cursor:pointer;" title="<?php esc_attr_e( 'Exit Studio View', 'tpd-tool' ); ?>">
-										<i class="fa-solid fa-xmark fa-lg"></i>
-									</button>
-								</div>
-							</div>
-
-							<!-- Placeholder Prompt -->
-							<div id="tpd-sa-lms-iframe-placeholder" style="text-align:center; padding:48px 24px; max-width:540px; margin:auto;">
-								<i class="fa-solid fa-chalkboard-user" style="font-size:44px; color:#164e87; margin-bottom:12px;"></i>
-								<h4 style="margin:0 0 6px; font-size:18px;"><?php esc_html_e( 'Launch LMS Instructor Studio', 'tpd-tool' ); ?></h4>
-								<p style="font-size:13px; color:#64748b; margin:0 0 16px; line-height:1.5;">
-									<?php esc_html_e( 'Embed the full LMS Instructor Studio workspace right here in your dashboard using your secure Single Sign-On session, or preview the interactive Course Simulator.', 'tpd-tool' ); ?>
-								</p>
-								<div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
-									<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-darkblue tpd-sa-trigger-load-studio" style="background:#00798c;">
-										<i class="fa-solid fa-play"></i> <?php esc_html_e( 'Load Studio in Tab', 'tpd-tool' ); ?>
-									</button>
-									<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline tpd-sa-open-simulator-btn">
-										<i class="fa-solid fa-laptop-code text-teal"></i> <?php esc_html_e( 'Preview Studio Simulator', 'tpd-tool' ); ?>
-									</button>
-								</div>
-							</div>
-
-							<!-- Live SSO Iframe -->
-							<iframe id="tpd-sa-lms-iframe" src="about:blank" style="display:none; width:100%; height:780px; border:0; background:#ffffff;"></iframe>
-
-							<!-- Interactive Built-in LMS Studio Simulator (Always works even if remote server is offline) -->
-							<div id="tpd-sa-lms-simulator" style="display:none; padding:24px; background:#f8fafc; font-family:'Plus Jakarta Sans', system-ui, sans-serif;">
-								<div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:20px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
-									<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; border-bottom:1px solid #f1f5f9; padding-bottom:14px; margin-bottom:16px;">
-										<div>
-											<span style="background:#eff6ff; color:#1d4ed8; font-size:11px; font-weight:800; padding:3px 10px; border-radius:6px; text-transform:uppercase;">
-												<i class="fa-solid fa-graduation-cap"></i> LMS INSTRUCTOR STUDIO WORKSPACE
-											</span>
-											<h3 style="margin:6px 0 0; font-size:18px; font-weight:800; color:#0f172a;">Course Management & Lesson Curriculum</h3>
-										</div>
-										<div style="display:flex; gap:8px;">
-											<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-sim-filter-btn active" data-simtab="all" style="background:#164e87; color:#fff;">All Courses (<?php echo count($lms_courses_admin); ?>)</button>
-											<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-sim-new-course-btn" style="background:#00798c; color:#fff; border-color:#00798c;">
-												<i class="fa-solid fa-plus"></i> Create Course
-											</button>
-										</div>
-									</div>
-
-									<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(290px, 1fr)); gap:18px;">
-										<?php foreach ( $lms_courses_admin as $lc ) :
-											$slug = $lc['slug'] ?? '';
-											$title = $lc['title'] ?? $slug;
-											$price = (float)($lc['price'] ?? 0);
-											$lessons = (int)($lc['lessons_count'] ?? 0);
-											$thumb = ! empty( $lc['thumbnail_url'] ) ? $lc['thumbnail_url'] : 'https://images.unsplash.com/photo-1548574505-5e239809ee19?w=600&auto=format&fit=crop&q=80';
-										?>
-											<div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; overflow:hidden; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
-												<div>
-													<div style="height:120px; background-image:url('<?php echo esc_url($thumb); ?>'); background-size:cover; background-position:center; padding:10px; display:flex; justify-content:space-between;">
-														<span style="background:#16a34a; color:#fff; font-size:10px; font-weight:800; padding:2px 8px; border-radius:4px; text-transform:uppercase;">PUBLISHED</span>
-														<strong style="background:rgba(11,21,38,0.85); color:#fff; font-size:11px; padding:2px 8px; border-radius:4px;">
-															<?php echo $price <= 0 ? 'Free' : ('$' . number_format($price, 2)); ?>
-														</strong>
-													</div>
-													<div style="padding:14px;">
-														<h4 style="margin:0 0 6px; font-size:14px; font-weight:800;"><?php echo esc_html($title); ?></h4>
-														<p style="font-size:12px; color:#64748b; margin:0 0 10px; line-height:1.4;"><?php echo esc_html(wp_trim_words($lc['subtitle'] ?? '', 14)); ?></p>
-														<div style="font-size:11.5px; color:#475569; display:flex; gap:10px;">
-															<span><i class="fa-regular fa-circle-play text-blue"></i> <?php echo esc_html($lessons); ?> lessons</span>
-															<span><i class="fa-solid fa-award text-gold"></i> Certificate</span>
-														</div>
-													</div>
-												</div>
-												<div style="padding:10px 14px; background:#f8fafc; border-top:1px solid #f1f5f9; display:flex; justify-content:space-between; gap:6px;">
-													<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-sim-manage-curriculum" data-title="<?php echo esc_attr($title); ?>" style="flex:1;">
-														<i class="fa-solid fa-list-check"></i> Curriculum
-													</button>
-													<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-sim-quiz-builder" data-title="<?php echo esc_attr($title); ?>" style="flex:1;">
-														<i class="fa-solid fa-question"></i> Quizzes
-													</button>
-												</div>
-											</div>
-										<?php endforeach; ?>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-
-				<!-- SUB-PANE 2: LMS COURSES & TPD TOOLKITS CRUD -->
-				<div id="tpd-sa-lms-tab-catalog" class="tpd-sa-lms-panel" style="display:none;">
-					<div class="tpd-sa-card">
-						<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
-							<h3 class="tpd-sa-card-title" style="margin:0;"><i class="fa-solid fa-book-open text-blue"></i> <?php esc_html_e( 'LMS Courses Catalog (Remote Control)', 'tpd-tool' ); ?></h3>
-							<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-darkblue tpd-sa-sso-jump" data-redirect="/studio/courses/create" style="background:#164e87;">
-								<i class="fa-solid fa-plus"></i> <?php esc_html_e( 'Create Course in Studio', 'tpd-tool' ); ?>
-							</button>
-						</div>
-
-						<div style="overflow-x:auto;">
-							<table class="tpd-sa-table">
-								<thead>
-									<tr>
-										<th><?php esc_html_e( 'Course Title & Slug', 'tpd-tool' ); ?></th>
-										<th><?php esc_html_e( 'Price', 'tpd-tool' ); ?></th>
-										<th><?php esc_html_e( 'Enrollments', 'tpd-tool' ); ?></th>
-										<th><?php esc_html_e( 'Status', 'tpd-tool' ); ?></th>
-										<th><?php esc_html_e( 'Actions', 'tpd-tool' ); ?></th>
-									</tr>
-								</thead>
-								<tbody>
-									<?php if ( empty( $lms_courses_admin ) ) : ?>
-										<tr><td colspan="5" style="text-align:center; color:#64748b; padding:22px;"><?php esc_html_e( 'No courses retrieved from LMS yet. Verify LMS API connection & credentials.', 'tpd-tool' ); ?></td></tr>
-									<?php else : ?>
-										<?php foreach ( $lms_courses_admin as $lc ) :
-											$c_slug   = (string) ( $lc['slug'] ?? '' );
-											$c_status = (string) ( $lc['status'] ?? 'draft' );
-											$is_pub   = ( 'published' === $c_status );
-											$c_price  = (float) ( $lc['price'] ?? 0 );
-										?>
-											<tr>
-												<td>
-													<strong><?php echo esc_html( $lc['title'] ?? $c_slug ); ?></strong><br>
-													<code style="font-size:11px;"><?php echo esc_html( $c_slug ); ?></code>
-												</td>
-												<td><?php echo $c_price <= 0 ? '<span style="color:#16a34a; font-weight:700;">Free</span>' : esc_html( $pay_symbol . number_format( $c_price, 2 ) ); ?></td>
-												<td><?php echo esc_html( (int) ( $lc['enrollments_count'] ?? 0 ) ); ?></td>
-												<td>
-													<span class="tpd-status-pill <?php echo $is_pub ? 'active' : 'inactive'; ?> tpd-lms-status-pill" data-slug="<?php echo esc_attr( $c_slug ); ?>">
-														<?php echo $is_pub ? 'PUBLISHED' : 'DRAFT'; ?>
-													</span>
-												</td>
-												<td style="white-space:nowrap;">
-													<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-outline tpd-lms-toggle-publish-btn" data-slug="<?php echo esc_attr( $c_slug ); ?>">
-														<i class="fa-solid fa-power-off"></i> <?php echo $is_pub ? esc_html__( 'Set Draft', 'tpd-tool' ) : esc_html__( 'Publish', 'tpd-tool' ); ?>
-													</button>
-													<?php if ( ! empty( $lc['edit_path'] ) ) : ?>
-														<button type="button" class="tpd-act-btn tpd-act-edit tpd-sa-sso-jump" data-redirect="<?php echo esc_attr( $lc['edit_path'] ); ?>" title="<?php esc_attr_e( 'Edit in LMS Studio', 'tpd-tool' ); ?>">
-															<i class="fa-solid fa-pen"></i>
-														</button>
-													<?php endif; ?>
-												</td>
-											</tr>
-										<?php endforeach; ?>
-									<?php endif; ?>
-								</tbody>
-							</table>
-						</div>
-					</div>
-
-					<!-- TPD Sales Toolkits & Custom Resources CRUD -->
-					<div class="tpd-sa-card">
-						<h3 class="tpd-sa-card-title"><i class="fa-solid fa-toolbox text-gold"></i> <?php esc_html_e( 'TPD Sales Toolkits & Downloadable Resources', 'tpd-tool' ); ?></h3>
-						<div style="overflow-x:auto; margin-bottom:20px;">
-							<table class="tpd-sa-table" id="tpd-sa-resources-table">
-								<thead>
-									<tr>
-										<th><?php esc_html_e( 'Title', 'tpd-tool' ); ?></th>
-										<th><?php esc_html_e( 'Category', 'tpd-tool' ); ?></th>
-										<th><?php esc_html_e( 'Price', 'tpd-tool' ); ?></th>
-										<th><?php esc_html_e( 'Tier Access', 'tpd-tool' ); ?></th>
-										<th><?php esc_html_e( 'Status', 'tpd-tool' ); ?></th>
-										<th><?php esc_html_e( 'Actions', 'tpd-tool' ); ?></th>
-									</tr>
-								</thead>
-								<tbody>
-									<?php foreach ( $tpd_resources_all as $res ) : ?>
-										<tr id="sa-res-row-<?php echo esc_attr( $res['id'] ); ?>">
-											<td><strong><?php echo esc_html( $res['title'] ); ?></strong></td>
-											<td><?php echo esc_html( $res['category'] ); ?></td>
-											<td><?php echo (float) $res['price'] <= 0 ? 'Free' : esc_html( $pay_symbol . number_format( (float) $res['price'], 2 ) ); ?></td>
-											<td><code><?php echo esc_html( $res['tier_included'] ); ?></code></td>
-											<td><?php echo esc_html( ucfirst( $res['status'] ) ); ?></td>
-											<td>
-												<button type="button" class="tpd-act-btn tpd-act-del tpd-sa-delete-resource-btn" data-id="<?php echo esc_attr( $res['id'] ); ?>" title="<?php esc_attr_e( 'Delete Resource', 'tpd-tool' ); ?>">
-													<i class="fa-regular fa-trash-can"></i>
-												</button>
-											</td>
-										</tr>
-									<?php endforeach; ?>
-								</tbody>
-							</table>
-						</div>
-
-						<form id="tpd-sa-resource-form" style="background:#f8fafc; padding:18px; border-radius:10px; border:1px solid #e2e8f0;">
-							<h4 style="margin:0 0 12px; font-size:14.5px;"><?php esc_html_e( '+ Add / Publish Sales Toolkit or Resource', 'tpd-tool' ); ?></h4>
-							<div class="tpd-form-grid-3">
-								<div class="tpd-form-group">
-									<label><?php esc_html_e( 'Resource Title *', 'tpd-tool' ); ?></label>
-									<input type="text" name="title" required placeholder="e.g. 2026 Luxury Yacht Sales Deck" class="tpd-input">
-								</div>
-								<div class="tpd-form-group">
-									<label><?php esc_html_e( 'Category', 'tpd-tool' ); ?></label>
-									<input type="text" name="category" value="Sales Toolkit" class="tpd-input">
-								</div>
-								<div class="tpd-form-group">
-									<label><?php esc_html_e( 'Standalone Price ($)', 'tpd-tool' ); ?></label>
-									<input type="number" step="0.01" min="0" name="price" value="0.00" class="tpd-input">
-								</div>
-							</div>
-							<div class="tpd-form-grid-3">
-								<div class="tpd-form-group">
-									<label><?php esc_html_e( 'Included in Plan Tier', 'tpd-tool' ); ?></label>
-									<select name="tier_included" class="tpd-select">
-										<option value="all">All Members</option>
-										<option value="standard">Standard & Premium</option>
-										<option value="premium">Premium Only</option>
-										<option value="none">Standalone Purchase Only</option>
-									</select>
-								</div>
-								<div class="tpd-form-group">
-									<label><?php esc_html_e( 'Download / Resource URL *', 'tpd-tool' ); ?></label>
-									<input type="url" name="file_url" required placeholder="https://..." class="tpd-input">
-								</div>
-								<div class="tpd-form-group">
-									<label><?php esc_html_e( 'Visibility Status', 'tpd-tool' ); ?></label>
-									<select name="status" class="tpd-select">
-										<option value="published">Published</option>
-										<option value="draft">Draft</option>
-									</select>
-								</div>
-							</div>
-							<div class="tpd-form-group">
-								<label><?php esc_html_e( 'Short Description', 'tpd-tool' ); ?></label>
-								<textarea name="description" rows="2" class="tpd-textarea" placeholder="<?php esc_attr_e( 'Brief description shown in Resources Hub...', 'tpd-tool' ); ?>"></textarea>
-							</div>
-							<button type="submit" class="tpd-btn tpd-btn-darkblue" style="background:#00798c;">
-								<i class="fa-solid fa-plus"></i> <?php esc_html_e( 'Publish TPD Resource', 'tpd-tool' ); ?>
-							</button>
-						</form>
-					</div>
-				</div>
-
-				<!-- SUB-PANE 3: CONNECTION SETTINGS & .ENV GENERATOR -->
-				<div id="tpd-sa-lms-tab-settings" class="tpd-sa-lms-panel" style="display:none;">
-					<div class="tpd-sa-card">
-						<h3 class="tpd-sa-card-title"><i class="fa-solid fa-plug text-blue"></i> <?php esc_html_e( 'LMS API & Signed SSO Bridge Configuration', 'tpd-tool' ); ?></h3>
-						<form id="tpd-sa-lms-settings-form">
-							<div class="tpd-form-grid-3">
-								<div class="tpd-form-group">
-									<label><?php esc_html_e( 'LMS Base URL *', 'tpd-tool' ); ?></label>
-									<input type="url" name="lms_url" required value="<?php echo esc_attr( $lms_settings['lms_url'] ?? 'https://learn.tarctpc.com' ); ?>" placeholder="https://learn.tarctpc.com" class="tpd-input">
-								</div>
-								<div class="tpd-form-group">
-									<label><?php esc_html_e( 'Catalog Cache TTL (Seconds)', 'tpd-tool' ); ?></label>
-									<input type="number" min="30" name="cache_ttl" value="<?php echo esc_attr( (int) ( $lms_settings['cache_ttl'] ?? 300 ) ); ?>" class="tpd-input">
-								</div>
-								<div class="tpd-form-group">
-									<label><?php esc_html_e( 'Bridge Options', 'tpd-tool' ); ?></label>
-									<div style="display:flex; gap:14px; padding-top:8px; flex-wrap:wrap;">
-										<label><input type="checkbox" name="enabled" value="1" <?php checked( ! empty( $lms_settings['enabled'] ) ); ?>> <?php esc_html_e( 'Enable Integration', 'tpd-tool' ); ?></label>
-										<label><input type="checkbox" name="embed_studio" value="1" <?php checked( ! empty( $lms_settings['embed_studio'] ) ); ?>> <?php esc_html_e( 'Allow Studio Iframe', 'tpd-tool' ); ?></label>
-									</div>
-								</div>
-							</div>
-
-							<div class="tpd-form-grid-3">
-								<div class="tpd-form-group">
-									<label><?php esc_html_e( 'Shared SSO Secret (HMAC-SHA256) *', 'tpd-tool' ); ?></label>
-									<input type="password" name="sso_secret" value="<?php echo esc_attr( $lms_settings['sso_secret'] ?? '' ); ?>" class="tpd-input" placeholder="32+ character shared secret">
-								</div>
-								<div class="tpd-form-group">
-									<label><?php esc_html_e( 'LMS Service API Bearer Token *', 'tpd-tool' ); ?></label>
-									<input type="password" name="api_token" value="<?php echo esc_attr( $lms_settings['api_token'] ?? '' ); ?>" class="tpd-input" placeholder="Shared TPD_API_TOKEN">
-								</div>
-								<div class="tpd-form-group">
-									<label><?php esc_html_e( 'LMS Webhook Secret', 'tpd-tool' ); ?></label>
-									<input type="password" name="webhook_secret" value="<?php echo esc_attr( $lms_settings['webhook_secret'] ?? '' ); ?>" class="tpd-input" placeholder="Shared TPD_WEBHOOK_SECRET">
-								</div>
-							</div>
-
-							<div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
-								<button type="submit" class="tpd-btn tpd-btn-darkblue" style="background:#164e87;">
-									<i class="fa-solid fa-floppy-disk"></i> <?php esc_html_e( 'Save LMS Settings', 'tpd-tool' ); ?>
-								</button>
-								<button type="button" id="tpd-btn-gen-lms-keys" class="tpd-btn tpd-btn-outline" title="<?php esc_attr_e( 'Auto-generate strong 64-character hex keys', 'tpd-tool' ); ?>">
-									<i class="fa-solid fa-wand-magic-sparkles text-gold"></i> <?php esc_html_e( 'Generate Secure Keys', 'tpd-tool' ); ?>
-								</button>
-								<button type="button" id="tpd-sa-test-lms-btn" class="tpd-btn tpd-btn-outline">
-									<i class="fa-solid fa-heart-pulse"></i> <?php esc_html_e( 'Test LMS Health (/api/tpd/health)', 'tpd-tool' ); ?>
-								</button>
-							</div>
-						</form>
-					</div>
-
-					<div class="tpd-sa-card">
-						<h3 class="tpd-sa-card-title"><i class="fa-solid fa-terminal text-teal"></i> <?php esc_html_e( 'Laravel LMS .env Environment Block', 'tpd-tool' ); ?></h3>
-						<p style="font-size:13px; color:#64748b; margin-top:-8px;">
-							<?php esc_html_e( 'Copy these values into your Laravel LMS .env file whenever setting up or changing domains:', 'tpd-tool' ); ?>
-						</p>
-						<?php
-						$env_block = implode( "\n", array(
-							'TPD_BASE_URL=' . home_url(),
-							'TPD_SSO_SECRET=' . ( ! empty( $lms_settings['sso_secret'] ) ? $lms_settings['sso_secret'] : 'REPLACE_WITH_SHARED_SSO_SECRET' ),
-							'TPD_API_TOKEN=' . ( ! empty( $lms_settings['api_token'] ) ? $lms_settings['api_token'] : 'REPLACE_WITH_SHARED_API_TOKEN' ),
-							'TPD_WEBHOOK_URL=' . rest_url( 'tpd/v1/lms-webhook' ),
-							'TPD_WEBHOOK_SECRET=' . ( ! empty( $lms_settings['webhook_secret'] ) ? $lms_settings['webhook_secret'] : 'REPLACE_WITH_SHARED_WEBHOOK_SECRET' ),
-							'TPD_FRAME_ANCESTORS="\'self\' https://tpd.tarctpc.com http://localhost:* http://127.0.0.1:* ' . home_url() . '"',
-						) );
-						?>
-						<pre style="background:#0f172a; color:#e2e8f0; padding:16px 18px; border-radius:10px; font-size:12.5px; line-height:1.65; overflow-x:auto; margin:0;"><?php echo esc_html( $env_block ); ?></pre>
-					</div>
+				<div class="tpd-sa-card">
+					<h3 class="tpd-sa-card-title"><i class="fa-solid fa-graduation-cap text-blue"></i> <?php esc_html_e( 'LMS Studio', 'tpd-tool' ); ?></h3>
+					<p style="font-size:13px; color:#64748b; margin:0;"><?php esc_html_e( 'The LMS is turned off. Turn it on with: wp tpd-lms enable', 'tpd-tool' ); ?></p>
 				</div>
 <?php endif; ?>
+
+				<!-- TPD Sales Toolkits & Custom Resources CRUD -->
+				<div class="tpd-sa-card">
+					<h3 class="tpd-sa-card-title"><i class="fa-solid fa-toolbox text-gold"></i> <?php esc_html_e( 'TPD Sales Toolkits & Downloadable Resources', 'tpd-tool' ); ?></h3>
+					<div style="overflow-x:auto; margin-bottom:20px;">
+						<table class="tpd-sa-table" id="tpd-sa-resources-table">
+							<thead>
+								<tr>
+									<th><?php esc_html_e( 'Title', 'tpd-tool' ); ?></th>
+									<th><?php esc_html_e( 'Category', 'tpd-tool' ); ?></th>
+									<th><?php esc_html_e( 'Price', 'tpd-tool' ); ?></th>
+									<th><?php esc_html_e( 'Tier Access', 'tpd-tool' ); ?></th>
+									<th><?php esc_html_e( 'Status', 'tpd-tool' ); ?></th>
+									<th><?php esc_html_e( 'Actions', 'tpd-tool' ); ?></th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php foreach ( $tpd_resources_all as $res ) : ?>
+									<tr id="sa-res-row-<?php echo esc_attr( $res['id'] ); ?>">
+										<td><strong><?php echo esc_html( $res['title'] ); ?></strong></td>
+										<td><?php echo esc_html( $res['category'] ); ?></td>
+										<td><?php echo (float) $res['price'] <= 0 ? 'Free' : esc_html( $pay_symbol . number_format( (float) $res['price'], 2 ) ); ?></td>
+										<td><code><?php echo esc_html( $res['tier_included'] ); ?></code></td>
+										<td><?php echo esc_html( ucfirst( $res['status'] ) ); ?></td>
+										<td>
+											<button type="button" class="tpd-act-btn tpd-act-del tpd-sa-delete-resource-btn" data-id="<?php echo esc_attr( $res['id'] ); ?>" title="<?php esc_attr_e( 'Delete Resource', 'tpd-tool' ); ?>">
+												<i class="fa-regular fa-trash-can"></i>
+											</button>
+										</td>
+									</tr>
+								<?php endforeach; ?>
+							</tbody>
+						</table>
+					</div>
+
+					<form id="tpd-sa-resource-form" style="background:#f8fafc; padding:18px; border-radius:10px; border:1px solid #e2e8f0;">
+						<h4 style="margin:0 0 12px; font-size:14.5px;"><?php esc_html_e( '+ Add / Publish Sales Toolkit or Resource', 'tpd-tool' ); ?></h4>
+						<div class="tpd-form-grid-3">
+							<div class="tpd-form-group">
+								<label><?php esc_html_e( 'Resource Title *', 'tpd-tool' ); ?></label>
+								<input type="text" name="title" required placeholder="e.g. 2026 Luxury Yacht Sales Deck" class="tpd-input">
+							</div>
+							<div class="tpd-form-group">
+								<label><?php esc_html_e( 'Category', 'tpd-tool' ); ?></label>
+								<input type="text" name="category" value="Sales Toolkit" class="tpd-input">
+							</div>
+							<div class="tpd-form-group">
+								<label><?php esc_html_e( 'Standalone Price ($)', 'tpd-tool' ); ?></label>
+								<input type="number" step="0.01" min="0" name="price" value="0.00" class="tpd-input">
+							</div>
+						</div>
+						<div class="tpd-form-grid-3">
+							<div class="tpd-form-group">
+								<label><?php esc_html_e( 'Included in Plan Tier', 'tpd-tool' ); ?></label>
+								<select name="tier_included" class="tpd-select">
+									<option value="all">All Members</option>
+									<option value="standard">Standard & Premium</option>
+									<option value="premium">Premium Only</option>
+									<option value="none">Standalone Purchase Only</option>
+								</select>
+							</div>
+							<div class="tpd-form-group">
+								<label><?php esc_html_e( 'Download / Resource URL *', 'tpd-tool' ); ?></label>
+								<input type="url" name="file_url" required placeholder="https://..." class="tpd-input">
+							</div>
+							<div class="tpd-form-group">
+								<label><?php esc_html_e( 'Visibility Status', 'tpd-tool' ); ?></label>
+								<select name="status" class="tpd-select">
+									<option value="published">Published</option>
+									<option value="draft">Draft</option>
+								</select>
+							</div>
+						</div>
+						<div class="tpd-form-group">
+							<label><?php esc_html_e( 'Short Description', 'tpd-tool' ); ?></label>
+							<textarea name="description" rows="2" class="tpd-textarea" placeholder="<?php esc_attr_e( 'Brief description shown in Resources Hub...', 'tpd-tool' ); ?>"></textarea>
+						</div>
+						<button type="submit" class="tpd-btn tpd-btn-darkblue" style="background:#00798c;">
+							<i class="fa-solid fa-plus"></i> <?php esc_html_e( 'Publish TPD Resource', 'tpd-tool' ); ?>
+						</button>
+					</form>
+				</div>
 			</div>
 
 		</div>

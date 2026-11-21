@@ -1960,7 +1960,7 @@
 			showToast('<i class="fa-solid fa-calendar-check"></i> Event saved to your calendar!');
 		});
 
-		// 23. Resources & Tools Hub (My Resources / All Resources, Filtering, SSO Launch, Sync)
+		// 23. Resources & Tools Hub (My Resources / All Resources, Filtering)
 		function switchResourcesSubtab(subtab) {
 			subtab = (subtab === 'all') ? 'all' : 'my';
 			$('.tpd-res-subtab').each(function() {
@@ -2011,78 +2011,6 @@
 		$(document).on('keyup input', '#tpd-res-search-input', filterResourcesCards);
 		$(document).on('change', '#tpd-res-type-filter', filterResourcesCards);
 
-		// 1-Click Fresh Signed SSO Launch
-		$(document).on('click', '.tpd-btn-sso-launch', function(e) {
-			e.preventDefault();
-			var $btn = $(this);
-			var redirectPath = $btn.data('redirect') || '/courses';
-			var origHtml = $btn.html();
-			var ssoWin = window.open('about:blank', '_blank');
-
-			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Launching...');
-
-			$.ajax({
-				url: (typeof tpd_data !== 'undefined') ? tpd_data.ajax_url : '/wp-admin/admin-ajax.php',
-				type: 'POST',
-				data: {
-					action: 'tpd_get_lms_sso_url',
-					redirect: redirectPath,
-					nonce: (typeof tpd_data !== 'undefined' ? tpd_data.nonce : '')
-				},
-				success: function(res) {
-					$btn.prop('disabled', false).html(origHtml);
-					if (res && res.success && res.data && res.data.sso_url) {
-						if (ssoWin && !ssoWin.closed) {
-							ssoWin.location.href = res.data.sso_url;
-						} else {
-							window.location.href = res.data.sso_url;
-						}
-					} else {
-						if (ssoWin && !ssoWin.closed) ssoWin.close();
-						alert((res && res.data && res.data.message) ? res.data.message : 'Unable to generate LMS SSO link.');
-					}
-				},
-				error: function() {
-					$btn.prop('disabled', false).html(origHtml);
-					if (ssoWin && !ssoWin.closed) ssoWin.close();
-					alert('Connection error generating SSO session.');
-				}
-			});
-		});
-
-		// Refresh Enrollments & Catalog Cache
-		$(document).on('click', '#tpd-btn-sync-my-resources', function(e) {
-			e.preventDefault();
-			var $btn = $(this);
-			var origHtml = $btn.html();
-			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Syncing...');
-
-			$.ajax({
-				url: (typeof tpd_data !== 'undefined') ? tpd_data.ajax_url : '/wp-admin/admin-ajax.php',
-				type: 'POST',
-				data: {
-					action: 'tpd_get_resources_data',
-					force: 1,
-					nonce: (typeof tpd_data !== 'undefined' ? tpd_data.nonce : '')
-				},
-				success: function(res) {
-					$btn.prop('disabled', false).html(origHtml);
-					if (res && res.success) {
-						showToast('Resources & LMS progress synced!');
-						setTimeout(function() {
-							window.location.reload();
-						}, 650);
-					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to sync LMS resources.');
-					}
-				},
-				error: function() {
-					$btn.prop('disabled', false).html(origHtml);
-					alert('Connection error syncing resources.');
-				}
-			});
-		});
-
 		// 24. Unified TPD Checkout Modal Controller (Plans, LMS Courses, Toolkits)
 		var tpdCheckoutNeedsReload = false;
 
@@ -2109,7 +2037,6 @@
 			tpdCheckoutNeedsReload = false;
 			$('#tpd-co-status-msg').hide().text('');
 			$('#tpd-checkout-success').hide();
-			$('#tpd-co-launch-sso-btn').hide().attr('href', '#');
 			$('#tpd-checkout-content').hide();
 			$('#tpd-checkout-loading').show();
 			$modal.css('display', 'flex').hide().fadeIn(160);
@@ -2229,9 +2156,6 @@
 					tpdCheckoutNeedsReload = Boolean(res.data.reload || res.data.refresh_resources);
 					$('#tpd-checkout-content').hide();
 					$('#tpd-co-success-text').text(res.data.message || 'Purchase confirmed!');
-					if (res.data.sso_url) {
-						$('#tpd-co-launch-sso-btn').attr('href', res.data.sso_url).attr('target', '_blank').show();
-					}
 					$('#tpd-checkout-success').fadeIn(180);
 					showToast(res.data.message || 'Order completed!');
 				},
@@ -2274,9 +2198,6 @@
 						if (res && res.success && res.data) {
 							tpdCheckoutNeedsReload = true;
 							$('#tpd-co-success-text').text(res.data.message || 'Payment confirmed and unlocked!');
-							if (res.data.sso_url) {
-								$('#tpd-co-launch-sso-btn').attr('href', res.data.sso_url).attr('target', '_blank').show();
-							}
 							$('#tpd-checkout-success').fadeIn(180);
 							showToast(res.data.message || 'Payment confirmed!');
 						} else {
