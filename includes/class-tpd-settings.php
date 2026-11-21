@@ -387,7 +387,37 @@ class TPD_Tool_Settings {
 		$is_yearly = ( stripos( $billing_type, 'year' ) !== false || stripos( $billing_type, 'annual' ) !== false );
 		$price     = $is_yearly ? (float) $plan['yearly_price'] : (float) $plan['monthly_price'];
 		$type_label = $is_yearly ? 'Year' : 'Month';
-		$expiry    = $is_yearly ? gmdate( 'Y-m-d', strtotime( '+1 year' ) ) : gmdate( 'Y-m-d', strtotime( '+1 month' ) );
+
+		// Free / basic plans do not expire
+		if ( in_array( $plan_slug, array( 'basic', 'free' ), true ) || $price <= 0 ) {
+			$expiry = 'Never';
+			delete_user_meta( $user_id, 'plan_expires_at' );
+			delete_user_meta( $user_id, 'tpd_plan_expires_at' );
+			delete_user_meta( $user_id, 'tpd_plan_expiry_date' );
+			delete_user_meta( $user_id, 'tpd_renewal_reminder_sent' );
+			delete_user_meta( $user_id, 'tpd_plan_expired_notice_sent' );
+		} else {
+			// Extend from active future expiry date if present, otherwise calculate from current time
+			$existing_expiry = get_user_meta( $user_id, 'plan_expires_at', true );
+			if ( empty( $existing_expiry ) ) {
+				$existing_expiry = get_user_meta( $user_id, 'tpd_plan_expiry_date', true );
+			}
+			$existing_ts = 0;
+			if ( ! empty( $existing_expiry ) ) {
+				$existing_ts = is_numeric( $existing_expiry ) ? (int) $existing_expiry : strtotime( $existing_expiry . ' 23:59:59 UTC' );
+			}
+			$now       = time();
+			$base_ts   = ( $existing_ts && $existing_ts > $now ) ? $existing_ts : $now;
+			$target_ts = $is_yearly ? strtotime( '+1 year', $base_ts ) : strtotime( '+1 month', $base_ts );
+			$expiry    = gmdate( 'Y-m-d', $target_ts );
+
+			update_user_meta( $user_id, 'plan_expires_at', $expiry );
+			update_user_meta( $user_id, 'tpd_plan_expires_at', $expiry );
+			update_user_meta( $user_id, 'tpd_plan_expiry_date', $expiry );
+			// Clear reminder and expired notice flags for new billing period
+			delete_user_meta( $user_id, 'tpd_renewal_reminder_sent' );
+			delete_user_meta( $user_id, 'tpd_plan_expired_notice_sent' );
+		}
 
 		$subs = (array) get_option( self::OPT_SUBSCRIPTIONS, array() );
 		array_unshift( $subs, array(
@@ -410,7 +440,6 @@ class TPD_Tool_Settings {
 		update_user_meta( $user_id, 'tpd_plan_billing_type', $type_label );
 		update_user_meta( $user_id, 'tpd_plan_amount', $symbol . number_format( $price, 2 ) );
 		update_user_meta( $user_id, 'tpd_plan_start_date', gmdate( 'Y-m-d' ) );
-		update_user_meta( $user_id, 'tpd_plan_expiry_date', $expiry );
 	}
 
 	public static function get_subscriptions( $limit = 10 ) {

@@ -17,6 +17,12 @@ class TPD_Tool_Tiers {
 		add_action( 'init', array( __CLASS__, 'export_advisors_csv' ) );
 		add_action( 'wp_ajax_tpd_update_user_tier', array( __CLASS__, 'ajax_update_user_tier' ) );
 		add_action( 'wp_ajax_tpd_save_tier_permissions', array( __CLASS__, 'ajax_save_tier_permissions' ) );
+
+		// Daily WP-Cron for plan expiration checks and renewal reminders
+		if ( ! wp_next_scheduled( 'tpd_daily_plan_expiration_check' ) ) {
+			wp_schedule_event( time(), 'daily', 'tpd_daily_plan_expiration_check' );
+		}
+		add_action( 'tpd_daily_plan_expiration_check', array( __CLASS__, 'cron_check_plan_expirations' ) );
 	}
 
 	/**
@@ -249,7 +255,24 @@ class TPD_Tool_Tiers {
 		if ( 'paid' === $tier ) {
 			return 'standard';
 		}
-		return sanitize_text_field( $tier );
+		$tier = sanitize_text_field( $tier );
+
+		// Check if active paid plan has expired; if so, immediately fall back to basic
+		if ( 'basic' !== $tier ) {
+			$expires_meta = get_user_meta( $user_id, 'plan_expires_at', true );
+			if ( empty( $expires_meta ) ) {
+				$expires_meta = get_user_meta( $user_id, 'tpd_plan_expiry_date', true );
+			}
+			if ( ! empty( $expires_meta ) ) {
+				$expires_ts = is_numeric( $expires_meta ) ? (int) $expires_meta : strtotime( $expires_meta . ' 23:59:59 UTC' );
+				if ( $expires_ts && time() > $expires_ts ) {
+					self::set_user_tier( $user_id, 'basic' );
+					return 'basic';
+				}
+			}
+		}
+
+		return $tier;
 	}
 
 	/**
@@ -269,6 +292,15 @@ class TPD_Tool_Tiers {
 			$tier = 'basic';
 		}
 		update_user_meta( $user_id, 'tpd_user_tier', $tier );
+
+		// If setting to basic, clear any expiration and reminder metadata
+		if ( 'basic' === $tier ) {
+			delete_user_meta( $user_id, 'plan_expires_at' );
+			delete_user_meta( $user_id, 'tpd_plan_expires_at' );
+			delete_user_meta( $user_id, 'tpd_plan_expiry_date' );
+			delete_user_meta( $user_id, 'tpd_renewal_reminder_sent' );
+			delete_user_meta( $user_id, 'tpd_plan_expired_notice_sent' );
+		}
 
 		// Also sync tier to linked CPT post
 		$linked = get_posts( array(
@@ -535,6 +567,110 @@ class TPD_Tool_Tiers {
 		</div>
 		<?php
 		return ob_get_clean();
+	}
+
+	/**
+	 * Daily WP-Cron: Check Plan Expirations and Send Renewal Notices
+	 */
+	public static function cron_check_plan_expirations() {
+		$users = get_users( array(
+			'meta_query' => array(
+				array(
+					'key'     => 'tpd_user_tier',
+					'value'   => array( 'basic', 'free' ),
+					'compare' => 'NOT IN',
+				),
+			),
+			'fields'     => array( 'ID', 'user_email', 'display_name' ),
+		) );
+
+		if ( empty( $users ) ) {
+			return;
+		}
+
+		$now = time();
+
+		foreach ( $users as $user ) {
+			$user_id = (int) $user->ID;
+
+			// Administrators are never subject to expiration
+			if ( user_can( $user_id, 'manage_options' ) ) {
+				continue;
+			}
+
+			$current_tier = get_user_meta( $user_id, 'tpd_user_tier', true );
+			if ( empty( $current_tier ) || in_array( $current_tier, array( 'basic', 'free' ), true ) ) {
+				continue;
+			}
+
+			$expires_meta = get_user_meta( $user_id, 'plan_expires_at', true );
+			if ( empty( $expires_meta ) ) {
+				$expires_meta = get_user_meta( $user_id, 'tpd_plan_expiry_date', true );
+			}
+
+			if ( empty( $expires_meta ) ) {
+				continue;
+			}
+
+			$expires_ts = is_numeric( $expires_meta ) ? (int) $expires_meta : strtotime( $expires_meta . ' 23:59:59 UTC' );
+			if ( ! $expires_ts ) {
+				continue;
+			}
+
+			$user_roles  = (array) ( get_userdata( $user_id )->roles ?? array() );
+			$is_supplier = in_array( 'supplier', $user_roles, true );
+			$portal_url  = $is_supplier ? home_url( '/supplier-dashboard/' ) : home_url( '/advisor-dashboard/' );
+			$plan_info   = class_exists( 'TPD_Tool_Settings' ) ? TPD_Tool_Settings::get_plan( $current_tier ) : array( 'name' => ucfirst( $current_tier ) );
+			$plan_name   = $plan_info['name'] ?? ucfirst( $current_tier );
+			$user_name   = ! empty( $user->display_name ) ? $user->display_name : 'Member';
+			$formatted_expiry = gmdate( 'F j, Y', $expires_ts );
+
+			// 1. Plan has expired -> demote to basic and send expiration notice
+			if ( $now > $expires_ts ) {
+				self::set_user_tier( $user_id, 'basic' );
+
+				$notice_sent = get_user_meta( $user_id, 'tpd_plan_expired_notice_sent', true );
+				if ( $notice_sent !== $expires_meta ) {
+					update_user_meta( $user_id, 'tpd_plan_expired_notice_sent', $expires_meta );
+
+					$subject = sprintf( __( 'Your Travel Partner Directory %s Membership Has Expired', 'tpd-tool' ), $plan_name );
+					$message = sprintf(
+						"Dear %s,\n\nYour Travel Partner Directory %s membership expired on %s.\nYour account has been moved to the Basic plan.\n\nTo restore your full access to premium tools, listings, and features, you can renew or upgrade your membership anytime here:\n%s\n\nThank you,\nTravel Partner Directory Team",
+						$user_name,
+						$plan_name,
+						$formatted_expiry,
+						$portal_url
+					);
+					wp_mail( $user->user_email, $subject, $message, array( 'Content-Type: text/plain; charset=UTF-8' ) );
+				}
+				continue;
+			}
+
+			// 2. Plan is expiring within 7 days -> send renewal reminder notice
+			$seconds_remaining = $expires_ts - $now;
+			if ( $seconds_remaining <= ( 7 * DAY_IN_SECONDS ) ) {
+				$reminder_sent = get_user_meta( $user_id, 'tpd_renewal_reminder_sent', true );
+				if ( $reminder_sent !== $expires_meta ) {
+					update_user_meta( $user_id, 'tpd_renewal_reminder_sent', $expires_meta );
+
+					$days_left = max( 1, (int) ceil( $seconds_remaining / DAY_IN_SECONDS ) );
+					$subject   = sprintf(
+						__( 'Your Travel Partner Directory %1$s Membership Renews in %2$d Days', 'tpd-tool' ),
+						$plan_name,
+						$days_left
+					);
+					$message   = sprintf(
+						"Dear %s,\n\nThis is a friendly reminder that your Travel Partner Directory %s membership will expire in %d days (on %s).\n\nTo ensure uninterrupted access to your premium directory features, please visit your portal to renew your membership:\n%s\n\nThank you,\nTravel Partner Directory Team",
+						$user_name,
+						$plan_name,
+						$days_left,
+						$formatted_expiry,
+						$portal_url
+					);
+					wp_mail( $user->user_email, $subject, $message, array( 'Content-Type: text/plain; charset=UTF-8' ) );
+				}
+			}
+		}
 	}
 }
 

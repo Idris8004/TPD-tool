@@ -281,6 +281,7 @@ class TPD_Tool_Core {
 	}
 
 	public static function deactivate() {
+		wp_clear_scheduled_hook( 'tpd_daily_plan_expiration_check' );
 		flush_rewrite_rules();
 	}
 }
