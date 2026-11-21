@@ -16,6 +16,7 @@ class TPD_Tool_Chat {
 
 		add_action( 'wp_ajax_tpd_get_chat_thread', array( __CLASS__, 'ajax_get_thread' ) );
 		add_action( 'wp_ajax_tpd_mark_convo_read', array( __CLASS__, 'ajax_mark_read' ) );
+		add_action( 'wp_ajax_tpd_request_discovery_call', array( __CLASS__, 'ajax_request_discovery_call' ) );
 	}
 
 	/**
@@ -459,6 +460,108 @@ class TPD_Tool_Chat {
 		}
 
 		return array();
+	}
+
+	/**
+	 * Programmatically send a chat message and dispatch email alert to the recipient.
+	 */
+	public static function send_message_internal( $sender_id, $recipient_id, $message_text ) {
+		$recipient = get_userdata( $recipient_id );
+		if ( ! $recipient ) {
+			return new WP_Error( 'invalid_recipient', __( 'Recipient user not found.', 'tpd-tool' ) );
+		}
+
+		$sender = get_userdata( $sender_id );
+		$sender_name  = $sender ? ( $sender->display_name ?: $sender->user_login ) : 'Travel Advisor';
+		$sender_email = $sender ? $sender->user_email : '';
+
+		$post_id = wp_insert_post( array(
+			'post_type'    => 'tpd_message',
+			'post_status'  => 'publish',
+			'post_title'   => sprintf( 'Chat: %s to %s', $sender_name, $recipient->display_name ),
+			'post_content' => sanitize_textarea_field( $message_text ),
+			'post_author'  => $sender_id ?: 1,
+		) );
+
+		if ( is_wp_error( $post_id ) ) {
+			return $post_id;
+		}
+
+		$conversation_id = self::get_conversation_id( $sender_id, $recipient_id );
+		$now_ts          = current_time( 'timestamp' );
+
+		update_post_meta( $post_id, '_tpd_sender_id', $sender_id );
+		update_post_meta( $post_id, '_tpd_sender_name', $sender_name );
+		update_post_meta( $post_id, '_tpd_sender_email', $sender_email );
+		update_post_meta( $post_id, '_tpd_recipient_id', $recipient_id );
+		update_post_meta( $post_id, '_tpd_conversation_id', $conversation_id );
+		update_post_meta( $post_id, '_tpd_is_read', 0 );
+		update_post_meta( $post_id, '_tpd_timestamp', $now_ts );
+
+		// Dispatch Email Alert to the recipient
+		self::send_chat_email_alert( $recipient, $sender_name, $sender_email, $message_text );
+
+		return array(
+			'post_id'         => $post_id,
+			'conversation_id' => $conversation_id,
+		);
+	}
+
+	/**
+	 * AJAX: Request 15-Min Discovery Call with Supplier BDM via Chat
+	 */
+	public static function ajax_request_discovery_call() {
+		check_ajax_referer( 'tpd_nonce', 'nonce' );
+
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( array( 'message' => __( 'Please log in to request discovery calls.', 'tpd-tool' ) ) );
+		}
+
+		$sender_id     = get_current_user_id();
+		$supplier_id   = isset( $_POST['supplier_id'] ) ? absint( $_POST['supplier_id'] ) : 0;
+		$recipient_id  = isset( $_POST['recipient_id'] ) ? absint( $_POST['recipient_id'] ) : 0;
+		$supplier_name = isset( $_POST['supplier_name'] ) ? sanitize_text_field( wp_unslash( $_POST['supplier_name'] ) ) : '';
+
+		if ( ! $recipient_id && $supplier_id ) {
+			$recipient_id = (int) get_post_meta( $supplier_id, 'tpd_assigned_user', true );
+			if ( ! $recipient_id ) {
+				$sp = get_post( $supplier_id );
+				$recipient_id = $sp ? (int) $sp->post_author : 0;
+			}
+		}
+
+		if ( ! $recipient_id ) {
+			wp_send_json_error( array( 'message' => __( 'Unable to determine supplier representative.', 'tpd-tool' ) ) );
+		}
+
+		if ( empty( $supplier_name ) && $supplier_id ) {
+			$sp = get_post( $supplier_id );
+			$supplier_name = $sp ? $sp->post_title : 'Supplier';
+		}
+
+		$sender       = wp_get_current_user();
+		$sender_name  = $sender->display_name ?: $sender->user_login;
+		$sender_email = $sender->user_email;
+
+		$message = sprintf(
+			"Discovery Call Request (15-Min Consultation)\n\n" .
+			"Hi %s BDM Team,\n\n" .
+			"I would like to request a 15-minute discovery call to discuss your portfolio, trade promotions, and client partnership opportunities.\n\n" .
+			"— %s (%s)",
+			$supplier_name ?: 'Supplier',
+			$sender_name,
+			$sender_email
+		);
+
+		$result = self::send_message_internal( $sender_id, $recipient_id, $message );
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+		}
+
+		wp_send_json_success( array(
+			'message'         => sprintf( __( 'Meeting request sent to %s BDM team! They have received your request in their portal inbox and by email.', 'tpd-tool' ), $supplier_name ),
+			'conversation_id' => $result['conversation_id'],
+		) );
 	}
 }
 

@@ -1491,11 +1491,16 @@ $news_posts = get_posts( array(
 					<h3><i class="fa-regular fa-calendar"></i> <?php esc_html_e( '1-on-1 Supplier BDM Meeting Scheduler', 'tpd-tool' ); ?></h3>
 					<p class="text-muted"><?php esc_html_e( 'Schedule virtual discovery calls and group contract consultations with supplier sales directors.', 'tpd-tool' ); ?></p>
 					<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-top:18px;">
-						<?php foreach ( array_slice( $supplier_posts, 0, 4 ) as $sp ) : ?>
+						<?php foreach ( array_slice( $supplier_posts, 0, 4 ) as $sp ) :
+							$sp_owner = (int) get_post_meta( $sp->ID, 'tpd_assigned_user', true ) ?: (int) $sp->post_author;
+							if ( ! $sp_owner ) {
+								$sp_owner = 1;
+							}
+						?>
 							<div style="border:1px solid #e2e8f0; border-radius:12px; padding:18px; background:#f8fafc;">
 								<h4 style="margin:0 0 6px;"><?php echo esc_html( $sp->post_title ); ?></h4>
 								<p style="font-size:12.5px; color:#64748b; margin:0 0 14px;"><?php echo esc_html( get_post_meta( $sp->ID, 'tpd_tagline', true ) ?: 'Trade Partner Desk' ); ?></p>
-								<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-darkblue" onclick="alert('Meeting request sent to ' + <?php echo wp_json_encode( $sp->post_title ); ?> + ' BDM team!');">
+								<button type="button" class="tpd-btn tpd-btn-xs tpd-btn-darkblue tpd-btn-request-meeting" data-supplier-id="<?php echo esc_attr( $sp->ID ); ?>" data-supplier-name="<?php echo esc_attr( $sp->post_title ); ?>" data-recipient-id="<?php echo esc_attr( $sp_owner ); ?>">
 									<i class="fa-regular fa-calendar-check"></i> <?php esc_html_e( 'Request 15-Min Discovery Call', 'tpd-tool' ); ?>
 								</button>
 							</div>

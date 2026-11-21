@@ -1829,6 +1829,44 @@
 			}
 		});
 
+		// Advisor Meeting Request / 15-Min Discovery Call via Chat
+		$(document).on('click', '.tpd-btn-request-meeting', function(e) {
+			e.preventDefault();
+			var $btn = $(this);
+			var supplierId = $btn.data('supplier-id');
+			var recipientId = $btn.data('recipient-id');
+			var supplierName = $btn.data('supplier-name') || 'Supplier';
+
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Requesting...');
+
+			$.ajax({
+				url: tpd_data.ajax_url,
+				type: 'POST',
+				dataType: 'json',
+				data: {
+					action: 'tpd_request_discovery_call',
+					nonce: tpd_data.nonce,
+					supplier_id: supplierId,
+					recipient_id: recipientId,
+					supplier_name: supplierName
+				},
+				success: function(res) {
+					if (res && res.success) {
+						$btn.removeClass('tpd-btn-darkblue').css({ background: '#059669', color: '#fff' })
+							.html('<i class="fa-solid fa-check"></i> Request Sent');
+						showToast('<i class="fa-solid fa-calendar-check"></i> ' + (res.data && res.data.message ? res.data.message : 'Discovery call request sent!'));
+					} else {
+						$btn.prop('disabled', false).html('<i class="fa-regular fa-calendar-check"></i> Request 15-Min Discovery Call');
+						showToast((res && res.data && res.data.message) ? res.data.message : 'Could not send request.', true);
+					}
+				},
+				error: function() {
+					$btn.prop('disabled', false).html('<i class="fa-regular fa-calendar-check"></i> Request 15-Min Discovery Call');
+					showToast('Network error while requesting call.', true);
+				}
+			});
+		});
+
 		// 19. Supplier Meeting Request Actions (Confirm Call / Reschedule)
 		$(document).on('click', '.tpd-btn-confirm-meeting', function(e) {
 			e.preventDefault();
