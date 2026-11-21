@@ -1333,7 +1333,7 @@ $news_posts = get_posts( array(
 						</p>
 					</div>
 					<div>
-						<a href="<?php echo esc_url( home_url( '/advisor/' . sanitize_title( $advisor_name ) ) ); ?>" target="_blank" class="tpd-btn tpd-btn-sm tpd-btn-outline-white" style="text-decoration:none; font-weight:700;">
+						<a href="<?php echo esc_url( $public_prof_url ); ?>" target="_blank" class="tpd-btn tpd-btn-sm tpd-btn-outline-white" style="text-decoration:none; font-weight:700;">
 							<i class="fa-solid fa-arrow-up-right-from-square"></i> <?php esc_html_e( 'View Public Profile', 'tpd-tool' ); ?>
 						</a>
 					</div>
@@ -1666,17 +1666,17 @@ $news_posts = get_posts( array(
 					<p class="text-muted"><?php esc_html_e( 'Sponsored campaigns and partner promotions managed by the Super Admin.', 'tpd-tool' ); ?></p>
 					<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px; margin-top:20px;">
 						<div class="tpd-card-box" style="border:1px solid #e2e8f0; background:#f8fafc; padding:20px;">
-							<span class="tpd-badge-tag" style="background:#fef3c7; color:#b45309; font-size:11px; padding:3px 8px; border-radius:4px; font-weight:700;"><?php echo esc_html( $ads_cfg['ad_1_tag'] ); ?></span>
-							<h4 style="margin:10px 0 6px;"><?php echo esc_html( $ads_cfg['ad_1_title'] ); ?></h4>
-							<p style="font-size:13px; color:#64748b;"><?php echo esc_html( $ads_cfg['ad_1_subtitle'] ); ?></p>
-							<a href="#tpd-view-suppliers" class="tpd-tab-link tpd-btn tpd-btn-xs tpd-btn-darkblue" data-view="suppliers" style="text-decoration:none; display:inline-block;"><?php echo esc_html( $ads_cfg['ad_1_link_text'] ); ?></a>
+							<span class="tpd-badge-tag" style="background:#fef3c7; color:#b45309; font-size:11px; padding:3px 8px; border-radius:4px; font-weight:700;"><?php echo esc_html( ( $ads_cfg['ad_1_tag'] ?? $ads_cfg['left_ad_1_tag'] ?? '' ) ); ?></span>
+							<h4 style="margin:10px 0 6px;"><?php echo esc_html( ( $ads_cfg['ad_1_title'] ?? $ads_cfg['left_ad_1_title'] ?? '' ) ); ?></h4>
+							<p style="font-size:13px; color:#64748b;"><?php echo esc_html( ( $ads_cfg['ad_1_subtitle'] ?? $ads_cfg['left_ad_1_subtitle'] ?? '' ) ); ?></p>
+							<a href="#tpd-view-suppliers" class="tpd-tab-link tpd-btn tpd-btn-xs tpd-btn-darkblue" data-view="suppliers" style="text-decoration:none; display:inline-block;"><?php echo esc_html( ( $ads_cfg['ad_1_link_text'] ?? $ads_cfg['left_ad_1_link_text'] ?? '' ) ); ?></a>
 						</div>
 
 						<div class="tpd-card-box" style="border:1px solid #e2e8f0; background:#f8fafc; padding:20px;">
-							<span class="tpd-badge-tag" style="background:#e0f2fe; color:#0369a1; font-size:11px; padding:3px 8px; border-radius:4px; font-weight:700;"><?php echo esc_html( $ads_cfg['ad_2_tag'] ); ?></span>
-							<h4 style="margin:10px 0 6px;"><?php echo esc_html( $ads_cfg['ad_2_title'] ); ?></h4>
-							<p style="font-size:13px; color:#64748b;"><?php echo esc_html( $ads_cfg['ad_2_subtitle'] ); ?></p>
-							<a href="#tpd-view-suppliers" class="tpd-tab-link tpd-btn tpd-btn-xs tpd-btn-darkblue" data-view="suppliers" style="text-decoration:none; display:inline-block;"><?php echo esc_html( $ads_cfg['ad_2_link_text'] ); ?></a>
+							<span class="tpd-badge-tag" style="background:#e0f2fe; color:#0369a1; font-size:11px; padding:3px 8px; border-radius:4px; font-weight:700;"><?php echo esc_html( ( $ads_cfg['ad_2_tag'] ?? $ads_cfg['left_ad_2_tag'] ?? '' ) ); ?></span>
+							<h4 style="margin:10px 0 6px;"><?php echo esc_html( ( $ads_cfg['ad_2_title'] ?? $ads_cfg['left_ad_2_title'] ?? '' ) ); ?></h4>
+							<p style="font-size:13px; color:#64748b;"><?php echo esc_html( ( $ads_cfg['ad_2_subtitle'] ?? $ads_cfg['left_ad_2_subtitle'] ?? '' ) ); ?></p>
+							<a href="#tpd-view-suppliers" class="tpd-tab-link tpd-btn tpd-btn-xs tpd-btn-darkblue" data-view="suppliers" style="text-decoration:none; display:inline-block;"><?php echo esc_html( ( $ads_cfg['ad_2_link_text'] ?? $ads_cfg['left_ad_2_link_text'] ?? '' ) ); ?></a>
 						</div>
 					</div>
 				</div>

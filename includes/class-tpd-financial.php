@@ -5,7 +5,7 @@
  * - Custom Ledger DB Table (`{$wpdb->prefix}tpd_transactions`)
  * - Authoritative Server-Side Pricing & Checkout Initiation (Membership Plans, LMS Courses, TPD Resources/Tools)
  * - Stripe Checkout Sessions, PayPal Orders v2, and Test/Sandbox Mode Checkout
- * - Idempotent Fulfillment (Plan Activation, LMS Course Enrollment via API, Resource Unlock)
+ * - Idempotent Fulfillment (Plan Activation, LMS Course Enrollment, Resource Unlock)
  * - Financial Analytics Queries, Admin Management & CSV Export
  */
 
@@ -156,45 +156,20 @@ class TPD_Tool_Financial {
 		}
 
 		if ( 'lms_course' === $item_type ) {
-			// Native LMS (includes/lms): courses live in TPD, not the external platform.
+			// Courses live in the native LMS module (includes/lms).
 			if ( class_exists( 'TPD_LMS_Native' ) && TPD_LMS_Native::is_enabled() ) {
 				return TPD_LMS_Student::resolve_checkout_item( $user_id, $item_id, $currency );
 			}
-			if ( ! class_exists( 'TPD_Tool_LMS' ) ) {
-				return new WP_Error( 'lms_unavailable', __( 'LMS integration module is not loaded.', 'tpd-tool' ) );
-			}
-			$course = TPD_Tool_LMS::find_course( $item_id, 'published' );
-			if ( ! $course ) {
-				return new WP_Error( 'course_not_found', __( 'The selected LMS course was not found or is not published.', 'tpd-tool' ) );
-			}
-			$course_currency = ! empty( $course['currency'] ) ? strtoupper( $course['currency'] ) : $currency;
-			$price           = isset( $course['price'] ) ? (float) $course['price'] : 0.0;
-
-			return array(
-				'item_type'     => 'lms_course',
-				'item_id'       => (string) ( $course['slug'] ?? $item_id ),
-				'item_title'    => (string) ( $course['title'] ?? $item_id ),
-				'billing_cycle' => 'once',
-				'amount'        => round( max( 0.0, $price ), 2 ),
-				'currency'      => $course_currency,
-				'description'   => (string) ( $course['subtitle'] ?? __( 'LMS Training Course Enrollment', 'tpd-tool' ) ),
-				'extra'         => array(
-					'course_id'  => $course['id'] ?? 0,
-					'learn_path' => $course['learn_path'] ?? '/courses',
-				),
-			);
+			return new WP_Error( 'lms_unavailable', __( 'Courses are not available right now.', 'tpd-tool' ) );
 		}
 
 		if ( 'resource' === $item_type ) {
-			if ( ! class_exists( 'TPD_Tool_LMS' ) ) {
-				return new WP_Error( 'lms_unavailable', __( 'Resource library module is not loaded.', 'tpd-tool' ) );
-			}
-			$resources = TPD_Tool_LMS::get_custom_resources( false );
+			$resources = TPD_Tool_Resources::get_custom_resources( false );
 			if ( empty( $resources[ $item_id ] ) ) {
 				return new WP_Error( 'resource_not_found', __( 'Selected resource or toolkit was not found.', 'tpd-tool' ) );
 			}
 			$res   = $resources[ $item_id ];
-			$price = TPD_Tool_LMS::user_has_resource_access( $user_id, $res ) ? 0.0 : (float) ( $res['price'] ?? 0 );
+			$price = TPD_Tool_Resources::user_has_resource_access( $user_id, $res ) ? 0.0 : (float) ( $res['price'] ?? 0 );
 
 			return array(
 				'item_type'     => 'resource',
@@ -234,7 +209,7 @@ class TPD_Tool_Financial {
 	/**
 	 * Idempotently fulfill a paid transaction according to its item_type.
 	 *
-	 * @return array Result metadata (status message, redirect/sso info).
+	 * @return array Result metadata (status message, reload/refresh flags).
 	 */
 	public static function fulfill_transaction( $tx ) {
 		global $wpdb;
@@ -298,56 +273,17 @@ class TPD_Tool_Financial {
 			$result['refresh_resources'] = true;
 
 		} elseif ( 'lms_course' === $tx->item_type ) {
-			if ( class_exists( 'TPD_Tool_LMS' ) ) {
-				$enroll_res = TPD_Tool_LMS::enroll_user(
-					$user_id,
-					$tx->item_id,
-					$tx->tx_ref,
-					(float) $tx->amount,
-					$tx->currency,
-					$tx->gateway,
-					array( 'wp_tx_id' => (int) $tx->id )
-				);
-
-				if ( empty( $enroll_res['ok'] ) ) {
-					// Record error in meta for retry without hiding payment receipt
-					$meta['lms_enroll_error'] = $enroll_res['error'] ?? 'Unknown LMS enrollment error';
-					$wpdb->update(
-						self::table_name(),
-						array( 'meta_json' => wp_json_encode( $meta ) ),
-						array( 'id' => (int) $tx->id ),
-						array( '%s' ),
-						array( '%d' )
-					);
-					return array(
-						'ok'    => false,
-						'error' => sprintf(
-							/* translators: %s: error text */
-							__( 'Payment succeeded (%1$s), but automatic LMS enrollment failed: %2$s', 'tpd-tool' ),
-							$tx->tx_ref,
-							$meta['lms_enroll_error']
-						),
-					);
-				}
-
-				$learn_path = $enroll_res['data']['enrollment']['learn_path'] ?? ( $meta['extra']['learn_path'] ?? '/courses' );
-				$sso_url    = TPD_Tool_LMS::build_sso_url( $user_id, $learn_path );
-				if ( ! is_wp_error( $sso_url ) ) {
-					$result['sso_url'] = $sso_url;
-				}
-			}
-
-			$result['message'] = sprintf(
-				/* translators: %s: course title */
-				__( 'You are now enrolled in "%s"! It is ready in My Resources.', 'tpd-tool' ),
-				$tx->item_title
+			// Courses need the native LMS. Keep the payment unfulfilled so it can be retried once it is on.
+			return array(
+				'ok'    => false,
+				'error' => sprintf(
+					/* translators: %s: transaction reference */
+					__( 'Payment succeeded (%s), but courses are not available right now. Contact support and quote this reference.', 'tpd-tool' ),
+					$tx->tx_ref
+				),
 			);
-			$result['refresh_resources'] = true;
-
 		} elseif ( 'resource' === $tx->item_type ) {
-			if ( class_exists( 'TPD_Tool_LMS' ) ) {
-				TPD_Tool_LMS::unlock_custom_resource( $user_id, $tx->item_id );
-			}
+			TPD_Tool_Resources::unlock_custom_resource( $user_id, $tx->item_id );
 			$result['message'] = sprintf(
 				/* translators: %s: resource title */
 				__( '"%s" has been unlocked and added to My Resources!', 'tpd-tool' ),
@@ -368,62 +304,6 @@ class TPD_Tool_Financial {
 		);
 
 		return $result;
-	}
-
-	/**
-	 * Record an external LMS order received via /lms-webhook (order.paid) idempotently.
-	 */
-	public static function record_external_lms_order( $data, $wp_user_id = 0 ) {
-		global $wpdb;
-		self::maybe_create_table();
-
-		$ref = ! empty( $data['reference'] ) ? sanitize_text_field( (string) $data['reference'] ) : '';
-		if ( '' === $ref ) {
-			return false;
-		}
-
-		// If already recorded (e.g. initiated from TPD Checkout), skip duplicate insert
-		$existing = self::get_tx_by_ref( $ref );
-		if ( $existing ) {
-			return (int) $existing->id;
-		}
-
-		$user  = $wp_user_id ? get_userdata( $wp_user_id ) : null;
-		$email = $user ? $user->user_email : sanitize_email( (string) ( $data['user']['email'] ?? '' ) );
-		$name  = $user ? ( $user->display_name ?: $user->user_login ) : sanitize_text_field( (string) ( $data['user']['name'] ?? 'LMS Learner' ) );
-
-		$course_slug  = sanitize_text_field( (string) ( $data['course']['slug'] ?? '' ) );
-		$course_title = sanitize_text_field( (string) ( $data['course']['title'] ?? $course_slug ) );
-		$amount       = isset( $data['total'] ) ? round( (float) $data['total'], 2 ) : 0.0;
-		$currency     = ! empty( $data['currency'] ) ? strtoupper( sanitize_text_field( $data['currency'] ) ) : 'USD';
-		$gateway      = ! empty( $data['gateway'] ) ? sanitize_key( (string) $data['gateway'] ) : 'lms_direct';
-		$now          = current_time( 'mysql' );
-
-		$wpdb->insert(
-			self::table_name(),
-			array(
-				'tx_ref'        => $ref,
-				'user_id'       => $wp_user_id,
-				'user_email'    => $email,
-				'user_name'     => $name,
-				'user_role'     => $wp_user_id ? self::detect_user_role_label( $wp_user_id ) : 'lms_user',
-				'item_type'     => 'lms_course',
-				'item_id'       => $course_slug ?: 'lms-course',
-				'item_title'    => $course_title ?: 'LMS Course',
-				'billing_cycle' => 'once',
-				'amount'        => $amount,
-				'currency'      => $currency,
-				'gateway'       => $gateway,
-				'gateway_ref'   => $ref,
-				'status'        => 'paid',
-				'meta_json'     => wp_json_encode( array( 'source' => 'lms_webhook', 'fulfilled_at' => $now ) ),
-				'created_at'    => $now,
-				'paid_at'       => $now,
-			),
-			array( '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%f', '%s', '%s', '%s', '%s', '%s', '%s', '%s' )
-		);
-
-		return (int) $wpdb->insert_id;
 	}
 
 	/**
@@ -623,7 +503,6 @@ class TPD_Tool_Financial {
 				'immediate'         => true,
 				'tx_ref'            => $tx_ref,
 				'message'           => $fulfill['message'],
-				'sso_url'           => $fulfill['sso_url'] ?? '',
 				'reload'            => ! empty( $fulfill['reload'] ),
 				'refresh_resources' => ! empty( $fulfill['refresh_resources'] ),
 			) );
@@ -858,7 +737,6 @@ class TPD_Tool_Financial {
 			wp_send_json_success( array(
 				'status'            => 'paid',
 				'message'           => $fulfill['message'] ?? __( 'Payment confirmed!', 'tpd-tool' ),
-				'sso_url'           => $fulfill['sso_url'] ?? '',
 				'reload'            => ! empty( $fulfill['reload'] ),
 				'refresh_resources' => ! empty( $fulfill['refresh_resources'] ),
 			) );
@@ -905,7 +783,6 @@ class TPD_Tool_Financial {
 			wp_send_json_success( array(
 				'status'            => 'paid',
 				'message'           => $fulfill['message'],
-				'sso_url'           => $fulfill['sso_url'] ?? '',
 				'reload'            => ! empty( $fulfill['reload'] ),
 				'refresh_resources' => ! empty( $fulfill['refresh_resources'] ),
 			) );
@@ -956,7 +833,6 @@ class TPD_Tool_Financial {
 			wp_send_json_success( array(
 				'status'            => 'paid',
 				'message'           => $fulfill['message'],
-				'sso_url'           => $fulfill['sso_url'] ?? '',
 				'reload'            => ! empty( $fulfill['reload'] ),
 				'refresh_resources' => ! empty( $fulfill['refresh_resources'] ),
 			) );

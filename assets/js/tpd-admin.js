@@ -80,12 +80,12 @@
 					if (res && res.success) {
 						showAdminToast('User plan updated to ' + res.data.label);
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to update tier.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to update tier.');
 					}
 				},
 				error: function() {
 					$select.prop('disabled', false);
-					alert('Connection error. Please try again.');
+					showAdminError('Connection error. Please try again.');
 				}
 			});
 		});
@@ -111,7 +111,7 @@
 							.text(res.data.label || (res.data.status === 'active' ? 'Active' : 'Inactive'));
 						showAdminToast('Account status changed to ' + (res.data.label || res.data.status));
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to toggle status.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to toggle status.');
 					}
 				}
 			});
@@ -263,12 +263,12 @@
 							window.location.reload();
 						}, 700);
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to save user.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to save user.');
 					}
 				},
 				error: function() {
 					$btn.prop('disabled', false).html('<i class="fa-solid fa-floppy-disk"></i> Save User Account');
-					alert('Connection error.');
+					showAdminError('Connection error.');
 				}
 			});
 		});
@@ -301,12 +301,12 @@
 						showAdminToast(res.data.message);
 					} else {
 						$btn.prop('disabled', false);
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to delete user.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to delete user.');
 					}
 				},
 				error: function() {
 					$btn.prop('disabled', false);
-					alert('Connection error.');
+					showAdminError('Connection error.');
 				}
 			});
 		});
@@ -348,7 +348,7 @@
 						showAdminToast(res.data.message);
 						setTimeout(function() { window.location.reload(); }, 700);
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to save plan.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to save plan.');
 					}
 				}
 			});
@@ -372,7 +372,7 @@
 						showAdminToast(res.data.message);
 						setTimeout(function() { window.location.reload(); }, 700);
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Cannot delete this plan.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Cannot delete this plan.');
 					}
 				}
 			});
@@ -396,7 +396,7 @@
 					if (res && res.success) {
 						showAdminToast(res.data.message);
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to save payment settings.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to save payment settings.');
 					}
 				}
 			});
@@ -443,7 +443,7 @@
 						showAdminToast(res.data.message);
 						setTimeout(function() { window.location.reload(); }, 700);
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to add custom field.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to add custom field.');
 					}
 				}
 			});
@@ -527,7 +527,7 @@
 						$row.find('.tpd-claim-action-btn').parent().html('<span style="font-size:12px; color:#64748b;">Reviewed</span>');
 						showAdminToast(res.data.message);
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to process claim.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to process claim.');
 						$btn.prop('disabled', false);
 					}
 				}
@@ -554,7 +554,7 @@
 						showAdminToast(res.data.message);
 						setTimeout(function() { window.location.reload(); }, 700);
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to publish.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to publish.');
 					}
 				}
 			});
@@ -599,7 +599,7 @@
 			}
 
 			if (typeof wp === 'undefined' || !wp.media) {
-				alert('WordPress Media Library is unavailable. Please verify admin privileges.');
+				showAdminError('WordPress Media Library is unavailable. Please verify admin privileges.');
 				return;
 			}
 
@@ -725,12 +725,12 @@
 					if (res && res.success) {
 						showAdminToast(res.data.message || 'Ad banners successfully saved and published!');
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to save ad banners.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to save ad banners.');
 					}
 				},
 				error: function() {
 					$btn.prop('disabled', false).html(origHtml);
-					alert('Network error while saving ad banners.');
+					showAdminError('Network error while saving ad banners.');
 				}
 			});
 		});
@@ -789,12 +789,12 @@
 							window.location.reload();
 						}, 1200);
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to create Super Admin account.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to create Super Admin account.');
 					}
 				},
 				error: function() {
 					$btn.prop('disabled', false).html(origHtml);
-					alert('Network error while creating Super Admin account.');
+					showAdminError('Network error while creating Super Admin account.');
 				}
 			});
 		});
@@ -838,12 +838,12 @@
 						$('#tpd-sa-admin-pass-modal').removeClass('open').fadeOut(150);
 						showAdminToast(res.data.message || 'Password updated successfully!');
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to update password.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to update password.');
 					}
 				},
 				error: function() {
 					$btn.prop('disabled', false).html(origHtml);
-					alert('Network error while updating password.');
+					showAdminError('Network error while updating password.');
 				}
 			});
 		});
@@ -871,11 +871,11 @@
 						$row.fadeOut(300, function() { $(this).remove(); });
 						showAdminToast(res.data.message || 'Super Admin deleted.');
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to delete administrator.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to delete administrator.');
 					}
 				},
 				error: function() {
-					alert('Network error while deleting administrator.');
+					showAdminError('Network error while deleting administrator.');
 				}
 			});
 		});
@@ -938,327 +938,19 @@
 						window.location.hash = 'sa-financial';
 						setTimeout(function() { window.location.reload(); }, 700);
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to update transaction.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to update transaction.');
 					}
 				},
 				error: function() {
 					$btn.prop('disabled', false).html(origHtml);
-					alert('Network error updating transaction.');
+					showAdminError('Network error updating transaction.');
 				}
 			});
 		});
 
 		// ---------------------------------------------------------------------
-		// 17. LMS Studio & Custom TPD Resources Controller
+		// 17. TPD Sales Toolkits & Resources (Super Admin -> LMS Studio)
 		// ---------------------------------------------------------------------
-		$(document).on('click', '.tpd-sa-lms-subtab', function(e) {
-			e.preventDefault();
-			var tab = $(this).data('lmstab') || 'studio';
-			$('.tpd-sa-lms-subtab').each(function() {
-				var active = ($(this).data('lmstab') === tab);
-				$(this).toggleClass('active', active);
-				if (active) {
-					$(this).css({ background: '#164e87', color: '#ffffff', borderColor: '#164e87' });
-				} else {
-					$(this).css({ background: '#f8fafc', color: '#334155', borderColor: '#cbd5e1' });
-				}
-			});
-			$('.tpd-sa-lms-panel').hide().removeClass('active');
-			$('#tpd-sa-lms-tab-' + tab).fadeIn(140).addClass('active');
-		});
-
-		
-		$(document).on('click', '.tpd-sa-jump-lms-settings', function(e) {
-			e.preventDefault();
-			$('.tpd-sa-lms-subtab[data-lmstab="settings"]').trigger('click');
-			$('input[name="sso_secret"]').focus();
-		});
-
-		function generateSecureHex(byteLength) {
-			byteLength = byteLength || 32;
-			var arr = new Uint8Array(byteLength);
-			if (window.crypto && window.crypto.getRandomValues) {
-				window.crypto.getRandomValues(arr);
-			} else {
-				for (var i = 0; i < byteLength; i++) {
-					arr[i] = Math.floor(Math.random() * 256);
-				}
-			}
-			var hex = '';
-			for (var j = 0; j < arr.length; j++) {
-				hex += arr[j].toString(16).padStart(2, '0');
-			}
-			return hex;
-		}
-
-		$(document).on('click', '#tpd-btn-gen-lms-keys', function(e) {
-			e.preventDefault();
-			var sso = generateSecureHex(32);
-			var api = generateSecureHex(32);
-			var wh = generateSecureHex(32);
-
-			$('input[name="sso_secret"]').attr('type', 'text').val(sso);
-			$('input[name="api_token"]').attr('type', 'text').val(api);
-			$('input[name="webhook_secret"]').attr('type', 'text').val(wh);
-
-			showAdminToast('Secure keys generated! Click "Save LMS Settings" below to apply.');
-		});
-
-		$(document).on('submit', '#tpd-sa-lms-settings-form', function(e) {
-			e.preventDefault();
-			var $form = $(this);
-			var $btn = $form.find('button[type="submit"]');
-			var origHtml = $btn.html();
-			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Saving...');
-
-			var payload = $form.serialize() + '&action=tpd_admin_save_lms_settings&nonce=' + encodeURIComponent(adminNonce);
-
-			$.ajax({
-				url: ajaxUrl,
-				type: 'POST',
-				data: payload,
-				success: function(res) {
-					$btn.prop('disabled', false).html(origHtml);
-					if (res && res.success) {
-						showAdminToast(res.data.message || 'LMS settings saved!');
-						window.location.hash = 'sa-lms-studio';
-						setTimeout(function() { window.location.reload(); }, 750);
-					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to save LMS settings.');
-					}
-				},
-				error: function() {
-					$btn.prop('disabled', false).html(origHtml);
-					alert('Network error saving LMS settings.');
-				}
-			});
-		});
-
-		$(document).on('click', '#tpd-sa-test-lms-btn', function(e) {
-			e.preventDefault();
-			var $btn = $(this);
-			var origHtml = $btn.html();
-			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Testing...');
-
-			$.ajax({
-				url: ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'tpd_admin_test_lms_connection',
-					nonce: adminNonce
-				},
-				success: function(res) {
-					$btn.prop('disabled', false).html(origHtml);
-					if (res && res.success) {
-						showAdminToast(res.data.message || 'LMS connection healthy!');
-					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'LMS health check failed.');
-					}
-				},
-				error: function() {
-					$btn.prop('disabled', false).html(origHtml);
-					alert('Network error testing LMS connection.');
-				}
-			});
-		});
-
-		$(document).on('click', '#tpd-sa-sync-lms-btn', function(e) {
-			e.preventDefault();
-			var $btn = $(this);
-			var origHtml = $btn.html();
-			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Syncing...');
-
-			$.ajax({
-				url: ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'tpd_admin_sync_lms_cache',
-					nonce: adminNonce
-				},
-				success: function(res) {
-					$btn.prop('disabled', false).html(origHtml);
-					if (res && res.success) {
-						showAdminToast(res.data.message || 'LMS cache synced!');
-						window.location.hash = 'sa-lms-studio';
-						setTimeout(function() { window.location.reload(); }, 700);
-					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'LMS sync failed.');
-					}
-				},
-				error: function() {
-					$btn.prop('disabled', false).html(origHtml);
-					alert('Network error syncing LMS cache.');
-				}
-			});
-		});
-
-		$(document).on('click', '.tpd-lms-toggle-publish-btn', function(e) {
-			e.preventDefault();
-			var $btn = $(this);
-			var slug = $btn.data('slug');
-			var origHtml = $btn.html();
-			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
-
-			$.ajax({
-				url: ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'tpd_admin_toggle_course_publish',
-					course_slug: slug,
-					nonce: adminNonce
-				},
-				success: function(res) {
-					$btn.prop('disabled', false);
-					if (res && res.success && res.data) {
-						var isPub = (res.data.status === 'published');
-						var $pill = $('.tpd-lms-status-pill[data-slug="' + slug + '"]');
-						$pill.toggleClass('active', isPub).toggleClass('inactive', !isPub).text(isPub ? 'PUBLISHED' : 'DRAFT');
-						$btn.html('<i class="fa-solid fa-power-off"></i> ' + (isPub ? 'Set Draft' : 'Publish'));
-						showAdminToast(res.data.message || 'Course status updated.');
-					} else {
-						$btn.html(origHtml);
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to toggle course status.');
-					}
-				},
-				error: function() {
-					$btn.prop('disabled', false).html(origHtml);
-					alert('Network error updating course status.');
-				}
-			});
-		});
-
-		function fetchAdminLmsSsoUrl(redirectPath, onSuccess, onError) {
-			$.ajax({
-				url: ajaxUrl,
-				type: 'POST',
-				data: {
-					action: 'tpd_get_lms_sso_url',
-					redirect: redirectPath || '/studio',
-					nonce: userNonce
-				},
-				success: function(res) {
-					if (res && res.success && res.data && res.data.sso_url) {
-						onSuccess(res.data.sso_url);
-					} else if (onError) {
-						onError((res && res.data && res.data.message) ? res.data.message : 'Could not build SSO URL.');
-					}
-				},
-				error: function() {
-					if (onError) onError('Network error generating LMS SSO token.');
-				}
-			});
-		}
-
-		$(document).on('click', '#tpd-sa-load-lms-iframe', function(e) {
-			e.preventDefault();
-			var $btn = $(this);
-			var origHtml = $btn.html();
-			var route = $('#tpd-sa-lms-route').val() || '/studio';
-			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Connecting SSO...');
-
-			fetchAdminLmsSsoUrl(route, function(ssoUrl) {
-				$btn.prop('disabled', false).html(origHtml);
-				$('#tpd-sa-lms-iframe-placeholder').hide();
-				showLmsStudioView(ssoUrl, route);
-				showAdminToast('LMS Studio SSO session loaded.');
-			}, function(errMsg) {
-				$btn.prop('disabled', false).html(origHtml);
-				if (errMsg && (errMsg.indexOf('not configured') !== -1 || errMsg.indexOf('disabled') !== -1)) {
-					if (confirm(errMsg + '\n\nWould you like to open "Connection & .env Setup" now to configure or generate keys?')) {
-						$('.tpd-sa-lms-subtab[data-lmstab="settings"]').trigger('click');
-						$('input[name="sso_secret"]').focus();
-					}
-				} else {
-					alert(errMsg);
-				}
-			});
-		});
-
-		
-		// Studio Simulator & Iframe Toggle Controller
-		function showLmsStudioView(ssoUrl, route) {
-			$('#tpd-sa-lms-iframe-placeholder').hide();
-			$('#tpd-sa-lms-active-dest').text(route || '/studio');
-			$('#tpd-sa-lms-active-sso-link').attr('href', ssoUrl || '#');
-			$('#tpd-sa-lms-active-bar').css('display', 'flex').show();
-			$('#tpd-sa-lms-simulator').hide();
-			$('#tpd-sa-lms-iframe').attr('src', ssoUrl).show();
-			$('#tpd-sa-mode-label').text('Switch to Studio Simulator');
-		}
-
-		function showLmsStudioSimulator() {
-			$('#tpd-sa-lms-iframe-placeholder').hide();
-			$('#tpd-sa-lms-active-dest').text('/studio (Interactive Simulator)');
-			$('#tpd-sa-lms-active-bar').css('display', 'flex').show();
-			$('#tpd-sa-lms-iframe').hide();
-			$('#tpd-sa-lms-simulator').fadeIn(150);
-			$('#tpd-sa-mode-label').text('Switch to Live Iframe');
-		}
-
-		$(document).on('click', '.tpd-sa-trigger-load-studio', function(e) {
-			e.preventDefault();
-			$('#tpd-sa-load-lms-iframe').trigger('click');
-		});
-
-		$(document).on('click', '.tpd-sa-open-simulator-btn', function(e) {
-			e.preventDefault();
-			showLmsStudioSimulator();
-		});
-
-		$(document).on('click', '#tpd-sa-toggle-studio-mode', function(e) {
-			e.preventDefault();
-			if ($('#tpd-sa-lms-simulator').is(':visible')) {
-				$('#tpd-sa-lms-simulator').hide();
-				$('#tpd-sa-lms-iframe').show();
-				$('#tpd-sa-mode-label').text('Switch to Studio Simulator');
-			} else {
-				showLmsStudioSimulator();
-			}
-		});
-
-		$(document).on('click', '#tpd-sa-close-lms-frame', function(e) {
-			e.preventDefault();
-			$('#tpd-sa-lms-active-bar, #tpd-sa-lms-iframe, #tpd-sa-lms-simulator').hide();
-			$('#tpd-sa-lms-iframe-placeholder').fadeIn(150);
-		});
-
-		$(document).on('click', '.tpd-sim-manage-curriculum', function(e) {
-			e.preventDefault();
-			var title = $(this).data('title') || 'Course';
-			alert('Curriculum for "' + title + '":\n\n1. Course Introduction & Welcome\n2. Partner Commission Structures & Tier Matrix\n3. Destination Highlights & Private Amenities\n4. Final Knowledge Quiz & Certificate Exam');
-		});
-
-		$(document).on('click', '.tpd-sim-quiz-builder', function(e) {
-			e.preventDefault();
-			var title = $(this).data('title') || 'Course';
-			alert('Quiz Builder for "' + title + '":\n\n10 Multiple-Choice Questions active. Passing score: 80% to earn official Certificate of Completion.');
-		});
-
-		$(document).on('click', '.tpd-sim-new-course-btn', function(e) {
-			e.preventDefault();
-			var name = prompt('Enter New Course Title to create in LMS Studio:');
-			if (name && name.trim()) {
-				showAdminToast('Draft course "' + name.trim() + '" created in LMS Studio!');
-			}
-		});
-
-		$(document).on('click', '#tpd-sa-open-lms-tab, .tpd-sa-sso-jump', function(e) {
-			e.preventDefault();
-			var route = $(this).data('redirect') || $('#tpd-sa-lms-route').val() || '/studio';
-			var tab = window.open('about:blank', '_blank');
-
-			fetchAdminLmsSsoUrl(route, function(ssoUrl) {
-				if (tab && !tab.closed) {
-					tab.location.href = ssoUrl;
-				} else {
-					window.open(ssoUrl, '_blank');
-				}
-			}, function(errMsg) {
-				if (tab && !tab.closed) tab.close();
-				alert(errMsg);
-			});
-		});
-
 		$(document).on('submit', '#tpd-sa-resource-form', function(e) {
 			e.preventDefault();
 			var $form = $(this);
@@ -1279,12 +971,12 @@
 						window.location.hash = 'sa-lms-studio';
 						setTimeout(function() { window.location.reload(); }, 700);
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to save resource.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to save resource.');
 					}
 				},
 				error: function() {
 					$btn.prop('disabled', false).html(origHtml);
-					alert('Network error saving resource.');
+					showAdminError('Network error saving resource.');
 				}
 			});
 		});
@@ -1307,14 +999,38 @@
 						$('#sa-res-row-' + resId).fadeOut(250, function() { $(this).remove(); });
 						showAdminToast(res.data.message || 'Resource deleted.');
 					} else {
-						alert((res && res.data && res.data.message) ? res.data.message : 'Failed to delete resource.');
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to delete resource.');
 					}
 				},
 				error: function() {
-					alert('Network error deleting resource.');
+					showAdminError('Network error deleting resource.');
 				}
 			});
 		});
+
+		// Error/notice toast (replaces browser showAdminError() pop-ups). Text only, stacks bottom-right, click to dismiss.
+		function showAdminError(message) {
+			var $stack = $('#tpd-toast-stack');
+			if (!$stack.length) {
+				$stack = $('<div id="tpd-toast-stack" aria-live="assertive"></div>').css({
+					position: 'fixed', bottom: '24px', right: '24px', zIndex: 1000000,
+					display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end', maxWidth: 'calc(100vw - 48px)'
+				}).appendTo('body');
+			}
+			var $toast = $('<div role="alert" class="tpd-error-toast"></div>').css({
+				background: '#b91c1c', color: '#ffffff', padding: '12px 16px', borderRadius: '10px',
+				boxShadow: '0 10px 25px rgba(0,0,0,0.25)', fontSize: '13.5px', fontWeight: '600',
+				display: 'flex', alignItems: 'flex-start', gap: '10px', maxWidth: '420px', cursor: 'pointer', lineHeight: '1.4'
+			});
+			$toast.append($('<i class="fa-solid fa-circle-exclamation" aria-hidden="true" style="margin-top:2px;"></i>'));
+			$toast.append($('<span></span>').text(String(message || 'Something went wrong. Please try again.')));
+			$toast.hide().appendTo($stack).fadeIn(160);
+			var close = function() { $toast.fadeOut(220, function() { $(this).remove(); }); };
+			$toast.on('click', close);
+			setTimeout(close, 7000);
+		}
+		// Shortcode copy buttons in the Super Admin template use these.
+		window.tpdAdminToast = function(m) { showAdminToast($('<span>').text(m).html()); };
 
 		function showAdminToast(msg) {
 			var $toast = $('<div class="tpd-admin-toast"><i class="fa-solid fa-circle-check" style="color:#4ade80;"></i> ' + msg + '</div>');

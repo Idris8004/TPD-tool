@@ -52,11 +52,11 @@ class TPD_LMS_Student {
 	}
 
 	/* ------------------------------------------------------------------ */
-	/* Data for the Resources & Tools tab (same shapes as the bridge)      */
+	/* Data for the Resources & Tools tab (shapes resources-hub.php uses) */
 	/* ------------------------------------------------------------------ */
 
 	/**
-	 * Published courses, shaped like TPD_Tool_LMS::get_catalog().
+	 * Published courses, in the shape resources-hub.php expects.
 	 */
 	public static function hub_catalog( $user_id ) {
 		$out = array();
@@ -87,7 +87,7 @@ class TPD_LMS_Student {
 	}
 
 	/**
-	 * The user's enrollments, shaped like TPD_Tool_LMS::get_user_enrollments().
+	 * The user's enrollments, in the shape resources-hub.php expects.
 	 */
 	public static function hub_enrollments( $user_id ) {
 		$out = array();

@@ -4,8 +4,8 @@
  *
  * The LMS (courses, lessons, quizzes, certificates) runs inside TPD when this
  * module is enabled. Until a super admin enables it, nothing here runs: no
- * tables are created, no hooks are added, and TPD keeps using the external LMS
- * bridge in class-tpd-lms.php.
+ * tables are created, no hooks are added, and no courses are shown. Toolkits
+ * (class-tpd-resources.php) work either way.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
