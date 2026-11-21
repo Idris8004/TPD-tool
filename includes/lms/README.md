@@ -2,7 +2,7 @@
 
 The TARC learning platform (courses, lessons, quizzes, exams, certificates) built into TPD.
 
-The module is **off by default**. While it's off, it creates no tables and adds no hooks, and TPD keeps using the external LMS bridge in `includes/class-tpd-lms.php`.
+The module is **off by default** on a fresh install. While it's off, it creates no tables and adds no hooks, and no courses are shown. The external Laravel LMS bridge (`includes/class-tpd-lms.php`) was removed in 2.13.0; toolkits moved to `includes/class-tpd-resources.php`.
 
 ## Switching it on
 
@@ -37,9 +37,9 @@ wp tpd-lms disable   # switch off; data is kept
 | `class-tpd-lms-mail.php` | Plain-text emails: enrolled (with receipt), certificate, proctoring; failures are logged, never fatal |
 
 When the module is off:
-- Super Admin → LMS Studio shows the existing bridge pane unchanged.
-- Resources & Tools renders byte for byte as before.
-- Checkout uses the bridge.
+- Super Admin → LMS Studio shows a short "LMS is off" note above the toolkits manager.
+- Resources & Tools shows toolkits only, and a notice for super admins.
+- Course checkout is refused.
 
 When it's on:
 - Resources & Tools reads courses from the native tables.
