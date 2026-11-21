@@ -18,6 +18,7 @@ $plan_info  = class_exists( 'TPD_Tool_Settings' ) ? TPD_Tool_Settings::get_plan(
 $first_name = ( $user && $user->first_name ) ? $user->first_name : ( $user ? $user->display_name : 'Partner' );
 $last_name  = ( $user && $user->last_name ) ? $user->last_name : '';
 $full_name  = ( $user && $user->display_name ) ? $user->display_name : trim( $first_name . ' ' . $last_name );
+$country    = (string) get_user_meta( $current_user_id, 'tpd_country_of_residence', true );
 
 // All supplier_listing CPT posts owned by or assigned to this supplier
 $my_listings = get_posts( array(

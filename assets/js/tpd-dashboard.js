@@ -460,12 +460,12 @@
 							.html('<i class="fa-solid fa-circle-check"></i> Registered');
 						showToast(res.data.message || 'Successfully registered for webinar!');
 					} else {
-						alert(res.data.message || 'Registration failed.');
+						showError(res.data.message || 'Registration failed.');
 						$btn.prop('disabled', false).text('Register');
 					}
 				},
 				error: function() {
-					alert('Connection error. Please try again.');
+					showError('Connection error. Please try again.');
 					$btn.prop('disabled', false).text('Register');
 				}
 			});
@@ -615,12 +615,12 @@
 						}
 					} else {
 						var msg = (res.data && res.data.message) ? res.data.message : 'Media upload failed.';
-						alert(msg);
+						showError(msg);
 						if (typeof errorCallback === 'function') errorCallback(msg);
 					}
 				},
 				error: function(xhr, status, error) {
-					alert('Connection error during media upload. Please try again.');
+					showError('Connection error during media upload. Please try again.');
 					if (typeof errorCallback === 'function') errorCallback(error);
 				}
 			});
@@ -875,12 +875,12 @@
 						}
 						showToast(res.data.message || 'Supplier profile updated & synced with CPT!');
 					} else {
-						alert(res.data.message || 'Update failed.');
+						showError(res.data.message || 'Update failed.');
 					}
 				},
 				error: function() {
 					$btn.prop('disabled', false).html(origHtml);
-					alert('Connection error. Please try again.');
+					showError('Connection error. Please try again.');
 				}
 			});
 		});
@@ -1576,12 +1576,12 @@
 							window.location.reload();
 						}, 900);
 					} else {
-						alert(res.data.message || 'Failed to update plan.');
+						showError(res.data.message || 'Failed to update plan.');
 					}
 				},
 				error: function() {
 					$btn.prop('disabled', false).html(origHtml);
-					alert('Connection error. Please try again.');
+					showError('Connection error. Please try again.');
 				}
 			});
 		});
@@ -1613,12 +1613,12 @@
 						$form[0].reset();
 						showToast(res.data.message || 'Password updated successfully!');
 					} else {
-						alert(res.data.message || 'Failed to update password.');
+						showError(res.data.message || 'Failed to update password.');
 					}
 				},
 				error: function() {
 					$btn.prop('disabled', false).html(origHtml);
-					alert('Connection error. Please try again.');
+					showError('Connection error. Please try again.');
 				}
 			});
 		});
@@ -1648,12 +1648,12 @@
 						window.location.href = res.data.redirect_url || '/';
 					} else {
 						$btn.prop('disabled', false).html('<i class="fa-solid fa-trash-can"></i> Delete My Account Permanently');
-						alert(res.data.message || 'Could not delete account.');
+						showError(res.data.message || 'Could not delete account.');
 					}
 				},
 				error: function() {
 					$btn.prop('disabled', false).html('<i class="fa-solid fa-trash-can"></i> Delete My Account Permanently');
-					alert('Connection error.');
+					showError('Connection error.');
 				}
 			});
 		});
@@ -1679,7 +1679,7 @@
 			var phone = $('#tpd_rep_phone').val().trim();
 
 			if (!name || !email) {
-				alert('Please enter both team member name and direct email.');
+				showError('Please enter both team member name and direct email.');
 				return;
 			}
 
@@ -1715,12 +1715,12 @@
 						$('#tpd-add-rep-modal').slideUp();
 						showToast('Team member added to Virtual Office!');
 					} else {
-						alert(res.data.message || 'Failed to add team member.');
+						showError(res.data.message || 'Failed to add team member.');
 					}
 				},
 				error: function() {
 					$btn.prop('disabled', false).text('Save Team Member');
-					alert('Connection error. Please try again.');
+					showError('Connection error. Please try again.');
 				}
 			});
 		});
@@ -1765,13 +1765,13 @@
 								.prop('disabled', true);
 							showToast(res.data.message || 'Claim submitted successfully!');
 						} else {
-							alert(res.data.message || 'Failed to submit claim.');
+							showError(res.data.message || 'Failed to submit claim.');
 							$btn.prop('disabled', false).text('Claim Listing');
 						}
 					},
 					error: function() {
 						$btn.prop('disabled', false).text('Claim Listing');
-						alert('Connection error. Please try again.');
+						showError('Connection error. Please try again.');
 					}
 				});
 			}
@@ -1785,7 +1785,7 @@
 				$('#tpd_agency_address_input').val(advLoc);
 				showToast('Copied advisor location to agency address.');
 			} else {
-				alert('Please enter your Advisor Location first.');
+				showError('Please enter your Advisor Location first.');
 			}
 		});
 
@@ -1859,6 +1859,27 @@
 			}, 500);
 		});
 
+		// Error/notice toast (replaces browser showError() pop-ups). Text only, stacks bottom-right, click to dismiss.
+		function showError(message) {
+			var $stack = $('#tpd-toast-stack');
+			if (!$stack.length) {
+				$stack = $('<div id="tpd-toast-stack" aria-live="assertive"></div>').css({
+					position: 'fixed', bottom: '24px', right: '24px', zIndex: 1000000,
+					display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end', maxWidth: 'calc(100vw - 48px)'
+				}).appendTo('body');
+			}
+			var $toast = $('<div role="alert" class="tpd-error-toast"></div>').css({
+				background: '#b91c1c', color: '#ffffff', padding: '12px 16px', borderRadius: '10px',
+				boxShadow: '0 10px 25px rgba(0,0,0,0.25)', fontSize: '13.5px', fontWeight: '600',
+				display: 'flex', alignItems: 'flex-start', gap: '10px', maxWidth: '420px', cursor: 'pointer', lineHeight: '1.4'
+			});
+			$toast.append($('<i class="fa-solid fa-circle-exclamation" aria-hidden="true" style="margin-top:2px;"></i>'));
+			$toast.append($('<span></span>').text(String(message || 'Something went wrong. Please try again.')));
+			$toast.hide().appendTo($stack).fadeIn(160);
+			var close = function() { $toast.fadeOut(220, function() { $(this).remove(); }); };
+			$toast.on('click', close);
+			setTimeout(close, 7000);
+		}
 		// Helper: Simple In-App Toast
 		function showToast(message) {
 			var $toast = $('<div class="tpd-app-toast">' + message + '</div>');
@@ -2055,7 +2076,7 @@
 					$('#tpd-checkout-loading').hide();
 					if (!res || !res.success || !res.data || !res.data.item) {
 						$modal.fadeOut(150);
-						alert((res && res.data && res.data.message) ? res.data.message : 'Could not load checkout pricing.');
+						showError((res && res.data && res.data.message) ? res.data.message : 'Could not load checkout pricing.');
 						return;
 					}
 
@@ -2095,7 +2116,7 @@
 				error: function() {
 					$('#tpd-checkout-loading').hide();
 					$modal.fadeOut(150);
-					alert('Connection error fetching checkout summary.');
+					showError('Connection error fetching checkout summary.');
 				}
 			});
 		}
@@ -2202,13 +2223,13 @@
 							showToast(res.data.message || 'Payment confirmed!');
 						} else {
 							$('#tpd-checkout-modal').hide();
-							alert((res && res.data && res.data.message) ? res.data.message : 'Could not verify payment return.');
+							showError((res && res.data && res.data.message) ? res.data.message : 'Could not verify payment return.');
 						}
 					},
 					error: function() {
 						$('#tpd-checkout-loading').hide();
 						$('#tpd-checkout-modal').hide();
-						alert('Connection error verifying payment.');
+						showError('Connection error verifying payment.');
 					}
 				});
 			} else if (urlParams.get('tpd_checkout_cancel') === '1') {
