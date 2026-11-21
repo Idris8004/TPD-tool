@@ -827,6 +827,8 @@ $prefill_username     = $prefill_user ? $prefill_user->user_login : '';
 })();
 </script>
 
+<?php include TPD_TOOL_DIR . 'templates/shared/checkout-modal.php'; ?>
+
 <?php
 if ( $is_standalone ) {
 	wp_footer();

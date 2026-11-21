@@ -96,6 +96,7 @@ $paypal_ready = ! empty( $pay_settings['paypal_enabled'] ) && ! empty( $pay_sett
 				<input type="hidden" id="tpd_co_item_type" value="">
 				<input type="hidden" id="tpd_co_item_id" value="">
 				<input type="hidden" id="tpd_co_billing_cycle" value="once">
+				<input type="hidden" id="tpd_co_return_url" value="">
 
 				<div style="display:flex; gap:10px; justify-content:flex-end;">
 					<button type="button" id="tpd-co-cancel-btn" class="tpd-btn tpd-btn-sm tpd-btn-outline"><?php esc_html_e( 'Cancel', 'tpd-tool' ); ?></button>

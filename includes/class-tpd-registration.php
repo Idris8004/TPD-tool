@@ -334,11 +334,24 @@ class TPD_Tool_Registration {
 		update_user_meta( $user_id, 'tpd_arc_num', $arc_num );
 		update_user_meta( $user_id, 'tpd_true_num', $true_num );
 
-		// Set User Tier & Record Plan Subscription
-		$final_tier = TPD_Tool_Tiers::set_user_tier( $user_id, $tier );
-		if ( class_exists( 'TPD_Tool_Settings' ) ) {
-			TPD_Tool_Settings::record_subscription( $user_id, $final_tier, $billing_cycle, $payment_gateway );
+		// Determine if a paid plan was requested
+		$is_yearly        = ( stripos( $billing_cycle, 'year' ) !== false || stripos( $billing_cycle, 'annual' ) !== false );
+		$cycle_normalized = $is_yearly ? 'year' : 'month';
+		$is_paid_plan     = false;
+
+		if ( ! empty( $tier ) && 'basic' !== $tier && 'free' !== $tier ) {
+			$plan_info = class_exists( 'TPD_Tool_Settings' ) ? TPD_Tool_Settings::get_plan( $tier ) : array();
+			$m_price   = isset( $plan_info['monthly_price'] ) ? (float) $plan_info['monthly_price'] : 0.0;
+			$y_price   = isset( $plan_info['yearly_price'] ) ? (float) $plan_info['yearly_price'] : ( isset( $plan_info['annual_price'] ) ? (float) $plan_info['annual_price'] : 0.0 );
+			$price     = $is_yearly ? $y_price : $m_price;
+			if ( $price > 0.0 ) {
+				$is_paid_plan = true;
+			}
 		}
+
+		// Security: All new accounts strictly initialize on the Free (basic) tier at registration time.
+		// Paid tiers require verified checkout and are granted exclusively via TPD_Tool_Financial::fulfill_transaction().
+		$final_tier = TPD_Tool_Tiers::set_user_tier( $user_id, 'basic' );
 
 		// 4. Create Paired CPT Record (travel_advisor)
 		$post_id = wp_insert_post( array(
@@ -392,12 +405,26 @@ class TPD_Tool_Registration {
 		);
 		wp_mail( $email, $subject, $message );
 
-		wp_send_json_success( array(
-			'message'      => $is_cross_role
-				? __( 'Dual-Portal Activated! Your Travel Advisor & Supplier dashboards are now both enabled. Opening Advisor Dashboard...', 'tpd-tool' )
-				: __( 'Registration complete! Opening your Advisor Dashboard...', 'tpd-tool' ),
-			'redirect_url' => home_url( '/advisor-dashboard/' ),
-		) );
+		if ( $is_paid_plan ) {
+			wp_send_json_success( array(
+				'message'          => __( 'Account created! Please confirm payment to activate your selected membership tier.', 'tpd-tool' ),
+				'redirect_url'     => home_url( '/advisor-dashboard/' ),
+				'requires_payment' => true,
+				'payment_item'     => array(
+					'item_type'     => 'plan',
+					'item_id'       => $tier,
+					'billing_cycle' => $cycle_normalized,
+					'gateway'       => strtolower( $payment_gateway ),
+				),
+			) );
+		} else {
+			wp_send_json_success( array(
+				'message'      => $is_cross_role
+					? __( 'Dual-Portal Activated! Your Travel Advisor & Supplier dashboards are now both enabled. Opening Advisor Dashboard...', 'tpd-tool' )
+					: __( 'Registration complete! Opening your Advisor Dashboard...', 'tpd-tool' ),
+				'redirect_url' => home_url( '/advisor-dashboard/' ),
+			) );
+		}
 	}
 
 	/**
@@ -541,10 +568,24 @@ class TPD_Tool_Registration {
 		update_user_meta( $user_id, 'tpd_company_name', $company_name );
 		update_user_meta( $user_id, 'tpd_country_of_residence', $country );
 
-		$final_tier = TPD_Tool_Tiers::set_user_tier( $user_id, $tier );
-		if ( class_exists( 'TPD_Tool_Settings' ) ) {
-			TPD_Tool_Settings::record_subscription( $user_id, $final_tier, $billing_cycle, 'Stripe' );
+		// Determine if a paid plan was requested
+		$is_yearly        = ( stripos( $billing_cycle, 'year' ) !== false || stripos( $billing_cycle, 'annual' ) !== false );
+		$cycle_normalized = $is_yearly ? 'year' : 'month';
+		$is_paid_plan     = false;
+
+		if ( ! empty( $tier ) && 'basic' !== $tier && 'free' !== $tier ) {
+			$plan_info = class_exists( 'TPD_Tool_Settings' ) ? TPD_Tool_Settings::get_plan( $tier ) : array();
+			$m_price   = isset( $plan_info['monthly_price'] ) ? (float) $plan_info['monthly_price'] : 0.0;
+			$y_price   = isset( $plan_info['yearly_price'] ) ? (float) $plan_info['yearly_price'] : ( isset( $plan_info['annual_price'] ) ? (float) $plan_info['annual_price'] : 0.0 );
+			$price     = $is_yearly ? $y_price : $m_price;
+			if ( $price > 0.0 ) {
+				$is_paid_plan = true;
+			}
 		}
+
+		// Security: All new supplier accounts strictly initialize on the Free (basic) tier at registration time.
+		// Paid tiers require verified checkout and are granted exclusively via TPD_Tool_Financial::fulfill_transaction().
+		$final_tier = TPD_Tool_Tiers::set_user_tier( $user_id, 'basic' );
 
 		// Create Paired supplier_listing CPT Post so Supplier Dashboard & WP Admin are 100% connected
 		$listing_id = wp_insert_post( array(
@@ -584,12 +625,26 @@ class TPD_Tool_Registration {
 		wp_set_current_user( $user_id );
 		wp_set_auth_cookie( $user_id, true, is_ssl() );
 
-		wp_send_json_success( array(
-			'message'      => $is_cross_role
-				? __( 'Dual-Portal Activated! Your Supplier Partner & Travel Advisor dashboards are now both enabled. Opening Supplier Dashboard...', 'tpd-tool' )
-				: __( 'Supplier account & company listing created! Opening your Supplier Dashboard...', 'tpd-tool' ),
-			'redirect_url' => home_url( '/supplier-dashboard/' ),
-		) );
+		if ( $is_paid_plan ) {
+			wp_send_json_success( array(
+				'message'          => __( 'Supplier account created! Please complete payment to activate your selected partner plan.', 'tpd-tool' ),
+				'redirect_url'     => home_url( '/supplier-dashboard/' ),
+				'requires_payment' => true,
+				'payment_item'     => array(
+					'item_type'     => 'plan',
+					'item_id'       => $tier,
+					'billing_cycle' => $cycle_normalized,
+					'gateway'       => 'stripe',
+				),
+			) );
+		} else {
+			wp_send_json_success( array(
+				'message'      => $is_cross_role
+					? __( 'Dual-Portal Activated! Your Supplier Partner & Travel Advisor dashboards are now both enabled. Opening Supplier Dashboard...', 'tpd-tool' )
+					: __( 'Supplier account & company listing created! Opening your Supplier Dashboard...', 'tpd-tool' ),
+				'redirect_url' => home_url( '/supplier-dashboard/' ),
+			) );
+		}
 	}
 
 	/**

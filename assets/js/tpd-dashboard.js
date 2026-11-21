@@ -561,6 +561,30 @@
 				data: $form.serialize(),
 				success: function(res) {
 					if (res.success) {
+						if (res.data && res.data.requires_payment && res.data.payment_item) {
+							$status.addClass('success')
+								.html('<i class="fa-solid fa-circle-check"></i> ' + (res.data.message || 'Account created! Opening payment checkout...'))
+								.fadeIn();
+
+							if (typeof window.tpdOpenCheckoutModal === 'function' && $('#tpd-checkout-modal').length) {
+								$btn.prop('disabled', false).html(originalBtnHtml);
+								window.tpdCheckoutSuccessRedirect = res.data.redirect_url || '/advisor-dashboard/';
+								window.tpdOpenCheckoutModal(
+									res.data.payment_item.item_type || 'plan',
+									res.data.payment_item.item_id,
+									res.data.payment_item.billing_cycle || 'month',
+									res.data.payment_item.gateway || '',
+									res.data.redirect_url || ''
+								);
+
+								// If user closes or cancels the modal, proceed to their free dashboard
+								$('#tpd-close-checkout-modal, #tpd-co-cancel-btn').off('click.tpdRegClose').on('click.tpdRegClose', function() {
+									window.location.href = res.data.redirect_url || '/advisor-dashboard/';
+								});
+								return;
+							}
+						}
+
 						$status.addClass('success')
 							.html('<i class="fa-solid fa-circle-check"></i> ' + (res.data.message || 'Registration successful! Redirecting...'))
 							.fadeIn();
@@ -2088,6 +2112,12 @@
 
 		function closeTpdCheckoutModal() {
 			$('#tpd-checkout-modal').fadeOut(160);
+			if (window.tpdCheckoutSuccessRedirect) {
+				var redir = window.tpdCheckoutSuccessRedirect;
+				window.tpdCheckoutSuccessRedirect = null;
+				window.location.href = redir;
+				return;
+			}
 			if (tpdCheckoutNeedsReload) {
 				window.location.href = window.location.href.split('?')[0];
 			}
@@ -2102,7 +2132,7 @@
 			}).text(msg).show();
 		}
 
-		function openTpdCheckoutModal(itemType, itemId, billingCycle, preferredGateway) {
+		function openTpdCheckoutModal(itemType, itemId, billingCycle, preferredGateway, returnUrl) {
 			var $modal = $('#tpd-checkout-modal');
 			if (!$modal.length) return;
 
@@ -2113,6 +2143,12 @@
 			$('#tpd-checkout-content').hide();
 			$('#tpd-checkout-loading').show();
 			$modal.css('display', 'flex').hide().fadeIn(160);
+
+			if (returnUrl) {
+				$('#tpd_co_return_url').val(returnUrl);
+			} else {
+				$('#tpd_co_return_url').val('');
+			}
 
 			$.ajax({
 				url: (typeof tpd_data !== 'undefined') ? tpd_data.ajax_url : '/wp-admin/admin-ajax.php',
@@ -2196,7 +2232,7 @@
 			var $btn = $(this);
 			var origHtml = $btn.html();
 			var gateway = $('input[name="tpd_co_gateway"]:checked').val() || 'test';
-			var cleanReturnUrl = window.location.href.split('#')[0];
+			var cleanReturnUrl = $('#tpd_co_return_url').val() || window.location.href.split('#')[0];
 
 			$('#tpd-co-status-msg').hide();
 			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Processing...');
