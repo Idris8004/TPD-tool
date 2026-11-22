@@ -3,6 +3,7 @@
  * Self-Contained GitHub Auto-Updater for TPD Tool
  * Checks https://github.com/TARC-LLC/dashboard (main branch) for new versions
  * and integrates with native WordPress Plugin Updates & Auto-Updates.
+ * Supports private repository access via TPD_GITHUB_TOKEN defined in wp-config.php.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -12,9 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class TPD_Tool_Updater {
 
 	const GITHUB_USER   = 'TARC-LLC';
-	const FALLBACK_GITHUB_USER = 'Idris8004';
 	const GITHUB_REPO   = 'dashboard';
-	const FALLBACK_GITHUB_REPO = 'TPD-tool';
 	const GITHUB_BRANCH = 'main';
 
 	private static $instance = null;
@@ -28,6 +27,19 @@ class TPD_Tool_Updater {
 		return self::$instance;
 	}
 
+	/**
+	 * Retrieve read-only GitHub Personal Access Token configured in wp-config.php (or option fallback).
+	 */
+	public static function get_token() {
+		if ( defined( 'TPD_GITHUB_TOKEN' ) && ! empty( TPD_GITHUB_TOKEN ) ) {
+			return trim( TPD_GITHUB_TOKEN );
+		}
+		if ( defined( 'TPD_GH_TOKEN' ) && ! empty( TPD_GH_TOKEN ) ) {
+			return trim( TPD_GH_TOKEN );
+		}
+		return trim( (string) get_option( 'tpd_github_token', '' ) );
+	}
+
 	private function __construct() {
 		$this->plugin_basename = plugin_basename( TPD_TOOL_FILE );
 		$this->plugin_slug     = dirname( $this->plugin_basename );
@@ -35,13 +47,14 @@ class TPD_Tool_Updater {
 		add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'check_for_update' ) );
 		add_filter( 'plugins_api', array( $this, 'plugin_Popup_info' ), 20, 3 );
 		add_filter( 'upgrader_source_selection', array( $this, 'fix_github_folder_name' ), 10, 4 );
+		add_filter( 'http_request_args', array( $this, 'attach_github_token_to_download' ), 10, 2 );
 		add_filter( 'auto_update_plugin', array( $this, 'enable_auto_update' ), 10, 2 );
 		add_filter( 'plugin_action_links_' . $this->plugin_basename, array( $this, 'add_plugin_action_links' ) );
 		add_action( 'admin_init', array( $this, 'handle_manual_update_check' ) );
 	}
 
 	/**
-	 * Fetch remote version from raw tpd-tool.php on GitHub main branch
+	 * Fetch remote version from TARC-LLC/dashboard on GitHub main branch
 	 */
 	public function get_remote_version( $force = false ) {
 		$transient_key = 'tpd_tool_gh_remote_version';
@@ -52,35 +65,65 @@ class TPD_Tool_Updater {
 			}
 		}
 
-		$targets = array(
-			array( 'user' => self::GITHUB_USER, 'repo' => self::GITHUB_REPO ),
-			array( 'user' => 'travelguy0401', 'repo' => 'dashboard' ),
-			array( 'user' => self::FALLBACK_GITHUB_USER, 'repo' => self::FALLBACK_GITHUB_REPO ),
+		$token   = self::get_token();
+		$headers = array(
+			'User-Agent'    => 'WordPress/' . get_bloginfo( 'version' ) . '; ' . home_url(),
+			'Accept'        => 'application/vnd.github.v3.raw',
+			'Cache-Control' => 'no-cache',
+		);
+		if ( ! empty( $token ) ) {
+			$headers['Authorization'] = 'Bearer ' . $token;
+		}
+
+		// 1. Direct GitHub REST API raw contents call (recommended for private repos)
+		$api_url = sprintf(
+			'https://api.github.com/repos/%s/%s/contents/tpd-tool.php?ref=%s',
+			self::GITHUB_USER,
+			self::GITHUB_REPO,
+			self::GITHUB_BRANCH
 		);
 
-		foreach ( $targets as $target ) {
-			$raw_url  = sprintf(
-				'https://raw.githubusercontent.com/%s/%s/%s/tpd-tool.php?t=%d',
-				$target['user'],
-				$target['repo'],
+		$response = wp_remote_get( $api_url, array(
+			'timeout' => 12,
+			'headers' => $headers,
+		) );
+
+		if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
+			$body = wp_remote_retrieve_body( $response );
+			if ( preg_match( '/^\s*\*\s*Version:\s*([0-9.]+)/mi', $body, $matches ) ) {
+				$remote_version = trim( $matches[1] );
+				set_transient( $transient_key, $remote_version, 15 * MINUTE_IN_SECONDS );
+				return $remote_version;
+			}
+		}
+
+		// 2. Fallback to raw.githubusercontent.com with Authorization header
+		$raw_url = sprintf(
+			'https://raw.githubusercontent.com/%s/%s/%s/tpd-tool.php?t=%d',
+			self::GITHUB_USER,
+			self::GITHUB_REPO,
 			self::GITHUB_BRANCH,
 			time()
 		);
+		$raw_headers = array(
+			'User-Agent'    => 'WordPress/' . get_bloginfo( 'version' ) . '; ' . home_url(),
+			'Cache-Control' => 'no-cache',
+		);
+		if ( ! empty( $token ) ) {
+			$raw_headers['Authorization'] = 'Bearer ' . $token;
+		}
 
-			$response = wp_remote_get( $raw_url, array(
-				'timeout' => 10,
-				'headers' => array(
-					'Cache-Control' => 'no-cache',
-				),
-			) );
+		$raw_response = wp_remote_get( $raw_url, array(
+			'timeout' => 10,
+			'headers' => $raw_headers,
+		) );
 
-			if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
-				$body = wp_remote_retrieve_body( $response );
-				if ( preg_match( '/^\s*\*\s*Version:\s*([0-9.]+)/mi', $body, $matches ) ) {
-					$remote_version = trim( $matches[1] );
-					set_transient( $transient_key, $remote_version, 15 * MINUTE_IN_SECONDS );
-					return $remote_version;
-				}
+		if ( ! is_wp_error( $raw_response ) && 200 === wp_remote_retrieve_response_code( $raw_response ) ) {
+			$body = wp_remote_retrieve_body( $raw_response );
+			if ( preg_match( '/^\s*\*\s*Version:\s*([0-9.]+)/mi', $body, $matches ) ) {
+				$remote_version = trim( $matches[1] );
+				set_transient( $transient_key, $remote_version, 15 * MINUTE_IN_SECONDS );
+				return $remote_version;
 			}
 		}
 
@@ -102,7 +145,7 @@ class TPD_Tool_Updater {
 
 		if ( version_compare( TPD_TOOL_VERSION, $remote_version, '<' ) ) {
 			$zip_url = sprintf(
-				'https://github.com/%s/%s/archive/refs/heads/%s.zip',
+				'https://api.github.com/repos/%s/%s/zipball/%s',
 				self::GITHUB_USER,
 				self::GITHUB_REPO,
 				self::GITHUB_BRANCH
@@ -139,21 +182,37 @@ class TPD_Tool_Updater {
 		$info->author        = '<a href="https://github.com/TARC-LLC/dashboard">Travel Partner Directory (TARC)</a>';
 		$info->homepage      = 'https://github.com/TARC-LLC/dashboard';
 		$info->download_link = sprintf(
-			'https://github.com/%s/%s/archive/refs/heads/%s.zip',
+			'https://api.github.com/repos/%s/%s/zipball/%s',
 			self::GITHUB_USER,
 			self::GITHUB_REPO,
 			self::GITHUB_BRANCH
 		);
 		$info->sections      = array(
 			'description' => 'Enterprise-grade travel marketplace suite featuring Multi-Step Registration Wizards, Dual Portals (Advisor & Supplier Dashboards), Bi-Directional WP CPT + ACF Sync, Dynamic Membership Plan Builder, Stripe/PayPal Checkout, and Super Admin Control Hub.',
-			'changelog'   => '<h4>Latest Release (' . esc_html( $info->version ) . ')</h4><ul><li>LMS Studio tab in Super Admin Control Hub with HMAC-SHA256 Single Sign-On iframe embedding, live metrics, course catalog control, and interactive Studio Simulator.</li><li>Resources &amp; Tools hub inside Advisor &amp; Supplier dashboards with My Resources vs. All Resources filtering and direct TPD course checkout.</li><li>Auto-initialized secure LMS keys, 1-click key generator, and Laravel .env copy helper.</li><li>Unified login, financial analytics, and offline-resilient course catalog fallback.</li></ul>',
+			'changelog'   => '<h4>Latest Release (' . esc_html( $info->version ) . ')</h4><ul><li>Unified login, verified discovery call meeting requests via portal chat, automatic webhook fulfillment, and plan expiration handling.</li><li>Pointed auto-updater directly to private TARC-LLC/dashboard repository with token authentication.</li></ul>',
 		);
 
 		return $info;
 	}
 
 	/**
-	 * Rename extracted GitHub archive folder (e.g. TPD-tool-main -> tpd-tool)
+	 * Attach GitHub token to package download requests for private repo
+	 */
+	public function attach_github_token_to_download( $args, $url ) {
+		$token = self::get_token();
+		if ( ! empty( $token ) && ( false !== strpos( $url, 'github.com' ) || false !== strpos( $url, 'api.github.com' ) ) && false !== strpos( $url, self::GITHUB_USER . '/' . self::GITHUB_REPO ) ) {
+			if ( empty( $args['headers'] ) || ! is_array( $args['headers'] ) ) {
+				$args['headers'] = array();
+			}
+			$args['headers']['Authorization'] = 'Bearer ' . $token;
+			$args['headers']['User-Agent']    = 'WordPress/' . get_bloginfo( 'version' ) . '; ' . home_url();
+			$args['headers']['Accept']        = 'application/vnd.github.v3+json';
+		}
+		return $args;
+	}
+
+	/**
+	 * Rename extracted GitHub archive folder (e.g. TARC-LLC-dashboard-abcd123 -> tpd-tool)
 	 */
 	public function fix_github_folder_name( $source, $remote_source, $upgrader, $hook_extra = null ) {
 		global $wp_filesystem;
@@ -191,7 +250,7 @@ class TPD_Tool_Updater {
 			'tpd_force_gh_check_nonce'
 		);
 		$custom_links = array(
-			'<a href="' . esc_url( home_url( '/super-admin-dashboard/' ) ) . '" style="font-weight:700; color:#2563eb;">Super Admin Hub</a>',
+			'<a href="' . esc_url( home_url( '/tpd-admin/' ) ) . '" style="font-weight:700; color:#2563eb;">Super Admin Hub</a>',
 			'<a href="' . esc_url( $check_url ) . '" style="font-weight:600; color:#16a34a;">Check for GitHub Update</a>',
 		);
 		return array_merge( $custom_links, $links );
