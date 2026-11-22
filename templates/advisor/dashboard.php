@@ -1348,6 +1348,11 @@ $news_posts = get_posts( array(
 					</div>
 
 					<?php
+					$inq_target_ids = array( (int) $current_user_id );
+					if ( ! empty( $advisor_post_id ) ) {
+						$inq_target_ids[] = (int) $advisor_post_id;
+					}
+
 					$inq_args = array(
 						'post_type'      => 'tpd_inquiry',
 						'posts_per_page' => 30,
@@ -1355,16 +1360,12 @@ $news_posts = get_posts( array(
 						'meta_query'     => array(
 							array(
 								'key'     => '_tpd_advisor_id',
-								'value'   => $current_user_id,
-								'compare' => '=',
+								'value'   => $inq_target_ids,
+								'compare' => 'IN',
 							),
 						),
 					);
 					$inquiries = get_posts( $inq_args );
-					// Fallback to all inquiries if testing / demo admin
-					if ( empty( $inquiries ) && ( current_user_can( 'manage_options' ) || count( $inquiries ) === 0 ) ) {
-						$inquiries = get_posts( array( 'post_type' => 'tpd_inquiry', 'posts_per_page' => 20 ) );
-					}
 
 					if ( ! empty( $inquiries ) ) :
 					?>
