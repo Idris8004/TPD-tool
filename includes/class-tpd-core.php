@@ -22,6 +22,7 @@ class TPD_Tool_Core {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
 		add_action( 'template_include', array( $this, 'template_loader' ), 999 );
+		add_action( 'template_redirect', array( $this, 'no_page_cache_for_logged_in' ), 0 );
 		add_action( 'admin_init', array( $this, 'restrict_admin_access' ) );
 		add_action( 'after_setup_theme', array( $this, 'hide_admin_bar' ) );
 		add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
@@ -91,6 +92,22 @@ class TPD_Tool_Core {
 			'nonce'       => wp_create_nonce( 'tpd_nonce' ),
 			'admin_nonce' => wp_create_nonce( 'tpd_admin_nonce' ),
 		) );
+	}
+
+	/**
+	 * Logged-in pages (dashboards, courses, messages, plans) are personal and change
+	 * all the time, so page caches must not keep copies of them. nocache_headers()
+	 * alone is not enough: LiteSpeed Cache's private cache ignores Cache-Control.
+	 * Guests are unaffected, so public pages stay cached.
+	 */
+	public function no_page_cache_for_logged_in() {
+		if ( ! is_user_logged_in() ) {
+			return;
+		}
+		if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+			define( 'DONOTCACHEPAGE', true );
+		}
+		do_action( 'litespeed_control_set_nocache', 'TPD: logged-in pages are personal' );
 	}
 
 	public function template_loader( $template ) {

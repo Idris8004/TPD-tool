@@ -26,6 +26,8 @@ if ( ! TPD_Tool_Roles::is_supplier( $current_user_id ) && ! current_user_can( 'm
 
 $user       = get_userdata( $current_user_id );
 $user_tier  = tpd_get_user_tier( $current_user_id );
+// Paid plans (standard, premium) unlock the enhanced listing; there is no tier literally named "enhanced".
+$is_enhanced = tpd_is_enhanced_supplier( $current_user_id );
 $first_name = $user ? $user->first_name : '';
 $last_name  = $user ? $user->last_name : '';
 $full_name  = ( $user && $user->display_name ) ? $user->display_name : trim( $first_name . ' ' . $last_name );
@@ -112,7 +114,7 @@ if ( $is_standalone ) {
 			</div>
 			<div class="tpd-acc-hero-info">
 				<div class="tpd-acc-pill-row">
-					<?php if ( 'enhanced' === $user_tier ) : ?>
+					<?php if ( $is_enhanced ) : ?>
 						<span class="tpd-tier-badge enhanced"><i class="fa-solid fa-crown text-gold"></i> <?php esc_html_e( 'Enhanced Supplier Member', 'tpd-tool' ); ?></span>
 					<?php else : ?>
 						<span class="tpd-tier-badge basic"><i class="fa-solid fa-shield-halved"></i> <?php esc_html_e( 'Verified Supplier Member', 'tpd-tool' ); ?></span>
@@ -279,16 +281,17 @@ if ( $is_standalone ) {
 						<li><i class="fa-solid fa-check text-teal"></i> <?php esc_html_e( 'Public Representative Profile', 'tpd-tool' ); ?></li>
 						<li><i class="fa-solid fa-check text-teal"></i> <?php esc_html_e( 'Direct Advisor Messaging & Chat', 'tpd-tool' ); ?></li>
 						<li><i class="fa-solid fa-check text-teal"></i> <?php esc_html_e( 'Discovery Meeting Requests', 'tpd-tool' ); ?></li>
-						<?php if ( 'enhanced' === $user_tier ) : ?>
-							<li><i class="fa-solid fa-check text-teal"></i> <?php esc_html_e( 'Multi-Tab Showcase (Conferences, Brochures, FAQs, Videos)', 'tpd-tool' ); ?></li>
-							<li><i class="fa-solid fa-check text-teal"></i> <?php esc_html_e( 'Priority Placement in Directory', 'tpd-tool' ); ?></li>
+						<?php if ( $is_enhanced ) : ?>
+							<li><i class="fa-solid fa-check text-teal"></i> <?php esc_html_e( 'Multi-Tab Showcase (Conferences, Brochures, FAQs, Gallery, Videos)', 'tpd-tool' ); ?></li>
+							<li><i class="fa-solid fa-check text-teal"></i> <?php esc_html_e( 'Enhanced Partner Badge on Your Public Listing', 'tpd-tool' ); ?></li>
 						<?php else : ?>
-							<li class="disabled"><i class="fa-solid fa-lock"></i> <?php esc_html_e( 'Multi-Tab Showcase (Conferences, Brochures, FAQs)', 'tpd-tool' ); ?></li>
+							<li class="disabled"><i class="fa-solid fa-lock"></i> <?php esc_html_e( 'Multi-Tab Showcase (Conferences, Brochures, FAQs, Gallery, Videos)', 'tpd-tool' ); ?></li>
+							<li class="disabled"><i class="fa-solid fa-lock"></i> <?php esc_html_e( 'Enhanced Partner Badge on Your Public Listing', 'tpd-tool' ); ?></li>
 						<?php endif; ?>
 					</ul>
-					<?php if ( 'enhanced' !== $user_tier ) : ?>
+					<?php if ( ! $is_enhanced ) : ?>
 						<a href="<?php echo esc_url( home_url( '/supplier-dashboard/' ) ); ?>#tpd-supp-settings" class="tpd-btn tpd-btn-gold tpd-btn-block">
-							<i class="fa-solid fa-arrow-up-right-dots"></i> <?php esc_html_e( 'Upgrade to Enhanced Tier', 'tpd-tool' ); ?>
+							<i class="fa-solid fa-arrow-up-right-dots"></i> <?php esc_html_e( 'Upgrade to Enhanced Listing', 'tpd-tool' ); ?>
 						</a>
 					<?php endif; ?>
 				</div>
