@@ -1490,16 +1490,32 @@ $all_directory_listings = get_posts( array(
 				<!-- Plan Upgrade Card -->
 				<div class="tpd-card-box mb-4">
 					<h3><i class="fa-solid fa-crown text-gold"></i> <?php esc_html_e( 'Supplier Membership Plan', 'tpd-tool' ); ?></h3>
-					<form id="tpd-user-upgrade-plan-form" class="mt-3">
+					<form id="tpd-user-upgrade-plan-form" class="mt-3" data-current-tier="<?php echo esc_attr( $user_tier ); ?>">
 						<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:14px; margin-bottom:16px;">
 							<?php foreach ( $all_plans as $p_slug => $p_info ) :
 								$m_price = (float) $p_info['monthly_price'];
 								$y_price = (float) $p_info['yearly_price'];
+								$is_active = ( $user_tier === $p_slug );
 							?>
-								<label class="tpd-tier-option" style="border:2px solid <?php echo ( $user_tier === $p_slug ) ? '#2563eb' : '#e2e8f0'; ?>; border-radius:12px; padding:16px; cursor:pointer;">
-									<input type="radio" name="plan_slug" value="<?php echo esc_attr( $p_slug ); ?>" <?php checked( $user_tier, $p_slug ); ?>>
+								<label class="tpd-tier-option <?php echo $is_active ? 'tpd-tier-active' : ''; ?>" data-tier="<?php echo esc_attr( $p_slug ); ?>" data-monthly="<?php echo esc_attr( $m_price ); ?>" data-yearly="<?php echo esc_attr( $y_price ); ?>" data-name="<?php echo esc_attr( $p_info['name'] ); ?>" style="border:2px solid <?php echo $is_active ? '#2563eb' : '#e2e8f0'; ?>; border-radius:12px; padding:16px; cursor:pointer; background:<?php echo $is_active ? '#f8fbff' : '#fff'; ?>;">
+									<input type="radio" name="plan_slug" value="<?php echo esc_attr( $p_slug ); ?>" <?php checked( $is_active ); ?>>
 									<div>
-										<span class="tpd-to-tag"><?php echo esc_html( $p_info['badge'] ); ?></span>
+										<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+											<span class="tpd-to-tag"><?php echo esc_html( $p_info['badge'] ); ?></span>
+											<?php if ( $is_active ) : ?>
+												<span class="tpd-tier-badge" style="background:#ecfdf5; color:#059669; font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px;">
+													<i class="fa-solid fa-circle-check"></i> <?php esc_html_e( 'Current Plan', 'tpd-tool' ); ?>
+												</span>
+											<?php elseif ( $m_price > 0 ) : ?>
+												<span class="tpd-tier-badge" style="background:#fef2f2; color:#b91c1c; font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px;">
+													<i class="fa-solid fa-lock"></i> <?php esc_html_e( 'Locked / Paid', 'tpd-tool' ); ?>
+												</span>
+											<?php else : ?>
+												<span class="tpd-tier-badge" style="background:#f1f5f9; color:#475569; font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px;">
+													<?php esc_html_e( 'Free Tier', 'tpd-tool' ); ?>
+												</span>
+											<?php endif; ?>
+										</div>
 										<h4 style="margin:4px 0;"><?php echo esc_html( $p_info['name'] ); ?></h4>
 										<strong><?php echo $m_price <= 0 ? 'Free' : '$' . number_format( $m_price, 2 ) . '/mo ($' . number_format( $y_price, 0 ) . '/yr)'; ?></strong>
 									</div>
@@ -1511,7 +1527,13 @@ $all_directory_listings = get_posts( array(
 								<option value="Month"><?php esc_html_e( 'Monthly Billing', 'tpd-tool' ); ?></option>
 								<option value="Year"><?php esc_html_e( 'Annual Billing', 'tpd-tool' ); ?></option>
 							</select>
-							<button type="submit" class="tpd-btn tpd-btn-darkblue"><?php esc_html_e( 'Update Supplier Plan', 'tpd-tool' ); ?></button>
+							<select name="gateway" class="tpd-select" style="max-width:220px;">
+								<option value="Stripe"><?php esc_html_e( 'Credit Card (Stripe)', 'tpd-tool' ); ?></option>
+								<option value="PayPal"><?php esc_html_e( 'PayPal Checkout', 'tpd-tool' ); ?></option>
+							</select>
+							<button type="submit" class="tpd-btn tpd-btn-darkblue" id="tpd-btn-upgrade-plan" disabled style="opacity:0.75; cursor:not-allowed;">
+								<i class="fa-solid fa-circle-check"></i> <?php esc_html_e( 'Current Active Plan', 'tpd-tool' ); ?>
+							</button>
 						</div>
 					</form>
 				</div>
@@ -1519,27 +1541,34 @@ $all_directory_listings = get_posts( array(
 				<!-- Password & Account Security -->
 				<div class="tpd-card-box mb-4">
 					<h3><i class="fa-solid fa-lock text-blue"></i> <?php esc_html_e( 'Password & Account Security', 'tpd-tool' ); ?></h3>
-					<p class="text-muted"><?php esc_html_e( 'Update your Supplier Portal login password.', 'tpd-tool' ); ?></p>
+					<p class="text-muted" style="margin:4px 0 16px; font-size:13px;"><?php esc_html_e( 'To change your password, please confirm your current password for security verification.', 'tpd-tool' ); ?></p>
 					<form id="tpd-user-password-form" class="mt-3">
-						<input type="hidden" name="action" value="tpd_update_user_password">
+						<input type="hidden" name="action" value="tpd_user_update_account_security">
+						<input type="hidden" name="portal_scope" value="supplier">
 						<input type="hidden" name="nonce" value="<?php echo esc_attr( wp_create_nonce( 'tpd_nonce' ) ); ?>">
 						<div class="tpd-form-grid-3">
 							<div class="tpd-form-group">
 								<label><?php esc_html_e( 'Current Password *', 'tpd-tool' ); ?></label>
-								<input type="password" name="current_password" required class="tpd-input">
+								<input type="password" name="current_password" required placeholder="<?php esc_attr_e( 'Enter current password', 'tpd-tool' ); ?>" class="tpd-input" autocomplete="current-password">
 							</div>
 							<div class="tpd-form-group">
 								<label><?php esc_html_e( 'New Password *', 'tpd-tool' ); ?></label>
-								<input type="password" name="new_password" required minlength="6" class="tpd-input">
+								<input type="password" name="new_password" required minlength="8" placeholder="<?php esc_attr_e( 'Minimum 8 characters', 'tpd-tool' ); ?>" class="tpd-input" autocomplete="new-password">
 							</div>
 							<div class="tpd-form-group">
 								<label><?php esc_html_e( 'Confirm New Password *', 'tpd-tool' ); ?></label>
-								<input type="password" name="confirm_password" required minlength="6" class="tpd-input">
+								<input type="password" name="confirm_password" required minlength="8" placeholder="<?php esc_attr_e( 'Confirm new password', 'tpd-tool' ); ?>" class="tpd-input" autocomplete="new-password">
 							</div>
 						</div>
-						<button type="submit" class="tpd-btn tpd-btn-darkblue mt-2">
-							<i class="fa-solid fa-key"></i> <?php esc_html_e( 'Update Password', 'tpd-tool' ); ?>
-						</button>
+						<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-top:16px;">
+							<button type="submit" class="tpd-btn tpd-btn-darkblue">
+								<i class="fa-solid fa-key"></i> <?php esc_html_e( 'Update Password', 'tpd-tool' ); ?>
+							</button>
+							<span style="font-size:12.5px; color:#64748b;">
+								<i class="fa-regular fa-circle-question"></i> <?php esc_html_e( 'Forgot your current password?', 'tpd-tool' ); ?>
+								<a href="<?php echo esc_url( wp_login_url() ); ?>" target="_blank" style="color:#0284c7; text-decoration:underline; font-weight:600; margin-left:4px;"><?php esc_html_e( 'Reset via email recovery', 'tpd-tool' ); ?></a>
+							</span>
+						</div>
 					</form>
 				</div>
 

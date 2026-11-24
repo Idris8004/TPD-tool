@@ -56,20 +56,9 @@ $paypal_ready = ! empty( $pay_settings['paypal_enabled'] ) && ! empty( $pay_sett
 				<div id="tpd-co-gateways-wrap" style="margin-bottom:20px;">
 					<label style="display:block; font-size:12.5px; font-weight:700; color:#334155; margin-bottom:10px;"><?php esc_html_e( 'Select Payment Method:', 'tpd-tool' ); ?></label>
 					<div style="display:flex; flex-direction:column; gap:10px;">
-						<?php if ( 'test' === $pay_mode ) : ?>
-							<label style="display:flex; align-items:center; gap:10px; padding:12px 14px; border:1.5px solid #00798c; background:#f0fdfa; border-radius:10px; cursor:pointer;">
-								<input type="radio" name="tpd_co_gateway" value="test" checked>
-								<i class="fa-solid fa-flask" style="color:#00798c; font-size:16px;"></i>
-								<div style="flex:1;">
-									<strong style="font-size:13.5px; color:#0f172a; display:block;"><?php esc_html_e( 'Instant Sandbox Test Payment', 'tpd-tool' ); ?></strong>
-									<span style="font-size:11.5px; color:#475569;"><?php esc_html_e( 'Completes checkout immediately in Test Mode for verification.', 'tpd-tool' ); ?></span>
-								</div>
-							</label>
-						<?php endif; ?>
-
 						<?php if ( $stripe_ready ) : ?>
 							<label style="display:flex; align-items:center; gap:10px; padding:12px 14px; border:1.5px solid #e2e8f0; background:#ffffff; border-radius:10px; cursor:pointer;">
-								<input type="radio" name="tpd_co_gateway" value="stripe" <?php checked( 'live' === $pay_mode ); ?>>
+								<input type="radio" name="tpd_co_gateway" value="stripe" checked>
 								<i class="fa-brands fa-stripe" style="color:#635bff; font-size:22px;"></i>
 								<div style="flex:1;">
 									<strong style="font-size:13.5px; color:#0f172a; display:block;"><?php esc_html_e( 'Credit / Debit Card (Stripe Checkout)', 'tpd-tool' ); ?></strong>
@@ -80,13 +69,19 @@ $paypal_ready = ! empty( $pay_settings['paypal_enabled'] ) && ! empty( $pay_sett
 
 						<?php if ( $paypal_ready ) : ?>
 							<label style="display:flex; align-items:center; gap:10px; padding:12px 14px; border:1.5px solid #e2e8f0; background:#ffffff; border-radius:10px; cursor:pointer;">
-								<input type="radio" name="tpd_co_gateway" value="paypal" <?php checked( 'live' === $pay_mode && ! $stripe_ready ); ?>>
+								<input type="radio" name="tpd_co_gateway" value="paypal" <?php checked( ! $stripe_ready ); ?>>
 								<i class="fa-brands fa-paypal" style="color:#003087; font-size:20px;"></i>
 								<div style="flex:1;">
 									<strong style="font-size:13.5px; color:#0f172a; display:block;"><?php esc_html_e( 'PayPal Express Checkout', 'tpd-tool' ); ?></strong>
 									<span style="font-size:11.5px; color:#64748b;"><?php esc_html_e( 'Pay securely via your PayPal balance or linked bank.', 'tpd-tool' ); ?></span>
 								</div>
 							</label>
+						<?php endif; ?>
+
+						<?php if ( ! $stripe_ready && ! $paypal_ready ) : ?>
+							<div style="padding:14px; border:1px solid #fed7aa; background:#fff7ed; border-radius:8px; font-size:12.5px; color:#9a3412;">
+								<i class="fa-solid fa-circle-exclamation"></i> <?php esc_html_e( 'Online payment gateways are currently being configured by administrators. Please check back shortly.', 'tpd-tool' ); ?>
+							</div>
 						<?php endif; ?>
 					</div>
 				</div>

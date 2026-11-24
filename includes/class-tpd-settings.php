@@ -1350,42 +1350,76 @@ class TPD_Tool_Settings {
 		$payments  = self::get_payment_settings();
 		$is_live   = ( isset( $payments['mode'] ) && 'live' === $payments['mode'] );
 
-		if ( $price > 0 && $is_live ) {
-			wp_send_json_error( array( 'message' => __( 'Paid plan upgrades must be completed via the Checkout flow.', 'tpd-tool' ) ) );
+		if ( $price > 0 ) {
+			wp_send_json_error( array( 'message' => __( 'Paid plan upgrades must be completed via the secure Checkout flow with verified payment.', 'tpd-tool' ) ) );
 		}
 
 		$updated_tier = TPD_Tool_Tiers::set_user_tier( $user_id, $plan_slug );
-		self::record_subscription( $user_id, $updated_tier, $billing_type, $gateway );
+		self::record_subscription( $user_id, $updated_tier, $billing_type, 'Free' );
 
 		if ( class_exists( 'TPD_Tool_Financial' ) ) {
-			TPD_Tool_Financial::log_plan_transaction( $user_id, $updated_tier, $billing_type, $is_live ? 'free' : 'test' );
+			TPD_Tool_Financial::log_plan_transaction( $user_id, $updated_tier, $billing_type, 'free' );
 		}
 
 		wp_send_json_success( array(
-			'message' => sprintf( 'Your membership has been updated to %s (%sly billing)!', $plan['name'], $billing_type ),
+			'message' => sprintf( __( 'Your membership has been updated to %s (%sly billing)!', 'tpd-tool' ), $plan['name'], $billing_type ),
 			'tier'    => $updated_tier,
 		) );
 	}
 
 	/**
-	 * AJAX: User Self-Service Password Update (Supports Primary & Portal-Specific Passwords)
+	 * AJAX: User Self-Service Password Update (Requires Current Password Verification)
 	 */
 	public static function ajax_user_update_account_security() {
 		check_ajax_referer( 'tpd_nonce', 'nonce' );
 		$user_id = get_current_user_id();
 		if ( ! $user_id || ! TPD_Tool_Roles::is_account_active( $user_id ) ) {
-			wp_send_json_error( array( 'message' => 'Authentication required.' ) );
+			wp_send_json_error( array( 'message' => __( 'Authentication required.', 'tpd-tool' ) ) );
 		}
 
+		$current_pass = isset( $_POST['current_password'] ) ? (string) wp_unslash( $_POST['current_password'] ) : '';
 		$new_pass     = isset( $_POST['new_password'] ) ? (string) wp_unslash( $_POST['new_password'] ) : '';
 		$confirm      = isset( $_POST['confirm_password'] ) ? (string) wp_unslash( $_POST['confirm_password'] ) : '';
 		$portal_scope = isset( $_POST['portal_scope'] ) ? sanitize_key( wp_unslash( $_POST['portal_scope'] ) ) : 'all';
 
-		if ( empty( $new_pass ) || strlen( $new_pass ) < 6 ) {
-			wp_send_json_error( array( 'message' => 'Password must be at least 6 characters long.' ) );
+		if ( empty( $current_pass ) ) {
+			wp_send_json_error( array( 'message' => __( 'Please enter your current password.', 'tpd-tool' ) ) );
+		}
+
+		$user = get_userdata( $user_id );
+		if ( ! $user ) {
+			wp_send_json_error( array( 'message' => __( 'User account not found.', 'tpd-tool' ) ) );
+		}
+
+		// Verify current password against primary hash and any portal-specific hashes
+		$current_valid = wp_check_password( $current_pass, $user->user_pass, $user_id );
+		if ( ! $current_valid ) {
+			if ( 'advisor' === $portal_scope || 'all' === $portal_scope ) {
+				$adv_hash = get_user_meta( $user_id, 'tpd_advisor_password_hash', true );
+				if ( ! empty( $adv_hash ) && wp_check_password( $current_pass, $adv_hash, $user_id ) ) {
+					$current_valid = true;
+				}
+			}
+			if ( ! $current_valid && ( 'supplier' === $portal_scope || 'all' === $portal_scope ) ) {
+				$sup_hash = get_user_meta( $user_id, 'tpd_supplier_password_hash', true );
+				if ( ! empty( $sup_hash ) && wp_check_password( $current_pass, $sup_hash, $user_id ) ) {
+					$current_valid = true;
+				}
+			}
+		}
+
+		if ( ! $current_valid ) {
+			wp_send_json_error( array( 'message' => __( 'The current password you entered is incorrect.', 'tpd-tool' ) ) );
+		}
+
+		if ( empty( $new_pass ) || strlen( $new_pass ) < 8 ) {
+			wp_send_json_error( array( 'message' => __( 'New password must be at least 8 characters long.', 'tpd-tool' ) ) );
 		}
 		if ( $new_pass !== $confirm ) {
-			wp_send_json_error( array( 'message' => 'Passwords do not match.' ) );
+			wp_send_json_error( array( 'message' => __( 'New passwords do not match.', 'tpd-tool' ) ) );
+		}
+		if ( $new_pass === $current_pass ) {
+			wp_send_json_error( array( 'message' => __( 'New password must be different from your current password.', 'tpd-tool' ) ) );
 		}
 
 		if ( 'advisor' === $portal_scope ) {
@@ -1401,7 +1435,7 @@ class TPD_Tool_Settings {
 		wp_set_current_user( $user_id );
 		wp_set_auth_cookie( $user_id, true, is_ssl() );
 
-		wp_send_json_success( array( 'message' => 'Your password has been securely hashed and updated!' ) );
+		wp_send_json_success( array( 'message' => __( 'Your password has been securely updated!', 'tpd-tool' ) ) );
 	}
 
 	/**

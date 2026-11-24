@@ -427,35 +427,26 @@ class TPD_Tool_Financial {
 
 		if ( $amount <= 0 ) {
 			$gateway = 'free';
-		} elseif ( 'test' === $req_gateway && 'test' === $mode ) {
-			$gateway = 'test';
 		} elseif ( 'stripe' === $req_gateway ) {
 			if ( ! $stripe_ready ) {
-				if ( 'test' === $mode ) {
-					$gateway = 'test';
-				} else {
-					wp_send_json_error( array( 'message' => __( 'Stripe is not configured in Super Admin Payment Settings.', 'tpd-tool' ) ) );
-				}
-			} else {
-				$gateway = 'stripe';
+				wp_send_json_error( array( 'message' => __( 'Stripe payment gateway is not configured or enabled in Payment Settings.', 'tpd-tool' ) ) );
 			}
+			$gateway = 'stripe';
 		} elseif ( 'paypal' === $req_gateway ) {
 			if ( ! $paypal_ready ) {
-				if ( 'test' === $mode ) {
-					$gateway = 'test';
-				} else {
-					wp_send_json_error( array( 'message' => __( 'PayPal is not configured in Super Admin Payment Settings.', 'tpd-tool' ) ) );
-				}
-			} else {
-				$gateway = 'paypal';
+				wp_send_json_error( array( 'message' => __( 'PayPal checkout is not configured or enabled in Payment Settings.', 'tpd-tool' ) ) );
 			}
-		} elseif ( 'test' === $mode ) {
-			$gateway = 'test';
+			$gateway = 'paypal';
+		} elseif ( 'test' === $req_gateway || 'test' === $gateway ) {
+			if ( $amount > 0 ) {
+				wp_send_json_error( array( 'message' => __( 'Direct test checkout without payment is disabled. Please complete checkout with a valid payment method (Stripe or PayPal).', 'tpd-tool' ) ) );
+			}
+			$gateway = 'free';
 		} else {
 			wp_send_json_error( array( 'message' => __( 'Please select an enabled payment method.', 'tpd-tool' ) ) );
 		}
 
-		$is_immediate = ( $amount <= 0 || 'test' === $gateway );
+		$is_immediate = ( $amount <= 0 );
 		$meta         = array(
 			'mode'       => $mode,
 			'extra'      => $resolved['extra'],

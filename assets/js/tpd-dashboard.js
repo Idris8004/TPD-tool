@@ -1571,13 +1571,53 @@
 			});
 		});
 
+		// Dynamic Plan Option Selection in Settings
+		$(document).on('change', '#tpd-user-upgrade-plan-form input[name="plan_slug"], #tpd-user-upgrade-plan-form select[name="billing_type"]', function() {
+			var $form = $(this).closest('#tpd-user-upgrade-plan-form');
+			var currentTier = ($form.data('current-tier') || 'basic').toLowerCase();
+			var $selectedRadio = $form.find('input[name="plan_slug"]:checked');
+			var $selectedOption = $selectedRadio.closest('.tpd-tier-option');
+			var selectedTier = ($selectedRadio.val() || 'basic').toLowerCase();
+			var isYearly = ($form.find('select[name="billing_type"]').val() || '').toLowerCase().indexOf('year') !== -1;
+			var price = isYearly ? parseFloat($selectedOption.data('yearly') || 0) : parseFloat($selectedOption.data('monthly') || 0);
+			var planName = $selectedOption.data('name') || selectedTier.toUpperCase();
+			var $btn = $form.find('#tpd-btn-upgrade-plan');
+
+			$form.find('.tpd-tier-option').css({
+				'border-color': '#e2e8f0',
+				'background': '#fff'
+			});
+			$selectedOption.css({
+				'border-color': '#2563eb',
+				'background': '#f8fbff'
+			});
+
+			if (selectedTier === currentTier) {
+				$btn.prop('disabled', true).css({ 'opacity': '0.75', 'cursor': 'not-allowed' })
+					.html('<i class="fa-solid fa-circle-check"></i> ' + (typeof tpd_data !== 'undefined' && tpd_data.str_current_plan ? tpd_data.str_current_plan : 'Current Active Plan'));
+			} else if (price > 0) {
+				var priceDisplay = '$' + price.toFixed(2) + (isYearly ? '/yr' : '/mo');
+				$btn.prop('disabled', false).css({ 'opacity': '1', 'cursor': 'pointer' })
+					.html('<i class="fa-solid fa-lock"></i> Upgrade to ' + planName + ' (' + priceDisplay + ') — Checkout');
+			} else {
+				$btn.prop('disabled', false).css({ 'opacity': '1', 'cursor': 'pointer' })
+					.html('<i class="fa-solid fa-arrow-down"></i> Switch to ' + planName + ' (Free)');
+			}
+		});
+
 		// 11. User Self-Service Plan Upgrade / Change (Routes through Unified TPD Checkout Modal)
 		$('#tpd-user-upgrade-plan-form').on('submit', function(e) {
 			e.preventDefault();
 			var $form = $(this);
-			var planSlug = $form.find('input[name="plan_slug"]:checked').val() || 'basic';
+			var currentTier = ($form.data('current-tier') || 'basic').toLowerCase();
+			var planSlug = ($form.find('input[name="plan_slug"]:checked').val() || 'basic').toLowerCase();
 			var billingType = $form.find('select[name="billing_type"]').val() || 'Month';
 			var prefGateway = ($form.find('select[name="gateway"]').val() || '').toLowerCase();
+
+			if (planSlug === currentTier) {
+				showToast('You are already active on the ' + planSlug.toUpperCase() + ' plan.');
+				return;
+			}
 
 			if (typeof window.tpdOpenCheckoutModal === 'function') {
 				window.tpdOpenCheckoutModal('plan', planSlug, billingType, prefGateway);
@@ -1614,6 +1654,31 @@
 		$('#tpd-user-password-form').on('submit', function(e) {
 			e.preventDefault();
 			var $form = $(this);
+			var currentPass = $form.find('input[name="current_password"]').val() || '';
+			var newPass = $form.find('input[name="new_password"]').val() || '';
+			var confirmPass = $form.find('input[name="confirm_password"]').val() || '';
+
+			if (!currentPass) {
+				showError('Please enter your current password.');
+				$form.find('input[name="current_password"]').focus();
+				return;
+			}
+			if (newPass.length < 8) {
+				showError('New password must be at least 8 characters long.');
+				$form.find('input[name="new_password"]').focus();
+				return;
+			}
+			if (newPass !== confirmPass) {
+				showError('New passwords do not match.');
+				$form.find('input[name="confirm_password"]').focus();
+				return;
+			}
+			if (newPass === currentPass) {
+				showError('New password must be different from your current password.');
+				$form.find('input[name="new_password"]').focus();
+				return;
+			}
+
 			var $btn = $form.find('button[type="submit"]');
 			var origHtml = $btn.html();
 
@@ -2217,7 +2282,7 @@
 			e.preventDefault();
 			var $btn = $(this);
 			var origHtml = $btn.html();
-			var gateway = $('input[name="tpd_co_gateway"]:checked').val() || 'test';
+			var gateway = $('input[name="tpd_co_gateway"]:checked').val() || ($('#tpd-co-gateways-wrap').is(':visible') ? 'stripe' : 'free');
 			var cleanReturnUrl = $('#tpd_co_return_url').val() || window.location.href.split('#')[0];
 
 			$('#tpd-co-status-msg').hide();
