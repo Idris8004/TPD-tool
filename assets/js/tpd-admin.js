@@ -1027,7 +1027,85 @@
 			$toast.hide().appendTo($stack).fadeIn(160);
 			var close = function() { $toast.fadeOut(220, function() { $(this).remove(); }); };
 			$toast.on('click', close);
-			setTimeout(close, 7000);
+			// 14. GitHub Auto-Updater (Save Token & Check Updates)
+		$(document).on('submit', '#tpd-sa-github-updater-form', function(e) {
+			e.preventDefault();
+			var $form = $(this);
+			var $btn = $form.find('button[type="submit"]');
+			var origHtml = $btn.html();
+			$btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Saving...');
+
+			var payload = $form.serialize() + '&action=tpd_admin_save_github_updater&nonce=' + encodeURIComponent(adminNonce);
+
+			$.ajax({
+				url: ajaxUrl,
+				type: 'POST',
+				data: payload,
+				success: function(res) {
+					$btn.prop('disabled', false).html(origHtml);
+					if (res && res.success) {
+						showAdminToast(res.data.message || 'GitHub token saved!');
+						if (res.data.remote_version) {
+							$('#tpd-updater-remote-status').html('<span style="color:#00798c; font-weight:700;">Remote Version: v' + res.data.remote_version + '</span>');
+						}
+					} else {
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to save token.');
+					}
+				},
+				error: function() {
+					$btn.prop('disabled', false).html(origHtml);
+					showAdminError('Connection error saving GitHub token.');
+				}
+			});
+		});
+
+		$(document).on('click', '#tpd-btn-check-gh-update', function(e) {
+			e.preventDefault();
+			var $btn = $(this);
+			var origHtml = $btn.html();
+			$btn.prop('disabled', true);
+			$('#tpd-gh-check-spinner').show();
+			$('#tpd-gh-check-result').hide();
+
+			$.ajax({
+				url: ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'tpd_admin_check_github_update',
+					nonce: adminNonce
+				},
+				success: function(res) {
+					$btn.prop('disabled', false).html(origHtml);
+					$('#tpd-gh-check-spinner').hide();
+					if (res && res.success && res.data) {
+						var isUpdate = res.data.has_update;
+						var bg = isUpdate ? '#fef2f2' : '#f0fdf4';
+						var border = isUpdate ? '#fecaca' : '#bbf7d0';
+						var color = isUpdate ? '#991b1b' : '#166534';
+						var icon = isUpdate ? 'fa-arrow-up' : 'fa-circle-check';
+
+						var html = '<div style="background:' + bg + '; border:1px solid ' + border + '; color:' + color + '; padding:12px 14px; border-radius:8px;">';
+						html += '<i class="fa-solid ' + icon + '" style="margin-right:8px;"></i><strong>' + res.data.message + '</strong>';
+						if (isUpdate) {
+							html += '<div style="margin-top:8px;"><a href="' + (typeof tpd_data !== 'undefined' && tpd_data.plugins_url ? tpd_data.plugins_url : '/wp-admin/plugins.php') + '" class="tpd-btn tpd-btn-xs" style="background:#b91c1c; color:#fff; text-decoration:none; display:inline-block; padding:6px 12px; border-radius:6px; font-weight:700;">Go to Plugins to Update</a></div>';
+						}
+						html += '</div>';
+
+						$('#tpd-gh-check-result').html(html).fadeIn(150);
+						$('#tpd-updater-remote-status').html('<span style="font-weight:700; color:' + (isUpdate ? '#b91c1c' : '#166534') + ';">Remote: v' + res.data.remote_version + '</span>');
+					} else {
+						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Error checking GitHub updates.');
+					}
+				},
+				error: function() {
+					$btn.prop('disabled', false).html(origHtml);
+					$('#tpd-gh-check-spinner').hide();
+					showAdminError('Connection error checking GitHub updates.');
+				}
+			});
+		});
+
+		setTimeout(close, 7000);
 		}
 		// Shortcode copy buttons in the Super Admin template use these.
 		window.tpdAdminToast = function(m) { showAdminToast($('<span>').text(m).html()); };

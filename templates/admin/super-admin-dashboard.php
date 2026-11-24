@@ -946,6 +946,127 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 						</button>
 					</form>
 				</div>
+
+				<!-- GitHub Auto-Updater & Private Repository Sync Card -->
+				<div class="tpd-sa-card" style="margin-top:24px;">
+					<div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+						<div>
+							<h3 class="tpd-sa-card-title" style="margin:0 0 4px;">
+								<i class="fa-brands fa-github text-blue"></i> <?php esc_html_e( 'GitHub Auto-Updater (TARC-LLC/dashboard)', 'tpd-tool' ); ?>
+							</h3>
+							<p style="font-size:13px; color:#64748b; margin:0;">
+								<?php esc_html_e( 'The plugin checks the private TARC-LLC/dashboard repository for updates and enables native one-click WordPress plugin updates.', 'tpd-tool' ); ?>
+							</p>
+						</div>
+						<div style="display:flex; gap:8px; align-items:center;">
+							<span style="background:#e0f2fe; color:#0369a1; font-size:12px; font-weight:700; padding:5px 12px; border-radius:999px;">
+								<i class="fa-solid fa-code-branch"></i> <?php esc_html_e( 'Branch: main', 'tpd-tool' ); ?>
+							</span>
+							<a href="https://github.com/TARC-LLC/dashboard" target="_blank" class="tpd-btn tpd-btn-xs tpd-btn-outline" style="text-decoration:none;">
+								<i class="fa-brands fa-github"></i> <?php esc_html_e( 'View Repo', 'tpd-tool' ); ?>
+							</a>
+						</div>
+					</div>
+
+					<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; margin-bottom:18px;">
+						<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px;">
+							<span style="font-size:11.5px; color:#64748b; text-transform:uppercase; font-weight:700; display:block; margin-bottom:4px;"><?php esc_html_e( 'Target Repository URL', 'tpd-tool' ); ?></span>
+							<strong style="font-size:13.5px; color:#0f172a; word-break:break-all;">https://github.com/TARC-LLC/dashboard.git</strong>
+							<div style="margin-top:6px; font-size:12px; color:#64748b;">
+								<span>Repository: <code>TARC-LLC/dashboard</code> (Private)</span>
+							</div>
+						</div>
+
+						<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px;">
+							<span style="font-size:11.5px; color:#64748b; text-transform:uppercase; font-weight:700; display:block; margin-bottom:4px;"><?php esc_html_e( 'Installed Version', 'tpd-tool' ); ?></span>
+							<strong style="font-size:18px; color:#00798c;" id="tpd-updater-cur-ver"><?php echo esc_html( TPD_TOOL_VERSION ); ?></strong>
+							<div style="margin-top:6px; font-size:12px; color:#64748b;" id="tpd-updater-remote-status">
+								<?php
+								$cached_ver = get_transient( 'tpd_tool_gh_remote_version' );
+								if ( $cached_ver ) {
+									if ( version_compare( TPD_TOOL_VERSION, $cached_ver, '<' ) ) {
+										echo '<span style="color:#b91c1c; font-weight:700;"><i class="fa-solid fa-arrow-up"></i> Update Available: v' . esc_html( $cached_ver ) . '</span>';
+									} else {
+										echo '<span style="color:#16a34a; font-weight:700;"><i class="fa-solid fa-check"></i> Latest Release Installed (v' . esc_html( $cached_ver ) . ')</span>';
+									}
+								} else {
+									echo '<span>' . esc_html__( 'Click "Check for Updates" to fetch latest remote version.', 'tpd-tool' ) . '</span>';
+								}
+								?>
+							</div>
+						</div>
+					</div>
+
+					<!-- Token Status Banner -->
+					<?php
+					$token_is_constant = ( defined( 'TPD_GITHUB_TOKEN' ) && ! empty( TPD_GITHUB_TOKEN ) ) || ( defined( 'TPD_GH_TOKEN' ) && ! empty( TPD_GH_TOKEN ) );
+					$has_token         = ! empty( TPD_Tool_Updater::get_token() );
+					?>
+
+					<?php if ( $token_is_constant ) : ?>
+						<div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:12px 16px; border-radius:8px; font-size:13px; margin-bottom:16px; display:flex; align-items:center; gap:10px;">
+							<i class="fa-solid fa-circle-check" style="font-size:16px;"></i>
+							<div>
+								<strong><?php esc_html_e( 'Authenticated via wp-config.php constant:', 'tpd-tool' ); ?></strong>
+								<span><?php esc_html_e( 'TPD_GITHUB_TOKEN is active. Automatic update checks and private repository downloads are enabled.', 'tpd-tool' ); ?></span>
+							</div>
+						</div>
+					<?php elseif ( $has_token ) : ?>
+						<div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:12px 16px; border-radius:8px; font-size:13px; margin-bottom:16px; display:flex; align-items:center; gap:10px;">
+							<i class="fa-solid fa-circle-check" style="font-size:16px;"></i>
+							<div>
+								<strong><?php esc_html_e( 'Authenticated via Saved Setting:', 'tpd-tool' ); ?></strong>
+								<span><?php esc_html_e( 'GitHub Personal Access Token is saved in the database. Update checks and private repository downloads are enabled.', 'tpd-tool' ); ?></span>
+							</div>
+						</div>
+					<?php else : ?>
+						<div style="background:#fffbeb; border:1px solid #fde68a; color:#92400e; padding:12px 16px; border-radius:8px; font-size:13px; margin-bottom:16px; display:flex; align-items:center; gap:10px;">
+							<i class="fa-solid fa-triangle-exclamation" style="font-size:16px;"></i>
+							<div>
+								<strong><?php esc_html_e( 'Private Repository Access Token Needed:', 'tpd-tool' ); ?></strong>
+								<span><?php esc_html_e( 'Because TARC-LLC/dashboard is a private repository, a read-only GitHub Personal Access Token (classic: repo or fine-grained: contents:read) is required to check for and install updates.', 'tpd-tool' ); ?></span>
+							</div>
+						</div>
+					<?php endif; ?>
+
+					<form id="tpd-sa-github-updater-form" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:18px;">
+						<div class="tpd-form-group mb-3">
+							<label style="font-weight:700; margin-bottom:6px; display:block;">
+								<?php esc_html_e( 'GitHub Personal Access Token (Read-Only)', 'tpd-tool' ); ?>
+								<?php if ( $token_is_constant ) : ?>
+									<span style="font-weight:400; color:#64748b; font-size:12px;">(<?php esc_html_e( 'Currently loaded from wp-config.php constant', 'tpd-tool' ); ?>)</span>
+								<?php endif; ?>
+							</label>
+							<div style="display:flex; gap:10px; align-items:center;">
+								<input type="password" name="github_token" id="tpd-sa-gh-token-inp" value="<?php echo esc_attr( get_option( 'tpd_github_token', '' ) ); ?>" placeholder="ghp_... or github_pat_..." class="tpd-input" style="flex:1;" <?php echo $token_is_constant ? 'readonly' : ''; ?>>
+								<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline" onclick="var el=document.getElementById('tpd-sa-gh-token-inp'); el.type = el.type==='password' ? 'text' : 'password';" title="<?php esc_attr_e( 'Toggle Token Visibility', 'tpd-tool' ); ?>">
+									<i class="fa-regular fa-eye"></i>
+								</button>
+								<?php if ( ! $token_is_constant ) : ?>
+									<button type="submit" class="tpd-btn tpd-btn-sm tpd-btn-darkblue" style="background:#00798c;">
+										<i class="fa-solid fa-floppy-disk"></i> <?php esc_html_e( 'Save Token', 'tpd-tool' ); ?>
+									</button>
+								<?php endif; ?>
+							</div>
+							<p style="font-size:12px; color:#64748b; margin:6px 0 0;">
+								<?php esc_html_e( 'Tip: You can also define', 'tpd-tool' ); ?> <code>define( 'TPD_GITHUB_TOKEN', 'ghp_...' );</code> <?php esc_html_e( 'in wp-config.php for server-level security.', 'tpd-tool' ); ?>
+							</p>
+						</div>
+
+						<div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:12px;">
+							<button type="button" class="tpd-btn tpd-btn-sm" id="tpd-btn-check-gh-update" style="background:#0b1526; color:#fff; border:none; padding:9px 18px; border-radius:8px; font-weight:700; cursor:pointer;">
+								<i class="fa-solid fa-rotate"></i> <?php esc_html_e( 'Check for GitHub Updates Now', 'tpd-tool' ); ?>
+							</button>
+							<a href="<?php echo esc_url( admin_url( 'plugins.php' ) ); ?>" class="tpd-btn tpd-btn-sm tpd-btn-outline" target="_blank" style="text-decoration:none;">
+								<i class="fa-solid fa-arrow-up-right-from-square"></i> <?php esc_html_e( 'WordPress Plugins Page', 'tpd-tool' ); ?>
+							</a>
+							<span id="tpd-gh-check-spinner" style="display:none; font-size:12.5px; color:#64748b;">
+								<i class="fa-solid fa-spinner fa-spin"></i> <?php esc_html_e( 'Checking TARC-LLC/dashboard on GitHub...', 'tpd-tool' ); ?>
+							</span>
+						</div>
+						<div id="tpd-gh-check-result" style="display:none; margin-top:14px; padding:12px 14px; border-radius:8px; font-size:13px;"></div>
+					</form>
+				</div>
 			</div>
 
 			<!-- =========================================================================

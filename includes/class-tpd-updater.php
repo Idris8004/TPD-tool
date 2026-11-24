@@ -200,7 +200,21 @@ class TPD_Tool_Updater {
 	 */
 	public function attach_github_token_to_download( $args, $url ) {
 		$token = self::get_token();
-		if ( ! empty( $token ) && ( false !== strpos( $url, 'github.com' ) || false !== strpos( $url, 'api.github.com' ) ) && false !== strpos( $url, self::GITHUB_USER . '/' . self::GITHUB_REPO ) ) {
+		if ( empty( $token ) ) {
+			return $args;
+		}
+
+		// When downloading zipball from api.github.com, GitHub sends a 302 redirect
+		// to codeload.github.com or AWS S3. Sending Authorization headers to codeload/S3
+		// results in an AWS S3 "InvalidArgument: Only one auth mechanism allowed" error.
+		if ( false !== strpos( $url, 'codeload.github.com' ) || false !== strpos( $url, 'amazonaws.com' ) ) {
+			if ( isset( $args['headers']['Authorization'] ) ) {
+				unset( $args['headers']['Authorization'] );
+			}
+			return $args;
+		}
+
+		if ( ( false !== strpos( $url, 'github.com' ) || false !== strpos( $url, 'api.github.com' ) ) && false !== strpos( $url, self::GITHUB_USER . '/' . self::GITHUB_REPO ) ) {
 			if ( empty( $args['headers'] ) || ! is_array( $args['headers'] ) ) {
 				$args['headers'] = array();
 			}
@@ -209,6 +223,57 @@ class TPD_Tool_Updater {
 			$args['headers']['Accept']        = 'application/vnd.github.v3+json';
 		}
 		return $args;
+	}
+
+	/**
+	 * AJAX: Save GitHub Token in database option
+	 */
+	public static function ajax_save_github_updater_settings() {
+		check_ajax_referer( 'tpd_admin_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized access.', 'tpd-tool' ) ) );
+		}
+
+		$token = isset( $_POST['github_token'] ) ? sanitize_text_field( wp_unslash( $_POST['github_token'] ) ) : '';
+		update_option( 'tpd_github_token', $token );
+		delete_transient( 'tpd_tool_gh_remote_version' );
+
+		$remote_version = self::get_instance()->get_remote_version( true );
+
+		wp_send_json_success( array(
+			'message'         => __( 'GitHub updater token saved successfully!', 'tpd-tool' ),
+			'remote_version'  => $remote_version ? $remote_version : __( 'Connected, awaiting release tag', 'tpd-tool' ),
+			'has_update'      => $remote_version ? version_compare( TPD_TOOL_VERSION, $remote_version, '<' ) : false,
+			'current_version' => TPD_TOOL_VERSION,
+		) );
+	}
+
+	/**
+	 * AJAX: Force check GitHub update status
+	 */
+	public static function ajax_check_github_update_status() {
+		check_ajax_referer( 'tpd_admin_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized access.', 'tpd-tool' ) ) );
+		}
+
+		delete_transient( 'tpd_tool_gh_remote_version' );
+		delete_site_transient( 'update_plugins' );
+		$remote_version = self::get_instance()->get_remote_version( true );
+		if ( function_exists( 'wp_update_plugins' ) ) {
+			wp_update_plugins();
+		}
+
+		$has_update = $remote_version ? version_compare( TPD_TOOL_VERSION, $remote_version, '<' ) : false;
+
+		wp_send_json_success( array(
+			'current_version' => TPD_TOOL_VERSION,
+			'remote_version'  => $remote_version ?: __( 'Unable to fetch remote version. Verify GitHub token has read access to TARC-LLC/dashboard.', 'tpd-tool' ),
+			'has_update'      => $has_update,
+			'message'         => $has_update
+				? sprintf( __( 'Update available! Version %s is ready on TARC-LLC/dashboard (Current: %s).', 'tpd-tool' ), $remote_version, TPD_TOOL_VERSION )
+				: sprintf( __( 'Up to date! You are running the latest version (%s).', 'tpd-tool' ), TPD_TOOL_VERSION ),
+		) );
 	}
 
 	/**

@@ -36,6 +36,8 @@ class TPD_Tool_Settings {
 		add_action( 'wp_ajax_tpd_admin_save_plan', array( __CLASS__, 'ajax_admin_save_plan' ) );
 		add_action( 'wp_ajax_tpd_admin_delete_plan', array( __CLASS__, 'ajax_admin_delete_plan' ) );
 		add_action( 'wp_ajax_tpd_admin_save_payment_settings', array( __CLASS__, 'ajax_admin_save_payment_settings' ) );
+		add_action( 'wp_ajax_tpd_admin_save_github_updater', array( 'TPD_Tool_Updater', 'ajax_save_github_updater_settings' ) );
+		add_action( 'wp_ajax_tpd_admin_check_github_update', array( 'TPD_Tool_Updater', 'ajax_check_github_update_status' ) );
 
 		// Form Config, Custom Fields, Ads & Content AJAX Handlers
 		add_action( 'wp_ajax_tpd_admin_save_form_config', array( __CLASS__, 'ajax_admin_save_form_config' ) );
