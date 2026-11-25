@@ -91,6 +91,24 @@ class TPD_Tool_Registration {
 	}
 
 	/**
+	 * Log the new member in and return a tpd_nonce valid for that logged-in session.
+	 *
+	 * The nonce on the sign-up page was made for a logged-out visitor, so the checkout
+	 * pop-up that follows registration would be refused with it. A nonce is tied to the
+	 * login cookie, which the browser only sends on the NEXT request, so copy the new
+	 * cookie into this request before creating the nonce.
+	 */
+	private static function log_in_with_fresh_nonce( $user_id ) {
+		$capture = static function ( $logged_in_cookie ) {
+			$_COOKIE[ LOGGED_IN_COOKIE ] = $logged_in_cookie;
+		};
+		add_action( 'set_logged_in_cookie', $capture );
+		wp_set_auth_cookie( $user_id, true, is_ssl() );
+		remove_action( 'set_logged_in_cookie', $capture );
+		return wp_create_nonce( 'tpd_nonce' );
+	}
+
+	/**
 	 * AJAX Handler: Check Email on Step 1 of Registration for Same-Role vs Cross-Role Detection
 	 */
 	public static function ajax_check_registration_email() {
@@ -351,7 +369,15 @@ class TPD_Tool_Registration {
 
 		// Security: All new accounts strictly initialize on the Free (basic) tier at registration time.
 		// Paid tiers require verified checkout and are granted exclusively via TPD_Tool_Financial::fulfill_transaction().
-		$final_tier = TPD_Tool_Tiers::set_user_tier( $user_id, 'basic' );
+		if ( $is_cross_role ) {
+			// Adding a second portal must not touch the plan this member already holds (or its expiry).
+			$final_tier = TPD_Tool_Tiers::get_user_tier( $user_id );
+			if ( $tier === $final_tier ) {
+				$is_paid_plan = false; // Already on the requested plan: nothing to pay.
+			}
+		} else {
+			$final_tier = TPD_Tool_Tiers::set_user_tier( $user_id, 'basic' );
+		}
 
 		// 4. Create Paired CPT Record (travel_advisor)
 		$post_id = wp_insert_post( array(
@@ -393,7 +419,7 @@ class TPD_Tool_Registration {
 
 		// 5. Automatically Authenticate the User
 		wp_set_current_user( $user_id );
-		wp_set_auth_cookie( $user_id, true, is_ssl() );
+		$fresh_nonce = self::log_in_with_fresh_nonce( $user_id );
 
 		// 6. Send Welcome Email
 		$subject = __( 'Welcome to Travel Partner Directory by TARC!', 'tpd-tool' );
@@ -410,6 +436,7 @@ class TPD_Tool_Registration {
 				'message'          => __( 'Account created! Please confirm payment to activate your selected membership tier.', 'tpd-tool' ),
 				'redirect_url'     => home_url( '/advisor-dashboard/' ),
 				'requires_payment' => true,
+				'nonce'            => $fresh_nonce,
 				'payment_item'     => array(
 					'item_type'     => 'plan',
 					'item_id'       => $tier,
@@ -585,7 +612,15 @@ class TPD_Tool_Registration {
 
 		// Security: All new supplier accounts strictly initialize on the Free (basic) tier at registration time.
 		// Paid tiers require verified checkout and are granted exclusively via TPD_Tool_Financial::fulfill_transaction().
-		$final_tier = TPD_Tool_Tiers::set_user_tier( $user_id, 'basic' );
+		if ( $is_cross_role ) {
+			// Adding a second portal must not touch the plan this member already holds (or its expiry).
+			$final_tier = TPD_Tool_Tiers::get_user_tier( $user_id );
+			if ( $tier === $final_tier ) {
+				$is_paid_plan = false; // Already on the requested plan: nothing to pay.
+			}
+		} else {
+			$final_tier = TPD_Tool_Tiers::set_user_tier( $user_id, 'basic' );
+		}
 
 		// Create Paired supplier_listing CPT Post so Supplier Dashboard & WP Admin are 100% connected
 		$listing_id = wp_insert_post( array(
@@ -623,13 +658,14 @@ class TPD_Tool_Registration {
 
 		// Authenticate User
 		wp_set_current_user( $user_id );
-		wp_set_auth_cookie( $user_id, true, is_ssl() );
+		$fresh_nonce = self::log_in_with_fresh_nonce( $user_id );
 
 		if ( $is_paid_plan ) {
 			wp_send_json_success( array(
 				'message'          => __( 'Supplier account created! Please complete payment to activate your selected partner plan.', 'tpd-tool' ),
 				'redirect_url'     => home_url( '/supplier-dashboard/' ),
 				'requires_payment' => true,
+				'nonce'            => $fresh_nonce,
 				'payment_item'     => array(
 					'item_type'     => 'plan',
 					'item_id'       => $tier,

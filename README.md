@@ -112,11 +112,11 @@ wp-content/plugins/tpd-tool/
    ```bash
    wp plugin activate tpd-tool
    ```
-3. To seed demo entities matching the design mockups (Steven Gould, Sarah Mitchell – AmaWaterways, Four Seasons, Viking, Abercrombie & Kent, Webinars), run:
+3. **Local/staging only:** to seed demo entities matching the design mockups (Steven Gould, Sarah Mitchell – AmaWaterways, Four Seasons, Viking, Abercrombie & Kent, Webinars), run:
    ```bash
-   wp tpd-tool-seed
+   wp tpd-tool-seed --demo
    ```
-   *(Or deactivate and re-activate the plugin once).*
+   *(Never on the live site. Demo accounts get random passwords; set one with `wp user update <login> --user_pass=...` if you need to log in as them.)*
 
 ---
 

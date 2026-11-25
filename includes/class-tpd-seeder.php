@@ -20,11 +20,27 @@ class TPD_Tool_Seeder {
 		}
 	}
 
-	public static function cli_seed() {
+	public static function cli_seed( $args = array(), $assoc_args = array() ) {
+		if ( empty( $assoc_args['demo'] ) ) {
+			WP_CLI::error( 'This creates DEMO users, listings and events. Never run it on the live site. To continue anyway: wp tpd-tool-seed --demo' );
+		}
 		self::seed_all();
 		WP_CLI::success( 'TPD Tool seeded with Inspiration Designs data (Steven Gould, AmaWaterways, Events & Portals)!' );
 	}
 
+	/**
+	 * What a real site needs on activation: taxonomy terms and the portal pages.
+	 * No demo users, listings or events (those come only from `wp tpd-tool-seed`).
+	 */
+	public static function seed_essentials() {
+		self::seed_taxonomies();
+		self::ensure_pages();
+	}
+
+	/**
+	 * Full DEMO data set (users, listings, events). Development/staging only:
+	 * run it with `wp tpd-tool-seed`, never on a live site.
+	 */
 	public static function seed_all() {
 		// 1. Seed Taxonomies
 		self::seed_taxonomies();
@@ -72,43 +88,39 @@ class TPD_Tool_Seeder {
 		$users_data = array(
 			// 1. Steven Gould (Design Inspiration 1 Advisor)
 			'steven.gould' => array(
-				'email'        => 'steven@gouldtravel.com',
+				'email'        => 'steven.gould@example.com',
 				'display_name' => 'Steven Gould',
 				'first_name'   => 'Steven',
 				'last_name'    => 'Gould',
 				'role'         => 'travel_advisor',
 				'tier'         => 'paid', // Pro Tier
-				'password'     => 'AdvisorPass123!',
 			),
 			// 2. Sarah Jenkins (Free Tier Advisor for comparison)
 			'sarah.jenkins' => array(
-				'email'        => 'sarah@luxetravelpros.com',
+				'email'        => 'sarah.jenkins@example.com',
 				'display_name' => 'Sarah Jenkins, VTA',
 				'first_name'   => 'Sarah',
 				'last_name'    => 'Jenkins',
 				'role'         => 'travel_advisor',
 				'tier'         => 'free', // Free Tier to test upgrade card!
-				'password'     => 'AdvisorPass123!',
 			),
 			// 3. Sarah Mitchell (Design Inspiration 2 Supplier - AmaWaterways)
 			'sarah.mitchell' => array(
-				'email'        => 'smitchell@amawaterways.com',
+				'email'        => 'sarah.mitchell@example.com',
 				'display_name' => 'Sarah Mitchell',
 				'first_name'   => 'Sarah',
 				'last_name'    => 'Mitchell',
 				'role'         => 'supplier',
 				'tier'         => 'paid', // Pro Supplier
-				'password'     => 'SupplierPass123!',
 			),
 			// 4. David Chen (Free Tier Supplier)
 			'david.chen' => array(
-				'email'        => 'tradesales@railbookers.com',
+				'email'        => 'david.chen@example.com',
 				'display_name' => 'David Chen',
 				'first_name'   => 'David',
 				'last_name'    => 'Chen',
 				'role'         => 'supplier',
 				'tier'         => 'free', // Free Supplier
-				'password'     => 'SupplierPass123!',
 			),
 		);
 
@@ -117,7 +129,8 @@ class TPD_Tool_Seeder {
 		foreach ( $users_data as $login => $u ) {
 			$user = get_user_by( 'login', $login );
 			if ( ! $user ) {
-				$uid = wp_create_user( $login, $u['password'], $u['email'] );
+				// Random password: demo accounts must never have a login that is written in the code.
+				$uid = wp_create_user( $login, wp_generate_password( 24, true, true ), $u['email'] );
 				if ( ! is_wp_error( $uid ) ) {
 					wp_update_user( array(
 						'ID'           => $uid,
@@ -130,7 +143,7 @@ class TPD_Tool_Seeder {
 					$created[ $login ] = $uid;
 				}
 			} else {
-				update_user_meta( $user->ID, 'tpd_user_tier', $u['tier'] );
+				// Existing account: leave its plan alone.
 				$created[ $login ] = $user->ID;
 			}
 		}
@@ -372,7 +385,7 @@ class TPD_Tool_Seeder {
 		}
 	}
 
-	private static function ensure_pages() {
+	public static function ensure_pages() {
 		$pages = array(
 			'advisor-dashboard' => array(
 				'title'   => 'Advisor Portal',

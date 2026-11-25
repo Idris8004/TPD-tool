@@ -293,7 +293,8 @@ class TPD_Tool_Core {
 		if ( class_exists( 'TPD_Tool_Resources' ) ) {
 			TPD_Tool_Resources::ensure_defaults();
 		}
-		TPD_Tool_Seeder::seed_all();
+		// Only real essentials here. Demo accounts used to be created on every activation (T11).
+		TPD_Tool_Seeder::seed_essentials();
 		flush_rewrite_rules();
 	}
 

@@ -127,9 +127,9 @@ class TPD_Tool_Settings {
 				'currency'               => 'USD',
 				'currency_symbol'        => '$',
 				'stripe_enabled'         => 1,
-				'stripe_publishable_key' => 'pk_test_tpd_51N9xSampleKey',
+				'stripe_publishable_key' => '',
 				'stripe_secret_key'      => '',
-				'paypal_enabled'         => 1,
+				'paypal_enabled'         => 0, // Off until PayPal keys and a Webhook ID are entered.
 				'paypal_client_id'       => '',
 				'paypal_secret'          => '',
 				'offline_enabled'        => 1,
@@ -299,25 +299,8 @@ class TPD_Tool_Settings {
 		$subs = get_option( self::OPT_SUBSCRIPTIONS );
 		if ( false === $subs ) {
 			$subs = array();
-			// Populate from existing advisor users if any exist
-			$advs = get_users( array( 'role' => 'travel_advisor', 'number' => 10, 'orderby' => 'registered', 'order' => 'DESC' ) );
-			foreach ( $advs as $u ) {
-				$t = TPD_Tool_Tiers::get_user_tier( $u->ID );
-				$p = isset( $plans[ $t ] ) ? $plans[ $t ] : $plans['basic'];
-				$reg_ts = strtotime( $u->user_registered );
-				$subs[] = array(
-					'id'           => uniqid( 'sub_' ),
-					'user_id'      => $u->ID,
-					'user_name'    => $u->display_name,
-					'plan_slug'    => $t,
-					'plan_name'    => $p['name'],
-					'billing_type' => 'Month',
-					'amount'       => '$' . number_format( (float) $p['monthly_price'], 2 ),
-					'date'         => gmdate( 'Y-m-d', $reg_ts ),
-					'expiry'       => gmdate( 'Y-m-d', strtotime( '+1 month', $reg_ts ) ),
-					'gateway'      => ( $p['monthly_price'] > 0 ) ? 'Stripe' : 'Free',
-				);
-			}
+			// Start empty. Real entries are added by record_subscription() when someone actually pays.
+			// (This used to invent "Stripe" entries for existing users that never paid - T11.)
 			update_option( self::OPT_SUBSCRIPTIONS, $subs );
 		}
 

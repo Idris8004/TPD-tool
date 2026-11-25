@@ -753,6 +753,11 @@ class TPD_Tool_Financial {
 			if ( empty( $json['payment_status'] ) || 'paid' !== $json['payment_status'] ) {
 				wp_send_json_error( array( 'message' => __( 'Payment has not completed yet.', 'tpd-tool' ) ) );
 			}
+			// The session id comes from the browser: make sure this paid session is for THIS order.
+			$session_ref = $json['metadata']['tx_ref'] ?? ( $json['client_reference_id'] ?? '' );
+			if ( ! self::gateway_payment_matches( $tx, $session_ref, $json['amount_total'] ?? -1, $json['currency'] ?? '' ) ) {
+				wp_send_json_error( array( 'message' => __( 'This payment does not match your order.', 'tpd-tool' ) ) );
+			}
 
 			$wpdb->update(
 				self::table_name(),
@@ -803,6 +808,13 @@ class TPD_Tool_Financial {
 			if ( empty( $json['status'] ) || 'COMPLETED' !== $json['status'] ) {
 				wp_send_json_error( array( 'message' => $json['message'] ?? __( 'PayPal capture did not complete.', 'tpd-tool' ) ) );
 			}
+			// The order id comes from the browser: make sure this captured order is for THIS order.
+			$pu      = $json['purchase_units'][0] ?? array();
+			$capture = $pu['payments']['captures'][0] ?? array();
+			$pp_ref  = $pu['reference_id'] ?? ( $capture['custom_id'] ?? '' );
+			if ( ! self::gateway_payment_matches( $tx, $pp_ref, self::paypal_amount_minor( $capture['amount']['value'] ?? -1 ), $capture['amount']['currency_code'] ?? '' ) ) {
+				wp_send_json_error( array( 'message' => __( 'This payment does not match your order.', 'tpd-tool' ) ) );
+			}
 
 			$wpdb->update(
 				self::table_name(),
@@ -834,6 +846,27 @@ class TPD_Tool_Financial {
 	}
 
 	/**
+	 * True when a gateway-reported payment belongs to this transaction: same
+	 * reference, same currency, and the full amount (in minor units, e.g. cents).
+	 */
+	private static function gateway_payment_matches( $tx, $ref, $amount_minor, $currency ) {
+		if ( ! $tx || '' === (string) $ref || ! hash_equals( (string) $tx->tx_ref, (string) $ref ) ) {
+			return false;
+		}
+		if ( strtoupper( (string) $currency ) !== strtoupper( (string) $tx->currency ) ) {
+			return false;
+		}
+		return (int) $amount_minor === (int) round( (float) $tx->amount * 100 );
+	}
+
+	/**
+	 * PayPal reports money as a decimal string ("49.00"); convert to minor units.
+	 */
+	private static function paypal_amount_minor( $value ) {
+		return (int) round( (float) $value * 100 );
+	}
+
+	/**
 	 * Register Stripe Webhook endpoint (/wp-json/tpd/v1/stripe-webhook).
 	 */
 	public static function register_rest_routes() {
@@ -859,26 +892,29 @@ class TPD_Tool_Financial {
 		$secret   = ! empty( $payments['stripe_webhook_secret'] ) ? trim( (string) $payments['stripe_webhook_secret'] ) : '';
 		$raw_body = $request->get_body();
 
-		if ( '' !== $secret ) {
-			$sig_header = (string) $request->get_header( 'stripe-signature' );
-			$parts      = array();
-			foreach ( explode( ',', $sig_header ) as $kv ) {
-				$pair = explode( '=', trim( $kv ), 2 );
-				if ( 2 === count( $pair ) ) {
-					$parts[ $pair[0] ] = $pair[1];
-				}
+		// Without a signing secret anyone could post a fake "paid" event, so refuse.
+		if ( '' === $secret ) {
+			return new WP_REST_Response( array( 'error' => 'Stripe webhook signing secret is not configured.' ), 403 );
+		}
+
+		$sig_header = (string) $request->get_header( 'stripe-signature' );
+		$parts      = array();
+		foreach ( explode( ',', $sig_header ) as $kv ) {
+			$pair = explode( '=', trim( $kv ), 2 );
+			if ( 2 === count( $pair ) ) {
+				$parts[ $pair[0] ] = $pair[1];
 			}
-			if ( empty( $parts['t'] ) || empty( $parts['v1'] ) ) {
-				return new WP_REST_Response( array( 'error' => 'Invalid Stripe signature header.' ), 403 );
-			}
-			if ( abs( time() - (int) $parts['t'] ) > 300 ) {
-				return new WP_REST_Response( array( 'error' => 'Timestamp outside tolerance.' ), 403 );
-			}
-			$signed_payload = $parts['t'] . '.' . $raw_body;
-			$expected       = hash_hmac( 'sha256', $signed_payload, $secret );
-			if ( ! hash_equals( $expected, $parts['v1'] ) ) {
-				return new WP_REST_Response( array( 'error' => 'Signature mismatch.' ), 403 );
-			}
+		}
+		if ( empty( $parts['t'] ) || empty( $parts['v1'] ) ) {
+			return new WP_REST_Response( array( 'error' => 'Invalid Stripe signature header.' ), 403 );
+		}
+		if ( abs( time() - (int) $parts['t'] ) > 300 ) {
+			return new WP_REST_Response( array( 'error' => 'Timestamp outside tolerance.' ), 403 );
+		}
+		$signed_payload = $parts['t'] . '.' . $raw_body;
+		$expected       = hash_hmac( 'sha256', $signed_payload, $secret );
+		if ( ! hash_equals( $expected, $parts['v1'] ) ) {
+			return new WP_REST_Response( array( 'error' => 'Signature mismatch.' ), 403 );
 		}
 
 		$event = json_decode( $raw_body, true );
@@ -889,8 +925,11 @@ class TPD_Tool_Financial {
 		if ( 'checkout.session.completed' === $event['type'] ) {
 			$session = $event['data']['object'] ?? array();
 			$tx_ref  = $session['metadata']['tx_ref'] ?? ( $session['client_reference_id'] ?? '' );
-			if ( $tx_ref ) {
+			if ( $tx_ref && 'paid' === ( $session['payment_status'] ?? '' ) ) {
 				$tx = self::get_tx_by_ref( sanitize_text_field( $tx_ref ) );
+				if ( $tx && ( 'stripe' !== $tx->gateway || ! self::gateway_payment_matches( $tx, $tx_ref, $session['amount_total'] ?? -1, $session['currency'] ?? '' ) ) ) {
+					$tx = null; // Not a Stripe order, or not paid in full: ignore.
+				}
 				if ( $tx && 'paid' !== $tx->status ) {
 					$wpdb->update(
 						self::table_name(),
@@ -920,8 +959,8 @@ class TPD_Tool_Financial {
 	private static function verify_paypal_webhook( WP_REST_Request $request, $payments ) {
 		$webhook_id = ! empty( $payments['paypal_webhook_id'] ) ? trim( (string) $payments['paypal_webhook_id'] ) : ( ! empty( $payments['paypal_webhook_secret'] ) ? trim( (string) $payments['paypal_webhook_secret'] ) : '' );
 		if ( empty( $webhook_id ) ) {
-			// If not configured, allow processing (e.g. sandbox/local testing)
-			return true;
+			// Not configured: nothing can be verified, so nothing is trusted.
+			return false;
 		}
 
 		$auth_algo         = (string) $request->get_header( 'paypal-auth-algo' );
@@ -929,12 +968,6 @@ class TPD_Tool_Financial {
 		$transmission_id   = (string) $request->get_header( 'paypal-transmission-id' );
 		$transmission_sig  = (string) $request->get_header( 'paypal-transmission-sig' );
 		$transmission_time = (string) $request->get_header( 'paypal-transmission-time' );
-
-		// Test/HMAC simulation support
-		$test_sig = (string) $request->get_header( 'x-paypal-test-signature' );
-		if ( ! empty( $test_sig ) && hash_equals( $webhook_id, $test_sig ) ) {
-			return true;
-		}
 
 		if ( empty( $transmission_id ) || empty( $transmission_sig ) ) {
 			return false;
@@ -977,7 +1010,10 @@ class TPD_Tool_Financial {
 	}
 
 	/**
-	 * Process PayPal PAYMENT.CAPTURE.COMPLETED & CHECKOUT.ORDER.APPROVED webhooks.
+	 * Process verified PayPal PAYMENT.CAPTURE.COMPLETED webhooks.
+	 *
+	 * Only a completed capture means money moved. CHECKOUT.ORDER.APPROVED only means
+	 * the buyer clicked "approve", so it is ignored (the return page captures it).
 	 */
 	public static function handle_paypal_webhook( WP_REST_Request $request ) {
 		global $wpdb;
@@ -993,53 +1029,42 @@ class TPD_Tool_Financial {
 			return new WP_REST_Response( array( 'error' => 'Invalid payload.' ), 400 );
 		}
 
-		$event_type = $event['event_type'];
-		$resource   = $event['resource'] ?? array();
+		$resource = $event['resource'] ?? array();
 
-		if ( in_array( $event_type, array( 'PAYMENT.CAPTURE.COMPLETED', 'CHECKOUT.ORDER.APPROVED' ), true ) ) {
-			$tx_ref = '';
-			if ( ! empty( $resource['custom_id'] ) ) {
-				$tx_ref = $resource['custom_id'];
-			} elseif ( ! empty( $resource['invoice_id'] ) ) {
-				$tx_ref = $resource['invoice_id'];
-			} elseif ( ! empty( $resource['purchase_units'][0]['custom_id'] ) ) {
-				$tx_ref = $resource['purchase_units'][0]['custom_id'];
-			} elseif ( ! empty( $resource['purchase_units'][0]['reference_id'] ) ) {
-				$tx_ref = $resource['purchase_units'][0]['reference_id'];
-			}
-
+		if ( 'PAYMENT.CAPTURE.COMPLETED' === $event['event_type'] && 'COMPLETED' === ( $resource['status'] ?? '' ) ) {
 			$tx = null;
-			if ( $tx_ref ) {
-				$tx = self::get_tx_by_ref( sanitize_text_field( $tx_ref ) );
+			if ( ! empty( $resource['custom_id'] ) ) {
+				$tx = self::get_tx_by_ref( sanitize_text_field( $resource['custom_id'] ) );
 			}
-
 			if ( ! $tx ) {
-				$order_id = $resource['supplementary_data']['related_ids']['order_id'] ?? ( $resource['id'] ?? '' );
+				$order_id = $resource['supplementary_data']['related_ids']['order_id'] ?? '';
 				if ( $order_id ) {
 					$table = self::table_name();
-					$tx    = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE gateway_ref = %s", sanitize_text_field( $order_id ) ) );
+					$tx    = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE gateway = 'paypal' AND gateway_ref = %s", sanitize_text_field( $order_id ) ) );
 				}
 			}
 
-			if ( $tx ) {
-				if ( 'paid' !== $tx->status ) {
-					$capture_id = $resource['id'] ?? $tx->gateway_ref;
-					$wpdb->update(
-						self::table_name(),
-						array(
-							'status'      => 'paid',
-							'gateway_ref' => sanitize_text_field( (string) $capture_id ),
-							'paid_at'     => current_time( 'mysql' ),
-						),
-						array( 'id' => (int) $tx->id ),
-						array( '%s', '%s', '%s' ),
-						array( '%d' )
-					);
-					self::fulfill_transaction( self::get_tx_by_id( $tx->id ) );
-				} elseif ( 'paid' === $tx->status ) {
-					// Idempotent fulfill call on webhook replay
-					self::fulfill_transaction( $tx );
-				}
+			$amount = $resource['amount'] ?? array();
+			if ( $tx && ( 'paypal' !== $tx->gateway || ! self::gateway_payment_matches( $tx, $tx->tx_ref, self::paypal_amount_minor( $amount['value'] ?? -1 ), $amount['currency_code'] ?? '' ) ) ) {
+				$tx = null; // Not a PayPal order, or not paid in full: ignore.
+			}
+
+			if ( $tx && 'paid' !== $tx->status ) {
+				$wpdb->update(
+					self::table_name(),
+					array(
+						'status'      => 'paid',
+						'gateway_ref' => sanitize_text_field( (string) ( $resource['id'] ?? $tx->gateway_ref ) ),
+						'paid_at'     => current_time( 'mysql' ),
+					),
+					array( 'id' => (int) $tx->id ),
+					array( '%s', '%s', '%s' ),
+					array( '%d' )
+				);
+				self::fulfill_transaction( self::get_tx_by_id( $tx->id ) );
+			} elseif ( $tx ) {
+				// Idempotent fulfill call on webhook replay
+				self::fulfill_transaction( $tx );
 			}
 		}
 
