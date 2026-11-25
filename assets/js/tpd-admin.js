@@ -1027,7 +1027,10 @@
 			$toast.hide().appendTo($stack).fadeIn(160);
 			var close = function() { $toast.fadeOut(220, function() { $(this).remove(); }); };
 			$toast.on('click', close);
-			// 14. GitHub Auto-Updater (Save Token & Check Updates)
+			setTimeout(close, 7000);
+		}
+
+		// 14. GitHub Auto-Updater (Save Token & Check Updates)
 		$(document).on('submit', '#tpd-sa-github-updater-form', function(e) {
 			e.preventDefault();
 			var $form = $(this);
@@ -1104,9 +1107,6 @@
 				}
 			});
 		});
-
-		setTimeout(close, 7000);
-		}
 		// Shortcode copy buttons in the Super Admin template use these.
 		window.tpdAdminToast = function(m) { showAdminToast($('<span>').text(m).html()); };
 

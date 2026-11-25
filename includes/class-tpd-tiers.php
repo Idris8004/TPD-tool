@@ -266,7 +266,7 @@ class TPD_Tool_Tiers {
 			if ( ! empty( $expires_meta ) ) {
 				$expires_ts = is_numeric( $expires_meta ) ? (int) $expires_meta : strtotime( $expires_meta . ' 23:59:59 UTC' );
 				if ( $expires_ts && time() > $expires_ts ) {
-					self::set_user_tier( $user_id, 'basic' );
+					self::expire_plan( $user_id, $tier, $expires_meta, $expires_ts );
 					return 'basic';
 				}
 			}
@@ -570,6 +570,34 @@ class TPD_Tool_Tiers {
 	}
 
 	/**
+	 * Move an expired member to Basic and email them once. Called from the daily cron
+	 * AND from get_user_tier() on page load, whichever notices the expiry first.
+	 */
+	private static function expire_plan( $user_id, $old_tier, $expires_meta, $expires_ts ) {
+		$user = get_userdata( $user_id );
+		self::set_user_tier( $user_id, 'basic' );
+		if ( ! $user || empty( $user->user_email ) ) {
+			return;
+		}
+
+		$is_supplier = in_array( 'supplier', (array) $user->roles, true );
+		$portal_url  = $is_supplier ? home_url( '/supplier-dashboard/' ) : home_url( '/advisor-dashboard/' );
+		$plan_info   = class_exists( 'TPD_Tool_Settings' ) ? TPD_Tool_Settings::get_plan( $old_tier ) : array();
+		$plan_name   = $plan_info['name'] ?? ucfirst( $old_tier );
+		$user_name   = ! empty( $user->display_name ) ? $user->display_name : 'Member';
+
+		$subject = sprintf( __( 'Your Travel Partner Directory %s Membership Has Expired', 'tpd-tool' ), $plan_name );
+		$message = sprintf(
+			"Dear %s,\n\nYour Travel Partner Directory %s membership expired on %s.\nYour account has been moved to the Basic plan.\n\nTo restore your full access to premium tools, listings, and features, you can renew or upgrade your membership anytime here:\n%s\n\nThank you,\nTravel Partner Directory Team",
+			$user_name,
+			$plan_name,
+			gmdate( 'F j, Y', $expires_ts ),
+			$portal_url
+		);
+		wp_mail( $user->user_email, $subject, $message, array( 'Content-Type: text/plain; charset=UTF-8' ) );
+	}
+
+	/**
 	 * Daily WP-Cron: Check Plan Expirations and Send Renewal Notices
 	 */
 	public static function cron_check_plan_expirations() {
@@ -627,22 +655,7 @@ class TPD_Tool_Tiers {
 
 			// 1. Plan has expired -> demote to basic and send expiration notice
 			if ( $now > $expires_ts ) {
-				self::set_user_tier( $user_id, 'basic' );
-
-				$notice_sent = get_user_meta( $user_id, 'tpd_plan_expired_notice_sent', true );
-				if ( $notice_sent !== $expires_meta ) {
-					update_user_meta( $user_id, 'tpd_plan_expired_notice_sent', $expires_meta );
-
-					$subject = sprintf( __( 'Your Travel Partner Directory %s Membership Has Expired', 'tpd-tool' ), $plan_name );
-					$message = sprintf(
-						"Dear %s,\n\nYour Travel Partner Directory %s membership expired on %s.\nYour account has been moved to the Basic plan.\n\nTo restore your full access to premium tools, listings, and features, you can renew or upgrade your membership anytime here:\n%s\n\nThank you,\nTravel Partner Directory Team",
-						$user_name,
-						$plan_name,
-						$formatted_expiry,
-						$portal_url
-					);
-					wp_mail( $user->user_email, $subject, $message, array( 'Content-Type: text/plain; charset=UTF-8' ) );
-				}
+				self::expire_plan( $user_id, $current_tier, $expires_meta, $expires_ts );
 				continue;
 			}
 

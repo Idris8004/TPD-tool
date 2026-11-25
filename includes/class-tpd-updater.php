@@ -48,7 +48,6 @@ class TPD_Tool_Updater {
 		add_filter( 'plugins_api', array( $this, 'plugin_Popup_info' ), 20, 3 );
 		add_filter( 'upgrader_source_selection', array( $this, 'fix_github_folder_name' ), 10, 4 );
 		add_filter( 'http_request_args', array( $this, 'attach_github_token_to_download' ), 10, 2 );
-		add_filter( 'auto_update_plugin', array( $this, 'enable_auto_update' ), 10, 2 );
 		add_filter( 'plugin_action_links_' . $this->plugin_basename, array( $this, 'add_plugin_action_links' ) );
 		add_action( 'admin_init', array( $this, 'handle_manual_update_check' ) );
 	}
@@ -294,16 +293,6 @@ class TPD_Tool_Updater {
 		}
 
 		return $source;
-	}
-
-	/**
-	 * Enable automatic background updates for TPD Tool
-	 */
-	public function enable_auto_update( $update, $item ) {
-		if ( isset( $item->slug ) && $item->slug === $this->plugin_slug ) {
-			return true;
-		}
-		return $update;
 	}
 
 	/**

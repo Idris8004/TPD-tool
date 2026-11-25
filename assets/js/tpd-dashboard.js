@@ -561,6 +561,12 @@
 				data: $form.serialize(),
 				success: function(res) {
 					if (res.success) {
+						// Registration logged the user in, so the page's old (logged-out) nonce is now invalid.
+						if (res.data && res.data.nonce) {
+							if (typeof tpd_data !== 'undefined') { tpd_data.nonce = res.data.nonce; }
+							$('input[name="nonce"]').val(res.data.nonce);
+						}
+
 						if (res.data && res.data.requires_payment && res.data.payment_item) {
 							$status.addClass('success')
 								.html('<i class="fa-solid fa-circle-check"></i> ' + (res.data.message || 'Account created! Opening payment checkout...'))

@@ -520,23 +520,25 @@ class TPD_Tool_Chat {
 		$sender_id     = get_current_user_id();
 		$supplier_id   = isset( $_POST['supplier_id'] ) ? absint( $_POST['supplier_id'] ) : 0;
 		$recipient_id  = isset( $_POST['recipient_id'] ) ? absint( $_POST['recipient_id'] ) : 0;
-		$supplier_name = isset( $_POST['supplier_name'] ) ? sanitize_text_field( wp_unslash( $_POST['supplier_name'] ) ) : '';
+		$supplier_name = '';
 
-		if ( ! $recipient_id && $supplier_id ) {
+		// Who receives the request and the name in it come from the listing, not from the browser.
+		$sp = $supplier_id ? get_post( $supplier_id ) : null;
+		if ( $sp && 'supplier_listing' === $sp->post_type ) {
 			$recipient_id = (int) get_post_meta( $supplier_id, 'tpd_assigned_user', true );
 			if ( ! $recipient_id ) {
-				$sp = get_post( $supplier_id );
-				$recipient_id = $sp ? (int) $sp->post_author : 0;
+				$recipient_id = (int) $sp->post_author;
 			}
+			$supplier_name = $sp->post_title;
+		} elseif ( $recipient_id && TPD_Tool_Roles::is_supplier( $recipient_id ) ) {
+			// No listing given: only a real supplier account may be the recipient.
+			$supplier_name = get_the_author_meta( 'display_name', $recipient_id );
+		} else {
+			$recipient_id = 0;
 		}
 
 		if ( ! $recipient_id ) {
 			wp_send_json_error( array( 'message' => __( 'Unable to determine supplier representative.', 'tpd-tool' ) ) );
-		}
-
-		if ( empty( $supplier_name ) && $supplier_id ) {
-			$sp = get_post( $supplier_id );
-			$supplier_name = $sp ? $sp->post_title : 'Supplier';
 		}
 
 		$sender       = wp_get_current_user();
