@@ -57,17 +57,18 @@ class TPD_Tool_Core {
 			wp_enqueue_media();
 		}
 
+		$is_admin_user    = TPD_Tool_Roles::is_admin( $current_uid );
 		$localize_payload = array(
 			'ajax_url'    => admin_url( 'admin-ajax.php' ),
 			'nonce'       => wp_create_nonce( 'tpd_nonce' ),
 			'chat_nonce'  => wp_create_nonce( 'tpd_chat_nonce' ),
-			'admin_nonce' => wp_create_nonce( 'tpd_admin_nonce' ),
+			'admin_nonce' => $is_admin_user ? wp_create_nonce( 'tpd_admin_nonce' ) : '',
 			'site_url'    => home_url(),
 			'user_id'     => $current_uid,
 			'user_tier'   => tpd_get_user_tier( $current_uid ),
 			'is_advisor'  => TPD_Tool_Roles::is_advisor( $current_uid ),
 			'is_supplier' => TPD_Tool_Roles::is_supplier( $current_uid ),
-			'is_admin'    => TPD_Tool_Roles::is_admin( $current_uid ),
+			'is_admin'    => $is_admin_user,
 		);
 
 		wp_localize_script( 'tpd-dashboard-js', 'tpd_data', $localize_payload );

@@ -55,6 +55,9 @@ if ( ! $target_user_id ) {
 }
 
 $target_user = $target_user_id ? get_userdata( $target_user_id ) : null;
+if ( $target_user && ( ! TPD_Tool_Roles::is_supplier( $target_user_id ) || ! TPD_Tool_Roles::is_account_active( $target_user_id ) ) ) {
+	$target_user = null;
+}
 
 if ( ! $target_user ) :
 ?>

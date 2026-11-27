@@ -17,15 +17,84 @@ class TPD_Tool_Seeder {
 	public static function init() {
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::add_command( 'tpd-tool-seed', array( __CLASS__, 'cli_seed' ) );
+			WP_CLI::add_command( 'tpd-tool-audit-demo', array( __CLASS__, 'cli_audit_demo' ) );
 		}
 	}
 
-	public static function cli_seed( $args = array(), $assoc_args = array() ) {
-		if ( empty( $assoc_args['demo'] ) ) {
-			WP_CLI::error( 'This creates DEMO users, listings and events. Never run it on the live site. To continue anyway: wp tpd-tool-seed --demo' );
+	/**
+	 * True whenever the site is running in production (explicitly or by WordPress default).
+	 */
+	public static function is_production_environment() {
+		if ( function_exists( 'wp_get_environment_type' ) && 'production' === wp_get_environment_type() ) {
+			return true;
 		}
-		self::seed_all();
+		if ( defined( 'WP_ENV' ) && 'production' === WP_ENV ) {
+			return true;
+		}
+		return false;
+	}
+
+	public static function cli_seed( $args = array(), $assoc_args = array() ) {
+		if ( self::is_production_environment() ) {
+			WP_CLI::error( 'Refused: Demo seeder cannot run on production environments (wp_get_environment_type() === "production").' );
+		}
+		if ( empty( $assoc_args['demo'] ) ) {
+			WP_CLI::error( 'This creates DEMO users, listings and events. Never run it on the live site. To continue on local/staging: wp tpd-tool-seed --demo' );
+		}
+		$res = self::seed_all();
+		if ( is_wp_error( $res ) ) {
+			WP_CLI::error( $res->get_error_message() );
+		}
 		WP_CLI::success( 'TPD Tool seeded with Inspiration Designs data (Steven Gould, AmaWaterways, Events & Portals)!' );
+	}
+
+	/**
+	 * Read-only audit: check whether any seeded demo users, listings, or events exist in the database.
+	 */
+	public static function find_demo_records() {
+		$demo_logins   = array( 'steven.gould', 'sarah.jenkins', 'sarah.mitchell', 'david.chen' );
+		$demo_listings = array( 'amawaterways', 'four-seasons-hotels-resorts', 'abercrombie-kent', 'viking-cruises', 'sandals-resorts' );
+		$demo_events   = array(
+			'amawaterways-european-river-cruise-masterclass',
+			'four-seasons-private-jet-2026-showcase',
+			'luxury-expedition-cruising-trade-summit',
+			'tarctpc-global-advisor-forum',
+		);
+
+		$found = array(
+			'users'    => array(),
+			'listings' => array(),
+			'events'   => array(),
+		);
+
+		foreach ( $demo_logins as $login ) {
+			$u = get_user_by( 'login', $login );
+			if ( $u ) {
+				$found['users'][] = array( 'ID' => (int) $u->ID, 'login' => $u->user_login, 'email' => $u->user_email );
+			}
+		}
+		foreach ( $demo_listings as $slug ) {
+			$p = get_page_by_path( $slug, OBJECT, 'supplier_listing' );
+			if ( $p ) {
+				$found['listings'][] = array( 'ID' => (int) $p->ID, 'slug' => $p->post_name, 'title' => $p->post_title, 'status' => $p->post_status );
+			}
+		}
+		foreach ( $demo_events as $slug ) {
+			$p = get_page_by_path( $slug, OBJECT, 'tpd_event' );
+			if ( $p ) {
+				$found['events'][] = array( 'ID' => (int) $p->ID, 'slug' => $p->post_name, 'title' => $p->post_title, 'status' => $p->post_status );
+			}
+		}
+
+		return $found;
+	}
+
+	public static function cli_audit_demo() {
+		$found = self::find_demo_records();
+		WP_CLI::log( 'Environment: ' . ( function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'unknown' ) );
+		WP_CLI::log( 'Demo users found: ' . count( $found['users'] ) . ( $found['users'] ? ' ' . wp_json_encode( $found['users'] ) : '' ) );
+		WP_CLI::log( 'Demo listings found: ' . count( $found['listings'] ) . ( $found['listings'] ? ' ' . wp_json_encode( $found['listings'] ) : '' ) );
+		WP_CLI::log( 'Demo events found: ' . count( $found['events'] ) . ( $found['events'] ? ' ' . wp_json_encode( $found['events'] ) : '' ) );
 	}
 
 	/**
@@ -39,9 +108,12 @@ class TPD_Tool_Seeder {
 
 	/**
 	 * Full DEMO data set (users, listings, events). Development/staging only:
-	 * run it with `wp tpd-tool-seed`, never on a live site.
+	 * run it with `wp tpd-tool-seed --demo`, never on a live site.
 	 */
 	public static function seed_all() {
+		if ( self::is_production_environment() ) {
+			return new WP_Error( 'tpd_seeder_blocked', __( 'Demo seeding is disabled on production environments.', 'tpd-tool' ) );
+		}
 		// 1. Seed Taxonomies
 		self::seed_taxonomies();
 

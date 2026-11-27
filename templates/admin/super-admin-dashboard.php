@@ -1038,7 +1038,7 @@ $pay_symbol          = ! empty( $payment_settings['currency_symbol'] ) ? $paymen
 								<?php endif; ?>
 							</label>
 							<div style="display:flex; gap:10px; align-items:center;">
-								<input type="password" name="github_token" id="tpd-sa-gh-token-inp" value="<?php echo esc_attr( get_option( 'tpd_github_token', '' ) ); ?>" placeholder="ghp_... or github_pat_..." class="tpd-input" style="flex:1;" <?php echo $token_is_constant ? 'readonly' : ''; ?>>
+								<input type="password" name="github_token" id="tpd-sa-gh-token-inp" value="" placeholder="<?php echo esc_attr( $has_token ? __( 'Token configured (enter new token to replace)', 'tpd-tool' ) : 'ghp_... or github_pat_...' ); ?>" class="tpd-input" style="flex:1;" autocomplete="new-password" <?php echo $token_is_constant ? 'readonly' : ''; ?>>
 								<button type="button" class="tpd-btn tpd-btn-sm tpd-btn-outline" onclick="var el=document.getElementById('tpd-sa-gh-token-inp'); el.type = el.type==='password' ? 'text' : 'password';" title="<?php esc_attr_e( 'Toggle Token Visibility', 'tpd-tool' ); ?>">
 									<i class="fa-regular fa-eye"></i>
 								</button>

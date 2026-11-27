@@ -156,11 +156,11 @@ class TPD_Tool_Registration {
 			'status'              => 'cross_role_available',
 			'existing_role_label' => $existing_role_label,
 			'target_role_label'   => $target_role_label,
-			'existing_username'   => $user->user_login,
-			'first_name'          => $user->first_name,
-			'last_name'           => $user->last_name,
-			'phone'               => get_user_meta( $user->ID, 'tpd_phone', true ),
-			'country'             => get_user_meta( $user->ID, 'tpd_country', true ) ?: get_user_meta( $user->ID, 'tpd_country_of_residence', true ),
+			'existing_username'   => $logged_in_same_user ? $user->user_login : '',
+			'first_name'          => $logged_in_same_user ? $user->first_name : '',
+			'last_name'           => $logged_in_same_user ? $user->last_name : '',
+			'phone'               => $logged_in_same_user ? get_user_meta( $user->ID, 'tpd_phone', true ) : '',
+			'country'             => $logged_in_same_user ? ( get_user_meta( $user->ID, 'tpd_country', true ) ?: get_user_meta( $user->ID, 'tpd_country_of_residence', true ) ) : '',
 			'logged_in_same_user' => $logged_in_same_user,
 			'message'             => sprintf(
 				/* translators: 1: Existing role, 2: Target role */
@@ -214,11 +214,12 @@ class TPD_Tool_Registration {
 
 			// Existing Supplier signing up for Travel Advisor Portal
 			if ( ! $confirm_cross_role ) {
+				$is_owner = ( is_user_logged_in() && (int) get_current_user_id() === (int) $existing_user->ID );
 				wp_send_json_error( array(
 					'cross_role_prompt'   => true,
 					'existing_role_label' => __( 'Supplier Partner', 'tpd-tool' ),
 					'target_role_label'   => __( 'Travel Advisor', 'tpd-tool' ),
-					'existing_username'   => $existing_user->user_login,
+					'existing_username'   => $is_owner ? $existing_user->user_login : '',
 					'message'             => __( 'Your email is already registered as a Supplier Partner. Confirm below to also register as a Travel Advisor and choose whether to use the same or separate login credentials.', 'tpd-tool' ),
 				) );
 			}
@@ -501,11 +502,12 @@ class TPD_Tool_Registration {
 
 			// Existing Travel Advisor signing up for Supplier Portal
 			if ( ! $confirm_cross_role ) {
+				$is_owner = ( is_user_logged_in() && (int) get_current_user_id() === (int) $existing_user->ID );
 				wp_send_json_error( array(
 					'cross_role_prompt'   => true,
 					'existing_role_label' => __( 'Travel Advisor', 'tpd-tool' ),
 					'target_role_label'   => __( 'Supplier Partner', 'tpd-tool' ),
-					'existing_username'   => $existing_user->user_login,
+					'existing_username'   => $is_owner ? $existing_user->user_login : '',
 					'message'             => __( 'Your email is already registered as a Travel Advisor. Confirm below to also register as a Supplier Partner and choose whether to use the same or separate login credentials.', 'tpd-tool' ),
 				) );
 			}
@@ -821,7 +823,7 @@ class TPD_Tool_Registration {
 	}
 
 	/**
-	 * AJAX Handler: Inline Forgot Password Request
+	 * AJAX Handler: Inline Forgot Password Request (Rate-limited, non-enumerating)
 	 */
 	public static function ajax_forgot_password() {
 		check_ajax_referer( 'tpd_nonce', 'nonce' );
@@ -831,13 +833,19 @@ class TPD_Tool_Registration {
 			wp_send_json_error( array( 'message' => __( 'Please enter your username or email address.', 'tpd-tool' ) ) );
 		}
 
-		$result = retrieve_password( $user_login );
-		if ( is_wp_error( $result ) ) {
-			wp_send_json_error( array( 'message' => __( 'If an account matches that username or email, a password reset link has been sent.', 'tpd-tool' ) ) );
+		$client_ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '0.0.0.0';
+		$rate_key  = 'tpd_pwd_reset_' . md5( $client_ip );
+		$attempts  = (int) get_transient( $rate_key );
+		if ( $attempts >= self::MAX_LOGIN_ATTEMPTS ) {
+			wp_send_json_error( array( 'message' => __( 'Too many password reset requests. Please wait 15 minutes before trying again.', 'tpd-tool' ) ) );
 		}
+		set_transient( $rate_key, $attempts + 1, self::LOCKOUT_SECONDS );
 
+		retrieve_password( $user_login );
+
+		// Always return the same response so callers cannot enumerate valid usernames or email addresses.
 		wp_send_json_success( array(
-			'message' => __( 'A password reset link has been emailed to your registered address.', 'tpd-tool' ),
+			'message' => __( 'If an account matches that username or email, a password reset link has been sent.', 'tpd-tool' ),
 		) );
 	}
 

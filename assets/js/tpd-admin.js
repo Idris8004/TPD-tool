@@ -1048,8 +1048,11 @@
 					$btn.prop('disabled', false).html(origHtml);
 					if (res && res.success) {
 						showAdminToast(res.data.message || 'GitHub token saved!');
+						$('#tpd-sa-gh-token-inp').val('');
 						if (res.data.remote_version) {
-							$('#tpd-updater-remote-status').html('<span style="color:#00798c; font-weight:700;">Remote Version: v' + res.data.remote_version + '</span>');
+							var rv = String(res.data.remote_version);
+							var label = /^\d/.test(rv) ? ('Remote Version: v' + rv) : rv;
+							$('#tpd-updater-remote-status').empty().append($('<span style="color:#00798c; font-weight:700;"></span>').text(label));
 						}
 					} else {
 						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Failed to save token.');
@@ -1095,7 +1098,9 @@
 						html += '</div>';
 
 						$('#tpd-gh-check-result').html(html).fadeIn(150);
-						$('#tpd-updater-remote-status').html('<span style="font-weight:700; color:' + (isUpdate ? '#b91c1c' : '#166534') + ';">Remote: v' + res.data.remote_version + '</span>');
+						var rv2 = String(res.data.remote_version || '');
+						var label2 = /^\d/.test(rv2) ? ('Remote: v' + rv2) : rv2;
+						$('#tpd-updater-remote-status').empty().append($('<span style="font-weight:700;"></span>').css('color', isUpdate ? '#b91c1c' : '#166534').text(label2));
 					} else {
 						showAdminError((res && res.data && res.data.message) ? res.data.message : 'Error checking GitHub updates.');
 					}

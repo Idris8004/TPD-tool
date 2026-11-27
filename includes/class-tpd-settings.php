@@ -564,6 +564,17 @@ class TPD_Tool_Settings {
 	}
 
 	/**
+	 * Neutralize CSV/Spreadsheet formula injection (=, +, -, @, tab, CR).
+	 */
+	public static function sanitize_csv_cell( $value ) {
+		$str = (string) $value;
+		if ( '' !== $str && in_array( $str[0], array( '=', '+', '-', '@', "\t", "\r" ), true ) ) {
+			return "'" . $str;
+		}
+		return $str;
+	}
+
+	/**
 	 * Export CSV for Advisors or Suppliers
 	 */
 	public static function handle_csv_exports() {
@@ -604,7 +615,7 @@ class TPD_Tool_Settings {
 		foreach ( $suppliers as $sup ) {
 			$uid = $sup->ID;
 			$status = get_user_meta( $uid, 'tpd_account_status', true ) ?: 'active';
-			fputcsv( $output, array(
+			fputcsv( $output, array_map( array( __CLASS__, 'sanitize_csv_cell' ), array(
 				$uid,
 				$sup->display_name,
 				$sup->user_login,
@@ -616,7 +627,7 @@ class TPD_Tool_Settings {
 				strtoupper( TPD_Tool_Tiers::get_user_tier( $uid ) ),
 				ucfirst( $status ),
 				$sup->user_registered,
-			) );
+			) ) );
 		}
 		fclose( $output );
 		exit;
@@ -1321,7 +1332,7 @@ class TPD_Tool_Settings {
 	public static function ajax_user_upgrade_plan() {
 		check_ajax_referer( 'tpd_nonce', 'nonce' );
 		$user_id = get_current_user_id();
-		if ( ! $user_id ) {
+		if ( ! $user_id || ! TPD_Tool_Roles::is_account_active( $user_id ) ) {
 			wp_send_json_error( array( 'message' => 'Authentication required.' ) );
 		}
 
@@ -1429,7 +1440,7 @@ class TPD_Tool_Settings {
 	public static function ajax_delete_own_account() {
 		check_ajax_referer( 'tpd_nonce', 'nonce' );
 		$user_id = get_current_user_id();
-		if ( ! $user_id ) {
+		if ( ! $user_id || ! TPD_Tool_Roles::is_account_active( $user_id ) ) {
 			wp_send_json_error( array( 'message' => 'Authentication required.' ) );
 		}
 		if ( current_user_can( 'manage_options' ) ) {

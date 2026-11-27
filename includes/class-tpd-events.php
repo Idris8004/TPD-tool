@@ -13,18 +13,21 @@ class TPD_Tool_Events {
 
 	public static function init() {
 		add_action( 'wp_ajax_tpd_register_event', array( __CLASS__, 'ajax_register_event' ) );
-		add_action( 'wp_ajax_nopriv_tpd_register_event', array( __CLASS__, 'ajax_register_event' ) );
 	}
 
 	public static function ajax_register_event() {
 		check_ajax_referer( 'tpd_nonce', 'nonce' );
 
-		if ( ! is_user_logged_in() ) {
+		$user_id = get_current_user_id();
+		if ( ! $user_id || ! TPD_Tool_Roles::is_account_active( $user_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Please log in to register for events.', 'tpd-tool' ) ) );
 		}
 
 		$event_id = isset( $_POST['event_id'] ) ? absint( $_POST['event_id'] ) : 0;
-		$user_id  = get_current_user_id();
+		$event    = $event_id ? get_post( $event_id ) : null;
+		if ( ! $event || 'tpd_event' !== $event->post_type || 'publish' !== $event->post_status ) {
+			wp_send_json_error( array( 'message' => __( 'Event not found.', 'tpd-tool' ) ) );
+		}
 
 		$registered = (array) get_user_meta( $user_id, '_tpd_registered_events', true );
 		if ( ! in_array( $event_id, $registered, true ) ) {
@@ -110,73 +113,6 @@ class TPD_Tool_Events {
 			}
 		}
 
-		// Exact 4-Model Fallback matching User Screenshot Design
-		$default_models = array(
-			array(
-				'id'          => 101,
-				'title'       => 'CCRA PowerSolutions Atlanta',
-				'image_url'   => 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&auto=format&fit=crop&q=80',
-				'start_date'  => '10-28-2026',
-				'end_date'    => '10-28-2026',
-				'description' => 'Join us for a dynamic, invitation-only experience designed to bring travel advisor...',
-				'location'    => 'Atlanta',
-				'event_url'   => '#',
-				'month'       => 'OCT',
-				'day'         => '28',
-				'series'      => 'Trade Summit',
-				'time'        => '9:00 AM - 5:00 PM EST',
-			),
-			array(
-				'id'          => 102,
-				'title'       => 'Dream Vacations and CruiseOne 2026 National Confer',
-				'image_url'   => 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80',
-				'start_date'  => '11-01-2026',
-				'end_date'    => '11-08-2026',
-				'description' => 'The conference will offer a variety of general sessions, workshops and networking events...',
-				'location'    => 'Cape Canaveral',
-				'event_url'   => '#',
-				'month'       => 'NOV',
-				'day'         => '01',
-				'series'      => 'National Conference',
-				'time'        => 'Annual Summit',
-			),
-			array(
-				'id'          => 103,
-				'title'       => 'Global European Marketplace',
-				'image_url'   => 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&auto=format&fit=crop&q=80',
-				'start_date'  => '11-02-2026',
-				'end_date'    => '11-06-2025',
-				'description' => 'The Global European Marketplace is ETOA\'s influential annual travel trade event...',
-				'location'    => 'London',
-				'event_url'   => '#',
-				'month'       => 'NOV',
-				'day'         => '02',
-				'series'      => 'European Marketplace',
-				'time'        => '10:00 AM - 6:00 PM GMT',
-			),
-			array(
-				'id'          => 104,
-				'title'       => 'WTM London',
-				'image_url'   => 'https://images.unsplash.com/photo-1505761671935-60b3a7427bad?w=800&auto=format&fit=crop&q=80',
-				'start_date'  => '11-03-2026',
-				'end_date'    => '11-05-2025',
-				'description' => 'For decades, World Travel Market London has been at the heart of global travel and...',
-				'location'    => 'London',
-				'event_url'   => '#',
-				'month'       => 'NOV',
-				'day'         => '03',
-				'series'      => 'World Travel Market',
-				'time'        => '9:30 AM - 6:00 PM GMT',
-			),
-		);
-
-		// If real posts count is less than requested limit, append defaults so 4 cards are always shown
-		if ( count( $events ) < $limit ) {
-			$needed = $limit - count( $events );
-			$slice  = array_slice( $default_models, 0, $needed );
-			$events = array_merge( $events, $slice );
-		}
-
 		return array_slice( $events, 0, $limit );
 	}
 
@@ -206,6 +142,13 @@ class TPD_Tool_Events {
 				<h2 class="tpd-events-heading"><?php echo esc_html( $r['title'] ); ?></h2>
 			<?php endif; ?>
 
+			<?php if ( empty( $events ) ) : ?>
+				<div class="tpd-empty-state-box" style="text-align:center; padding:40px 24px; background:#ffffff; border:1.5px dashed #cbd5e1; border-radius:14px;">
+					<i class="fa-regular fa-calendar-days" style="font-size:32px; color:#94a3b8; margin-bottom:10px; display:block;"></i>
+					<h4 style="margin:0 0 6px; font-size:16px; font-weight:700; color:#0f172a;"><?php esc_html_e( 'No Upcoming Events Scheduled', 'tpd-tool' ); ?></h4>
+					<p style="margin:0; font-size:13px; color:#64748b;"><?php esc_html_e( 'New partner webinars, trade conferences, and live summits will appear here once published.', 'tpd-tool' ); ?></p>
+				</div>
+			<?php else : ?>
 			<div class="tpd-events-grid" style="grid-template-columns: repeat(<?php echo (int) $columns; ?>, 1fr);">
 				<?php foreach ( $events as $ev ) : ?>
 					<div class="tpd-event-card" data-event-id="<?php echo esc_attr( $ev['id'] ); ?>">
@@ -254,6 +197,7 @@ class TPD_Tool_Events {
 					</div>
 				<?php endforeach; ?>
 			</div>
+			<?php endif; ?>
 		</div>
 		<?php
 		return ob_get_clean();

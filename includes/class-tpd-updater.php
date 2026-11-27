@@ -234,7 +234,10 @@ class TPD_Tool_Updater {
 		}
 
 		$token = isset( $_POST['github_token'] ) ? sanitize_text_field( wp_unslash( $_POST['github_token'] ) ) : '';
-		update_option( 'tpd_github_token', $token );
+		if ( '' === trim( $token ) ) {
+			wp_send_json_error( array( 'message' => __( 'Please enter a GitHub Personal Access Token.', 'tpd-tool' ) ) );
+		}
+		update_option( 'tpd_github_token', trim( $token ) );
 		delete_transient( 'tpd_tool_gh_remote_version' );
 
 		$remote_version = self::get_instance()->get_remote_version( true );

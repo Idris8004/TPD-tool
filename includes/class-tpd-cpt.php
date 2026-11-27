@@ -1196,12 +1196,28 @@ class TPD_Tool_CPT {
 			return;
 		}
 		$fields = self::get_dynamic_fields( $post_type, 'all' );
+		if ( empty( $fields ) ) {
+			return;
+		}
 		foreach ( $_POST['tpd_dyn'] as $f_name => $raw_val ) {
 			$f_name = sanitize_key( $f_name );
+			// Strict whitelist: never allow arbitrary user/post meta overwrites (e.g. tpd_user_tier or wp_capabilities).
+			if ( ! isset( $fields[ $f_name ] ) ) {
+				continue;
+			}
+			$field_type = isset( $fields[ $f_name ]['type'] ) ? $fields[ $f_name ]['type'] : 'text';
 			if ( is_array( $raw_val ) ) {
 				$clean_val = array_map( 'sanitize_text_field', wp_unslash( $raw_val ) );
-			} else {
+			} elseif ( 'url' === $field_type ) {
+				$clean_val = esc_url_raw( wp_unslash( $raw_val ) );
+			} elseif ( 'email' === $field_type ) {
+				$clean_val = sanitize_email( wp_unslash( $raw_val ) );
+			} elseif ( 'wysiwyg' === $field_type ) {
+				$clean_val = wp_kses_post( wp_unslash( $raw_val ) );
+			} elseif ( 'textarea' === $field_type ) {
 				$clean_val = sanitize_textarea_field( wp_unslash( $raw_val ) );
+			} else {
+				$clean_val = sanitize_text_field( wp_unslash( $raw_val ) );
 			}
 
 			if ( $post_id ) {

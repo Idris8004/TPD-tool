@@ -44,17 +44,39 @@ class TPD_Tool_Chat {
 		$current_user_id = get_current_user_id();
 
 		if ( $current_user_id ) {
+			if ( ! TPD_Tool_Roles::is_account_active( $current_user_id ) ) {
+				wp_send_json_error( array( 'message' => __( 'Your account is inactive or suspended.', 'tpd-tool' ) ) );
+			}
+			if ( $current_user_id === $recipient_id ) {
+				wp_send_json_error( array( 'message' => __( 'You cannot send a message to yourself.', 'tpd-tool' ) ) );
+			}
 			$sender       = wp_get_current_user();
 			$sender_name  = $sender->display_name ?: $sender->user_login;
 			$sender_email = $sender->user_email;
 		} else {
-			$sender_name  = isset( $_POST['guest_name'] ) ? sanitize_text_field( wp_unslash( $_POST['guest_name'] ) ) : 'Guest Traveler';
+			$sender_name  = isset( $_POST['guest_name'] ) ? sanitize_text_field( wp_unslash( $_POST['guest_name'] ) ) : '';
 			$sender_email = isset( $_POST['guest_email'] ) ? sanitize_email( wp_unslash( $_POST['guest_email'] ) ) : '';
+			if ( '' === $sender_name ) {
+				$sender_name = 'Guest Traveler';
+			}
+			if ( empty( $sender_email ) || ! is_email( $sender_email ) ) {
+				wp_send_json_error( array( 'message' => __( 'Please enter a valid email address.', 'tpd-tool' ) ) );
+			}
+			$client_ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '0.0.0.0';
+			$rate_key  = 'tpd_guest_chat_' . md5( $client_ip );
+			$sent_cnt  = (int) get_transient( $rate_key );
+			if ( $sent_cnt >= 5 ) {
+				wp_send_json_error( array( 'message' => __( 'Too many messages sent. Please wait a few minutes before sending another.', 'tpd-tool' ) ) );
+			}
+			set_transient( $rate_key, $sent_cnt + 1, 10 * MINUTE_IN_SECONDS );
 		}
 
 		$recipient = get_userdata( $recipient_id );
-		if ( ! $recipient ) {
+		if ( ! $recipient || ! TPD_Tool_Roles::is_account_active( $recipient_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Recipient user not found.', 'tpd-tool' ) ) );
+		}
+		if ( ! $current_user_id && ! TPD_Tool_Roles::is_advisor( $recipient_id ) && ! TPD_Tool_Roles::is_supplier( $recipient_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Recipient cannot receive guest messages.', 'tpd-tool' ) ) );
 		}
 
 		// Create Message Post Record
@@ -110,7 +132,7 @@ class TPD_Tool_Chat {
 		$current_user_id = get_current_user_id();
 		$partner_id      = isset( $_POST['partner_id'] ) ? absint( $_POST['partner_id'] ) : 0;
 
-		if ( ! $current_user_id || ! $partner_id ) {
+		if ( ! $current_user_id || ! TPD_Tool_Roles::is_account_active( $current_user_id ) || ! $partner_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid conversation parameters.', 'tpd-tool' ) ) );
 		}
 
@@ -376,7 +398,8 @@ class TPD_Tool_Chat {
 
 		$headers = array( 'Content-Type: text/plain; charset=UTF-8' );
 		if ( ! empty( $sender_email ) && is_email( $sender_email ) ) {
-			$headers[] = 'Reply-To: ' . $sender_name . ' <' . $sender_email . '>';
+			$safe_name = trim( str_replace( array( "\r", "\n", '<', '>', '"' ), '', (string) $sender_name ) );
+			$headers[] = 'Reply-To: ' . ( '' !== $safe_name ? $safe_name : 'Member' ) . ' <' . $sender_email . '>';
 		}
 
 		wp_mail( $recipient_email, $subject, $body, $headers );

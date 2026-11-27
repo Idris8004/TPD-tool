@@ -271,6 +271,14 @@ class TPD_Tool_Shortcodes {
 			}
 		}
 
+		if ( $target_post && 'publish' !== $target_post->post_status ) {
+			$cur_uid  = get_current_user_id();
+			$assigned = (int) get_post_meta( $target_post->ID, 'tpd_assigned_user', true );
+			if ( ! current_user_can( 'manage_options' ) && ( ! $cur_uid || ( (int) $target_post->post_author !== $cur_uid && $assigned !== $cur_uid ) ) ) {
+				$target_post = null;
+			}
+		}
+
 		if ( ! $target_post ) {
 			return '<div class="tpd-alert tpd-alert-info" style="margin:20px auto; max-width:800px; padding:20px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; color:#1e40af; font-size:14px; text-align:center; font-family:\'Plus Jakarta Sans\',sans-serif;">' .
 				'<i class="fa-solid fa-circle-info" style="font-size:24px; margin-bottom:8px; display:block;"></i>' .
@@ -603,8 +611,41 @@ class TPD_Tool_Shortcodes {
 		$msg         = isset( $_POST['message'] ) ? sanitize_textarea_field( wp_unslash( $_POST['message'] ) ) : '';
 		$advisor_id  = isset( $_POST['advisor_id'] ) ? absint( $_POST['advisor_id'] ) : 0;
 
-		if ( empty( $name ) || empty( $email ) || empty( $destination ) ) {
-			wp_send_json_error( array( 'message' => __( 'Please complete all required fields.', 'tpd-tool' ) ) );
+		if ( empty( $name ) || empty( $email ) || ! is_email( $email ) || empty( $destination ) ) {
+			wp_send_json_error( array( 'message' => __( 'Please enter a valid name, email address, and destination.', 'tpd-tool' ) ) );
+		}
+
+		$client_ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '0.0.0.0';
+		$rate_key  = 'tpd_client_inquiry_' . md5( $client_ip );
+		$sent_cnt  = (int) get_transient( $rate_key );
+		if ( $sent_cnt >= 5 ) {
+			wp_send_json_error( array( 'message' => __( 'Too many inquiry submissions. Please wait a few minutes before sending another.', 'tpd-tool' ) ) );
+		}
+		set_transient( $rate_key, $sent_cnt + 1, 10 * MINUTE_IN_SECONDS );
+
+		// Resolve valid advisor user ID (from advisor user ID or travel_advisor CPT ID) — never target arbitrary users/admins.
+		$resolved_advisor_uid = 0;
+		$advisor_email        = '';
+		if ( $advisor_id > 0 ) {
+			$u = get_userdata( $advisor_id );
+			if ( $u && TPD_Tool_Roles::is_advisor( $advisor_id ) && TPD_Tool_Roles::is_account_active( $advisor_id ) ) {
+				$resolved_advisor_uid = $advisor_id;
+				$advisor_email        = $u->user_email;
+			} else {
+				$adv_post = get_post( $advisor_id );
+				if ( $adv_post && 'travel_advisor' === $adv_post->post_type && 'publish' === $adv_post->post_status ) {
+					$assigned_uid = (int) get_post_meta( $advisor_id, 'tpd_assigned_user', true ) ?: (int) $adv_post->post_author;
+					$au           = $assigned_uid ? get_userdata( $assigned_uid ) : null;
+					if ( $au && TPD_Tool_Roles::is_advisor( $assigned_uid ) && TPD_Tool_Roles::is_account_active( $assigned_uid ) ) {
+						$resolved_advisor_uid = $assigned_uid;
+						$advisor_email        = $au->user_email;
+					}
+				}
+			}
+		}
+
+		if ( ! $resolved_advisor_uid ) {
+			wp_send_json_error( array( 'message' => __( 'The selected travel advisor could not be found.', 'tpd-tool' ) ) );
 		}
 
 		$post_id = wp_insert_post( array(
@@ -612,14 +653,14 @@ class TPD_Tool_Shortcodes {
 			'post_status'  => 'publish',
 			'post_title'   => sprintf( 'Inquiry from %s for %s', $name, $destination ),
 			'post_content' => $msg,
-			'post_author'  => $advisor_id ?: 1,
+			'post_author'  => $resolved_advisor_uid,
 		) );
 
 		if ( is_wp_error( $post_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Failed to submit inquiry. Please try again.', 'tpd-tool' ) ) );
 		}
 
-		update_post_meta( $post_id, '_tpd_advisor_id', $advisor_id );
+		update_post_meta( $post_id, '_tpd_advisor_id', $resolved_advisor_uid );
 		update_post_meta( $post_id, '_tpd_traveler_name', $name );
 		update_post_meta( $post_id, '_tpd_traveler_email', $email );
 		update_post_meta( $post_id, '_tpd_traveler_phone', $phone );
@@ -630,22 +671,10 @@ class TPD_Tool_Shortcodes {
 		update_post_meta( $post_id, '_tpd_status', 'New' );
 		update_post_meta( $post_id, '_tpd_timestamp', current_time( 'timestamp' ) );
 
-		// Send email notification to advisor
-		$advisor_email = '';
-		$advisor_user  = $advisor_id ? get_userdata( $advisor_id ) : null;
-		if ( $advisor_user ) {
-			$advisor_email = $advisor_user->user_email;
-		} elseif ( $advisor_id ) {
-			$adv_post_author = (int) get_post_field( 'post_author', $advisor_id );
-			$adv_author_user = $adv_post_author ? get_userdata( $adv_post_author ) : null;
-			if ( $adv_author_user ) {
-				$advisor_email = $adv_author_user->user_email;
-			}
-		}
-
 		if ( is_email( $advisor_email ) ) {
-			$subj = sprintf( '[TPD Lead] New Trip Inquiry from %s on Travel Partner Directory', $name );
-			$body = "Hi,\n\nYou have received a new client trip inquiry on Travel Partner Directory:\n\n" .
+			$subj      = sprintf( '[TPD Lead] New Trip Inquiry from %s on Travel Partner Directory', $name );
+			$safe_name = trim( str_replace( array( "\r", "\n", '<', '>', '"' ), '', $name ) );
+			$body      = "Hi,\n\nYou have received a new client trip inquiry on Travel Partner Directory:\n\n" .
 				"Traveler Name: " . $name . "\n" .
 				"Email: " . $email . "\n" .
 				"Phone: " . $phone . "\n" .
@@ -658,7 +687,7 @@ class TPD_Tool_Shortcodes {
 				home_url( '/advisor-dashboard/?tab=inquiries' ) . "\n\n" .
 				"Travel Partner Directory by TARC\n";
 
-			wp_mail( $advisor_email, $subj, $body, array( 'Reply-To: ' . $name . ' <' . $email . '>' ) );
+			wp_mail( $advisor_email, $subj, $body, array( 'Reply-To: ' . ( '' !== $safe_name ? $safe_name : 'Traveler' ) . ' <' . $email . '>' ) );
 		}
 
 		wp_send_json_success( array(

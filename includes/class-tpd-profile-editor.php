@@ -83,19 +83,13 @@ class TPD_Tool_Profile_Editor {
 			wp_send_json_error( array( 'message' => $err_msg ) );
 		}
 
-		// Ensure current user has upload capability
-		$current_user = wp_get_current_user();
-		if ( $current_user && $current_user->exists() && ! $current_user->has_cap( 'upload_files' ) ) {
-			$current_user->add_cap( 'upload_files' );
-		}
-
-		// Validate file extension against allowed formats
+		// Validate file extension and true MIME content against allowed formats (no SVG to prevent Stored XSS)
 		$raw_name     = sanitize_file_name( wp_unslash( $_FILES['file']['name'] ) );
 		$ext          = strtolower( pathinfo( $raw_name, PATHINFO_EXTENSION ) );
-		$allowed_exts = array( 'jpg', 'jpeg', 'jpe', 'png', 'gif', 'webp', 'svg', 'pdf' );
+		$allowed_exts = array( 'jpg', 'jpeg', 'jpe', 'png', 'gif', 'webp', 'pdf' );
 
 		if ( ! in_array( $ext, $allowed_exts, true ) ) {
-			wp_send_json_error( array( 'message' => __( 'Security Error: Only JPG, PNG, GIF, WEBP, SVG images and PDF documents are allowed.', 'tpd-tool' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Security Error: Only JPG, PNG, GIF, WEBP images and PDF documents are allowed.', 'tpd-tool' ) ) );
 		}
 
 		$allowed_mimes = array(
@@ -103,7 +97,6 @@ class TPD_Tool_Profile_Editor {
 			'png'          => 'image/png',
 			'gif'          => 'image/gif',
 			'webp'         => 'image/webp',
-			'svg'          => 'image/svg+xml',
 			'pdf'          => 'application/pdf',
 		);
 
@@ -111,37 +104,53 @@ class TPD_Tool_Profile_Editor {
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 
+		$tmp_path = isset( $_FILES['file']['tmp_name'] ) ? (string) $_FILES['file']['tmp_name'] : '';
+		$ft_check = $tmp_path ? wp_check_filetype_and_ext( $tmp_path, $raw_name, $allowed_mimes ) : array();
+		if ( empty( $ft_check['ext'] ) || empty( $ft_check['type'] ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security Error: Uploaded file content does not match an allowed image or PDF format.', 'tpd-tool' ) ) );
+		}
+
 		$upload_overrides = array(
 			'test_form' => false,
 			'mimes'     => $allowed_mimes,
 		);
 
-		$attachment_id = media_handle_upload( 'file', 0, array(), $upload_overrides );
-		$url           = '';
+		$allow_upload_cap = static function( $allcaps ) {
+			$allcaps['upload_files'] = true;
+			return $allcaps;
+		};
+		add_filter( 'user_has_cap', $allow_upload_cap );
 
-		if ( is_wp_error( $attachment_id ) ) {
-			// Fallback: direct wp_handle_upload in case media_handle_upload failed
-			$file = wp_handle_upload( $_FILES['file'], $upload_overrides );
-			if ( isset( $file['error'] ) ) {
-				wp_send_json_error( array( 'message' => $file['error'] ) );
+		try {
+			$attachment_id = media_handle_upload( 'file', 0, array(), $upload_overrides );
+			$url           = '';
+
+			if ( is_wp_error( $attachment_id ) ) {
+				// Fallback: direct wp_handle_upload in case media_handle_upload failed
+				$file = wp_handle_upload( $_FILES['file'], $upload_overrides );
+				if ( isset( $file['error'] ) ) {
+					wp_send_json_error( array( 'message' => $file['error'] ) );
+				}
+				$url = ! empty( $file['url'] ) ? $file['url'] : '';
+				$attachment = array(
+					'post_mime_type' => ! empty( $file['type'] ) ? $file['type'] : 'image/jpeg',
+					'guid'           => $url,
+					'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $raw_name ) ),
+					'post_content'   => '',
+					'post_status'    => 'inherit',
+					'post_author'    => $current_user_id,
+				);
+				$attach_id = wp_insert_attachment( $attachment, $file['file'] );
+				if ( ! is_wp_error( $attach_id ) && $attach_id > 0 ) {
+					$attach_data = wp_generate_attachment_metadata( $attach_id, $file['file'] );
+					wp_update_attachment_metadata( $attach_id, $attach_data );
+					$attachment_id = $attach_id;
+				}
+			} else {
+				$url = wp_get_attachment_url( $attachment_id );
 			}
-			$url = ! empty( $file['url'] ) ? $file['url'] : '';
-			$attachment = array(
-				'post_mime_type' => ! empty( $file['type'] ) ? $file['type'] : 'image/jpeg',
-				'guid'           => $url,
-				'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $raw_name ) ),
-				'post_content'   => '',
-				'post_status'    => 'inherit',
-				'post_author'    => $current_user_id,
-			);
-			$attach_id = wp_insert_attachment( $attachment, $file['file'] );
-			if ( ! is_wp_error( $attach_id ) && $attach_id > 0 ) {
-				$attach_data = wp_generate_attachment_metadata( $attach_id, $file['file'] );
-				wp_update_attachment_metadata( $attach_id, $attach_data );
-				$attachment_id = $attach_id;
-			}
-		} else {
-			$url = wp_get_attachment_url( $attachment_id );
+		} finally {
+			remove_filter( 'user_has_cap', $allow_upload_cap );
 		}
 
 		if ( empty( $url ) ) {
@@ -885,11 +894,23 @@ class TPD_Tool_Profile_Editor {
 		$listing_id = isset( $_POST['listing_id'] ) ? absint( $_POST['listing_id'] ) : 0;
 		$notes      = isset( $_POST['claim_notes'] ) ? sanitize_textarea_field( wp_unslash( $_POST['claim_notes'] ) ) : '';
 
-		if ( ! $user_id || ! $listing_id ) {
+		if ( ! $user_id || ! TPD_Tool_Roles::is_account_active( $user_id ) || ! $listing_id ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid listing or authentication.', 'tpd-tool' ) ) );
+		}
+		if ( ! TPD_Tool_Roles::is_supplier( $user_id ) && ! TPD_Tool_Roles::is_admin( $user_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized: Supplier Partner account required to claim a listing.', 'tpd-tool' ) ) );
+		}
+
+		$listing = get_post( $listing_id );
+		if ( ! $listing || 'supplier_listing' !== $listing->post_type ) {
+			wp_send_json_error( array( 'message' => __( 'Supplier listing not found.', 'tpd-tool' ) ) );
 		}
 
 		$claims = (array) get_option( 'tpd_pending_listing_claims', array() );
+		if ( isset( $claims[ $listing_id ] ) && in_array( $claims[ $listing_id ]['status'] ?? '', array( 'pending', 'approved' ), true ) && (int) ( $claims[ $listing_id ]['user_id'] ?? 0 ) !== $user_id ) {
+			wp_send_json_error( array( 'message' => __( 'A claim request for this listing is already under review or approved.', 'tpd-tool' ) ) );
+		}
+
 		$claims[ $listing_id ] = array(
 			'user_id'    => $user_id,
 			'listing_id' => $listing_id,
@@ -902,7 +923,7 @@ class TPD_Tool_Profile_Editor {
 		// Notify Super Admin via email
 		$admin_email = get_option( 'admin_email' );
 		$user = get_userdata( $user_id );
-		$listing_title = get_the_title( $listing_id );
+		$listing_title = $listing->post_title;
 		wp_mail(
 			$admin_email,
 			sprintf( '[TPD Claim Request] %s claimed %s', $user->display_name, $listing_title ),
@@ -992,7 +1013,14 @@ class TPD_Tool_Profile_Editor {
 		}
 
 		if ( 'approve' === $decision ) {
-			$claiming_user_id = $claims[ $listing_id ]['user_id'];
+			$listing = get_post( $listing_id );
+			if ( ! $listing || 'supplier_listing' !== $listing->post_type ) {
+				wp_send_json_error( array( 'message' => __( 'Target post is not a valid supplier listing.', 'tpd-tool' ) ) );
+			}
+			$claiming_user_id = absint( $claims[ $listing_id ]['user_id'] ?? 0 );
+			if ( ! $claiming_user_id || ! get_userdata( $claiming_user_id ) ) {
+				wp_send_json_error( array( 'message' => __( 'Claiming user account not found.', 'tpd-tool' ) ) );
+			}
 			wp_update_post( array(
 				'ID'          => $listing_id,
 				'post_author' => $claiming_user_id,
@@ -1022,20 +1050,8 @@ class TPD_Tool_Profile_Editor {
 	 * Get All Claims
 	 */
 	public static function get_claims() {
-		$claims = get_option( 'tpd_pending_listing_claims', false );
-		if ( false === $claims || empty( $claims ) ) {
-			$claims = array(
-				28 => array(
-					'user_id'    => 2,
-					'listing_id' => 28,
-					'date'       => current_time( 'mysql' ),
-					'notes'      => 'Director of Trade Partnerships requesting ownership of the official brand listing.',
-					'status'     => 'pending',
-				),
-			);
-			update_option( 'tpd_pending_listing_claims', $claims );
-		}
-		return $claims;
+		$claims = get_option( 'tpd_pending_listing_claims', array() );
+		return is_array( $claims ) ? $claims : array();
 	}
 }
 

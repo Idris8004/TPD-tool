@@ -676,6 +676,11 @@ $news_posts = get_posts( array(
 							</div>
 
 							<div class="tpd-events-stack">
+								<?php if ( empty( $events ) ) : ?>
+									<p class="text-muted" style="font-size:12.5px; margin:8px 0; text-align:center;">
+										<?php esc_html_e( 'No upcoming events scheduled yet.', 'tpd-tool' ); ?>
+									</p>
+								<?php else : ?>
 								<?php foreach ( $events as $ev ) : ?>
 									<div class="tpd-event-stack-row">
 										<div class="tpd-esr-date">
@@ -692,6 +697,7 @@ $news_posts = get_posts( array(
 										</button>
 									</div>
 								<?php endforeach; ?>
+								<?php endif; ?>
 							</div>
 						</div>
 

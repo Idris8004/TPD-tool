@@ -461,7 +461,7 @@ class TPD_Tool_Tiers {
 
 		foreach ( $advisors as $adv ) {
 			$uid = $adv->ID;
-			fputcsv( $output, array(
+			$row = array(
 				$uid,
 				$adv->display_name,
 				$adv->user_login,
@@ -482,7 +482,11 @@ class TPD_Tool_Tiers {
 				get_user_meta( $uid, 'tpd_true_num', true ) ?: 'N/A',
 				strtoupper( self::get_user_tier( $uid ) ),
 				$adv->user_registered,
-			) );
+			);
+			if ( class_exists( 'TPD_Tool_Settings' ) ) {
+				$row = array_map( array( 'TPD_Tool_Settings', 'sanitize_csv_cell' ), $row );
+			}
+			fputcsv( $output, $row );
 		}
 
 		fclose( $output );

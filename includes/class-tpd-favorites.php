@@ -17,16 +17,17 @@ class TPD_Tool_Favorites {
 	public static function ajax_toggle_favorite() {
 		check_ajax_referer( 'tpd_nonce', 'nonce' );
 
-		if ( ! is_user_logged_in() ) {
+		$user_id = get_current_user_id();
+		if ( ! $user_id || ! TPD_Tool_Roles::is_account_active( $user_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Please log in to save suppliers.', 'tpd-tool' ) ) );
 		}
 
 		$supplier_id = isset( $_POST['supplier_id'] ) ? absint( $_POST['supplier_id'] ) : 0;
-		if ( ! $supplier_id ) {
+		$supplier    = $supplier_id ? get_post( $supplier_id ) : null;
+		if ( ! $supplier || 'supplier_listing' !== $supplier->post_type || 'publish' !== $supplier->post_status ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid supplier ID.', 'tpd-tool' ) ) );
 		}
 
-		$user_id = get_current_user_id();
 		$saved   = self::get_saved_supplier_ids( $user_id );
 
 		if ( in_array( $supplier_id, $saved, true ) ) {

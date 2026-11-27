@@ -158,7 +158,11 @@ class TPD_Tool_Resources {
 		}
 
 		foreach ( $resources as &$res ) {
-			$res['has_access'] = self::user_has_resource_access( $user_id, $res );
+			$has_access        = self::user_has_resource_access( $user_id, $res );
+			$res['has_access'] = $has_access;
+			if ( ! $has_access ) {
+				$res['file_url'] = '';
+			}
 		}
 		unset( $res );
 

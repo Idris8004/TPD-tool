@@ -1252,7 +1252,7 @@ class TPD_Tool_Financial {
 		) );
 
 		foreach ( $rows as $r ) {
-			fputcsv( $out, array(
+			$row = array(
 				$r->tx_ref,
 				$r->created_at,
 				$r->paid_at ?: '',
@@ -1269,7 +1269,11 @@ class TPD_Tool_Financial {
 				$r->gateway,
 				$r->gateway_ref,
 				$r->status,
-			) );
+			);
+			if ( class_exists( 'TPD_Tool_Settings' ) ) {
+				$row = array_map( array( 'TPD_Tool_Settings', 'sanitize_csv_cell' ), $row );
+			}
+			fputcsv( $out, $row );
 		}
 		fclose( $out );
 		exit;
